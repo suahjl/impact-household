@@ -1,0 +1,14 @@
+pandas
+numpy
+telegram-send
+dataframe-image
+tqdm
+fastparquet
+plotly
+openpyxl
+kaleido
+pillow
+statsmodels
+linearmodels
+python-dotenv
+tabulate
