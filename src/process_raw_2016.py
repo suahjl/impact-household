@@ -28,30 +28,222 @@ df_b3 = pd.read_stata(path_data + 'HES 2016- Expenditure Records-BNM.dta')
 
 # IV --- Clean & Consolidate
 
-# b2: Recode dummies
+# b1 & b2: Redefine some dtypes
+for i in ['No_Mem_HH', 'Type_LQ']:
+    df_b1[i] = df_b1[i].astype('int')
+for i in ['HH_Mem_No', 'Relationship', 'Gender', 'Age',
+          'Marital_Status', 'Schooling',
+          'Highest_Level_Edu', 'Highest_Certificate',
+          'Act_Status', 'Inc_recipient']:
+    df_b2[i] = df_b2[i].astype('int')
+
+# b1 & b2: Recode dummies
 df_b2.loc[df_b2['Inc_recipient'] == 2, 'Inc_recipient'] = 0  # receives income
 df_b2.loc[df_b2['Citizenship'] == 2, 'Citizenship'] = 0  # malaysian
 df_b2.loc[df_b2['Gender'] == 2, 'Gender'] = 0  # male
 
+df_b1['State'] = df_b1['State'].cat.codes
+
+df_b1['Ethnic'] = df_b1['Ethnic'].cat.codes
+
+df_b1['Strata'] = df_b1['Strata'].cat.codes + 1
+df_b1.loc[df_b1['Strata'] == 2, 'Strata'] = 0  # urban / rural
+
+df_b2['Occupation'] = df_b2['Occupation'].cat.codes
+df_b2['Industry'] = df_b2['Industry'].cat.codes
+
+# b1 & b2: Recode ethnicity
+dict_ethnicity = \
+    {
+        0: 'bumiputera',
+        1: 'chinese',
+        2: 'indian',
+        3: 'others'
+    }
+df_b1['Ethnic'] = df_b1['Ethnic'].replace(dict_ethnicity)
+df_b2['Ethnic'] = df_b2['Ethnic'].replace(dict_ethnicity)
+
+# b1: Recode state
+dict_state = \
+    {
+        0: 'johor',
+        1: 'kedah',
+        2: 'kelantan',
+        3: 'melaka',
+        4: 'negeri_sembilan',
+        5: 'pahang',
+        6: 'penang',
+        7: 'perak',
+        8: 'perlis',
+        9: 'selangor',
+        10: 'terengganu',
+        11: 'sabah',
+        12: 'sarawak',
+        13: 'kuala_lumpur',
+        14: 'labuan',
+        15: 'putrajaya',
+    }
+df_b1['State'] = df_b1['State'].replace(dict_state)
+
+# b1: Recode housing type
+dict_house_type = \
+    {
+        1: 'bungalow',
+        2: 'semi_detached',
+        3: 'terrace',
+        4: 'longhouse',
+        5: 'flat',
+        6: 'apartment',
+        7: 'condo',
+        8: 'shophouse',
+        9: 'room',
+        10: 'hut',
+        11: 'others',
+    }
+df_b1['Type_LQ'] = df_b1['Type_LQ'].replace(dict_house_type)
+
+# b1: Recode housing status (only in 2016)
+dict_house_status = \
+    {
+        1: 'owned',
+        2: 'rented',
+        3: 'squatters_owned',
+        4: 'squatters_rented',
+        5: 'quarters',
+        6: 'others',
+    }
+df_b1['LQ_owned'] = df_b1['LQ_owned'].replace(dict_house_status)
+
+# b2: Recode marriage status
+dict_marriage_status = \
+    {
+        1: 'never',
+        2: 'married',
+        3: 'widowed',
+        4: 'divorced',
+        5: 'separated',
+        9: 'never',  # if no info, assumed to be never married
+    }
+df_b2['Marital_Status'] = df_b2['Marital_Status'].replace(dict_marriage_status)
+
+# b2: Recode education
+dict_education = \
+    {
+        1: 'diploma',
+        2: 'cert',
+        3: 'stpm',
+        4: 'spm',
+        5: 'pmr',
+        6: 'no_cert',
+    }
+df_b2['Highest_Certificate'] = df_b2['Highest_Certificate'].replace(dict_education)
+
+# b2: Recode detailed education
+dict_education = \
+    {
+        0: 'preschool',
+        1: 'primary',
+        2: 'lower_sec',
+        3: 'upper_sec',
+        4: 'pre_uni',
+        5: 'post_sec_non_tertiary',
+        6: 'tertiary_diploma',
+        7: 'tertiary_grad',
+        8: 'tertiary_postdoc',
+        9: 'informal',
+        10: 'no_educ',
+        11: 'not_yet',
+    }
+df_b2['Highest_Level_Edu'] = df_b2['Highest_Level_Edu'].replace(dict_education)
+
+# b2: Recode emp_status
+dict_emp_status = \
+    {
+        1: 'employer',
+        2: 'gov_employee',
+        3: 'priv_employee',
+        4: 'self_employed',
+        5: 'unpaid_fam',
+        6: 'unemployed',
+        7: 'housespouse',
+        8: 'student',
+        9: 'pensioner',
+        10: 'others',
+        11: 'child_not_at_work',
+    }
+df_b2['Act_Status'] = df_b2['Act_Status'].replace(dict_emp_status)
+
+# b2: redefine occupation
+dict_occ = \
+    {
+        1: 'manager',
+        2: 'professional',
+        3: 'technician',
+        4: 'clerical',
+        5: 'services',
+        6: 'agriculture',
+        7: 'craft',
+        8: 'plant_operator',
+        9: 'elementary',
+        0: 'others',
+    }
+df_b2['Occupation'] = df_b2['Occupation'].replace(dict_occ)
+
+# b2: redefine industries
+dict_ind = \
+    {
+        1: 'agriculture',
+        2: 'mining',
+        3: 'manufacturing',
+        4: 'elec_gas_steam_aircond',
+        5: 'water_sewer_waste',
+        6: 'construction',
+        7: 'wholesale_retail',
+        8: 'transport_storage',
+        9: 'accom_fb',
+        10: 'info_comm',
+        11: 'finance_insurance',
+        12: 'real_estate',
+        13: 'professional',
+        14: 'admin_support',
+        15: 'public_admin',
+        16: 'education',
+        17: 'health_social',
+        18: 'arts',
+        19: 'other_services',
+        20: 'household',
+        21: 'extra_territorial',
+        0: 'others'
+    }
+df_b2['Industry'] = df_b2['Industry'].replace(dict_ind)
+
+# b2: age group
+df_b2.loc[(df_b2['Age'] <= 29), 'age_group'] = '0_29'
+df_b2.loc[((df_b2['Age'] >= 30) & (df_b2['Age'] <= 39)), 'age_group'] = '30_39'
+df_b2.loc[((df_b2['Age'] >= 40) & (df_b2['Age'] <= 49)), 'age_group'] = '40_49'
+df_b2.loc[((df_b2['Age'] >= 50) & (df_b2['Age'] <= 59)), 'age_group'] = '50_59'
+df_b2.loc[((df_b2['Age'] >= 60) & (df_b2['Age'] <= 69)), 'age_group'] = '60_69'
+df_b2.loc[(df_b2['Age'] >= 70), 'age_group'] = '70+'
+
 # b2: Separate column for number of income-generating members
-b2_income_gen = df_b2.groupby('id')['Inc_recipient']\
-    .sum()\
-    .reset_index()\
+b2_income_gen = df_b2.groupby('id')['Inc_recipient'] \
+    .sum() \
+    .reset_index() \
     .rename(columns={'Inc_recipient': 'income_gen_members'})
 
 # b2: Separate column for <= 12 year-olds, and <= 17 year-olds
 b2_kids = df_b2[['id', 'Age']].copy()
 b2_kids['Age'] = b2_kids['Age'].astype('int')
 b2_kids.loc[b2_kids['Age'] <= 12, 'child'] = 1
-b2_kids.loc[b2_kids['Age'] <= 17, 'underage'] = 1
-for i in ['child', 'underage']:
+b2_kids.loc[(b2_kids['Age'] > 12) & (b2_kids['Age'] <= 17), 'adolescent'] = 1
+for i in ['child', 'adolescent']:
     b2_kids.loc[b2_kids[i].isna(), i] = 0
-b2_kids = b2_kids.groupby('id')[['child', 'underage']].sum().reset_index()
+b2_kids = b2_kids.groupby('id')[['child', 'adolescent']].sum().reset_index()
 
 # b2: Keep only head of households
 print(tabulate(pd.crosstab(df_b2['Inc_recipient'], df_b2['Relationship']), showindex=True, headers='keys',
                tablefmt="pretty"))
-df_b2 = df_b2[df_b2['Relationship'] == '01'].copy()
+df_b2 = df_b2[df_b2['Relationship'] == 1].copy()
 
 # b1 + b2
 col_overlap = [i for i in df_b1.columns if i in df_b2.columns and ('id' not in i)]
@@ -75,7 +267,7 @@ del b2_kids
 del df['No_Mem_HH']
 
 # b1 + b2: redundant columns
-for i in ['Region', 'HH_Mem_No', 'Relationship', 'Schooling']:
+for i in ['Region', 'HH_Mem_No', 'Relationship', 'Schooling', 'Inc_recipient']:
     del df[i]
 
 # b3: generate new column indicating 2D category
@@ -108,12 +300,16 @@ df = df.merge(cons_two_digits, on='id', how='left', validate='one_to_one')
 del df_b3
 del cons_two_digits
 
+# Margins
+df['gross_margin'] = (df['INCS07_hh'] / 12) - df['Total_Exp_01_12']
+df['net_margin'] = (df['INCS08_hh'] / 12) - df['Total_Exp_01_12']
+
 # Rename columns to be more intuitive
 dict_rename = \
     {
         # 'id': 'id',
         'State': 'state',
-        'Strata': 'strata',
+        'Strata': 'urban',
         'Ethnic': 'ethnicity',
         'Tot_mem': 'hh_size',
         'Type_LQ': 'house_type',
@@ -129,18 +325,22 @@ dict_rename = \
         'INCS06_hh': 'net_transfers',
         'INCS07_hh': 'gross_income',
         'INCS08_hh': 'net_income',
+        # 'gross_margin': 'gross_margin',
+        # 'net_margin': 'net_margin',
         'Gender': 'male',
         'Age': 'age',
+        # 'age_group': 'age_group',
         'Marital_Status': 'marriage',
         'Highest_Level_Edu': 'education_detailed',
         'Highest_Certificate': 'education',
         'Act_Status': 'emp_status',
-        'Inc_recipient': 'receives_income',
+        # 'Inc_recipient': 'receives_income',
+        # 'income_gen_members': 'income_gen_members',
         'Occupation': 'occupation',
         'Industry': 'industry',
         'Citizenship': 'malaysian',
         # 'child': '',
-        # 'underage': '',
+        # 'adolescent': '',
         # 'cons_01': '',
         # 'cons_02': '',
         # 'cons_03': '',
@@ -161,6 +361,68 @@ df = df.rename(columns=dict_rename)
 if not (len(df.id.unique()) == len(df)): raise NotImplementedError('IDs are not unique')
 df['id'] = df.reset_index().index
 df = df.reset_index(drop=True)
+
+# post-merge: convert income, expenditure, and margins into monthly per capita
+for i in ['salaried_wages', 'other_wages', 'asset_income',
+          'gross_transfers', 'net_transfers', 'gross_income', 'net_income']:
+    df[i] = df[i] * df['hh_size'] / 12
+for i in ['cons_01_12', 'cons_01_13'] + \
+    ['cons_0' + str(i) for i in range(1, 10)] + \
+    ['cons_' + str(i) for i in range(11, 14)]:
+    df[i] = df[i] / df['hh_size']
+
+# Drop NAs
+df = df.dropna(axis=0, how='any')
+
+# Harmonise dtypes
+dict_dtypes_16 = \
+    {
+        'state': 'str',
+        'urban': 'int',
+        'ethnicity': 'str',
+        'hh_size': 'int',
+        'house_type': 'str',
+        'house_status': 'str',
+        'monthly_income': 'float',
+        'cons_01_12': 'float',
+        'cons_01_13': 'float',
+        'salaried_wages': 'float',
+        'other_wages': 'float',
+        'asset_income': 'float',
+        'gross_transfers': 'float',
+        'net_transfers': 'float',
+        'gross_income': 'float',
+        'net_income': 'float',
+        'male': 'int',
+        'age': 'int',
+        'marriage': 'str',
+        'education_detailed': 'str',
+        'education': 'str',
+        'emp_status': 'str',
+        'occupation': 'str',
+        'industry': 'str',
+        'malaysian': 'int',
+        'age_group': 'str',
+        'income_gen_members': 'int',
+        'child': 'int',
+        'adolescent': 'int',
+        'cons_01': 'float',
+        'cons_02': 'float',
+        'cons_03': 'float',
+        'cons_04': 'float',
+        'cons_05': 'float',
+        'cons_06': 'float',
+        'cons_07': 'float',
+        'cons_08': 'float',
+        'cons_09': 'float',
+        'cons_10': 'float',
+        'cons_11': 'float',
+        'cons_12': 'float',
+        'cons_13': 'float',
+        'gross_margin': 'float',
+        'net_margin': 'float',
+    }
+df = df.astype(dict_dtypes_16)
 
 # V --- Save output
 df.to_parquet(path_data + 'hies_2016_consol.parquet', compression='brotli')
