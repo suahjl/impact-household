@@ -14,6 +14,7 @@ time_start = time.time()
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/hies_consol/'
+outcome_choice = 'cons_01_13'  # cons_01_13
 
 # I --- Load data
 df = pd.read_parquet(path_data + 'hies_consol_agg_balanced.parquet')
@@ -60,7 +61,7 @@ for i in col_cons + col_inc:
 mod_fe, res_fe, params_table_fe, joint_teststats_fe, reg_det_fe = \
     fe_reg(
         df=df,
-        y_col='cons_01_12',
+        y_col=outcome_choice,
         x_cols=['gross_income'],
         i_col='cohort_code',
         t_col='year',
@@ -69,10 +70,20 @@ mod_fe, res_fe, params_table_fe, joint_teststats_fe, reg_det_fe = \
         cov_choice='robust'
     )
 
+mod_re, res_re, params_table_re, joint_teststats_re, reg_det_re = \
+    re_reg(
+        df=df,
+        y_col=outcome_choice,
+        x_cols=['gross_income'],
+        i_col='cohort_code',
+        t_col='year',
+        cov_choice='robust'
+    )
+
 mod_ols, res_ols, params_table_ols, joint_teststats_ols, reg_det_ols = \
     reg_ols(
         df=df_ind,
-        eqn='cons_01_12 ~ gross_income + ' +
+        eqn=outcome_choice + ' ~ gross_income + ' +
             'C(state) + urban + C(education) + C(ethnicity) + ' +
             'malaysian + C(income_gen_members_group) + C(adolescent_group) +' +
             'C(child_group) + male + C(age_group) + C(marriage) + ' +
@@ -81,7 +92,7 @@ mod_ols, res_ols, params_table_ols, joint_teststats_ols, reg_det_ols = \
 
 # X --- Notify
 telsendmsg(conf=tel_config,
-           msg='impact-household --- analysis_cohorts_fe: COMPLETED')
+           msg='impact-household --- analysis_reg: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

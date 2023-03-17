@@ -130,7 +130,7 @@ def re_reg(
     d = d.set_index([i_col, t_col])
 
     # Create eqn
-    eqn = y_col + '~' + '+'.join(x_cols)
+    eqn = y_col + '~' + '1 +' + '+'.join(x_cols)
 
     # Estimate model
     mod = RandomEffects.from_formula(formula=eqn, data=d)
