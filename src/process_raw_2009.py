@@ -100,14 +100,6 @@ dict_occ = \
     }
 df['occupation'] = df['occupation'].replace(dict_occ)
 
-# b2: age group
-df.loc[(df['age'] <= 29), 'age_group'] = '0_29'
-df.loc[((df['age'] >= 30) & (df['age'] <= 39)), 'age_group'] = '30_39'
-df.loc[((df['age'] >= 40) & (df['age'] <= 49)), 'age_group'] = '40_49'
-df.loc[((df['age'] >= 50) & (df['age'] <= 59)), 'age_group'] = '50_59'
-df.loc[((df['age'] >= 60) & (df['age'] <= 69)), 'age_group'] = '60_69'
-df.loc[(df['age'] >= 70), 'age_group'] = '70+'
-
 # Sketchy data types
 for i in ['Tot_exp_01_13', 'wt', 'age',
           'F10', 'F21', 'F22', 'F23', 'F30',
@@ -238,7 +230,6 @@ dict_dtypes_09 = \
         'marriage': 'str',
         'occupation': 'str',
         'education': 'str',
-        'age_group': 'str',
         'cons_01': 'float',
         'cons_02': 'float',
         'cons_03': 'float',

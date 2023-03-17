@@ -217,14 +217,6 @@ dict_ind = \
     }
 df_b2['Industry'] = df_b2['Industry'].replace(dict_ind)
 
-# b2: age group
-df_b2.loc[(df_b2['Age'] <= 29), 'age_group'] = '0_29'
-df_b2.loc[((df_b2['Age'] >= 30) & (df_b2['Age'] <= 39)), 'age_group'] = '30_39'
-df_b2.loc[((df_b2['Age'] >= 40) & (df_b2['Age'] <= 49)), 'age_group'] = '40_49'
-df_b2.loc[((df_b2['Age'] >= 50) & (df_b2['Age'] <= 59)), 'age_group'] = '50_59'
-df_b2.loc[((df_b2['Age'] >= 60) & (df_b2['Age'] <= 69)), 'age_group'] = '60_69'
-df_b2.loc[(df_b2['Age'] >= 70), 'age_group'] = '70+'
-
 # b2: Separate column for number of income-generating members
 b2_income_gen = df_b2.groupby('id')['Inc_recipient'] \
     .sum() \
@@ -329,7 +321,6 @@ dict_rename = \
         # 'net_margin': 'net_margin',
         'Gender': 'male',
         'Age': 'age',
-        # 'age_group': 'age_group',
         'Marital_Status': 'marriage',
         'Highest_Level_Edu': 'education_detailed',
         'Highest_Certificate': 'education',
@@ -402,7 +393,6 @@ dict_dtypes_16 = \
         'occupation': 'str',
         'industry': 'str',
         'malaysian': 'int',
-        'age_group': 'str',
         'income_gen_members': 'int',
         'child': 'int',
         'adolescent': 'int',

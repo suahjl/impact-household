@@ -202,14 +202,6 @@ dict_ind = \
     }
 df_b2['IND'] = df_b2['IND'].replace(dict_ind)
 
-# b2: age group
-df_b2.loc[(df_b2['U'] <= 29), 'age_group'] = '0_29'
-df_b2.loc[((df_b2['U'] >= 30) & (df_b2['U'] <= 39)), 'age_group'] = '30_39'
-df_b2.loc[((df_b2['U'] >= 40) & (df_b2['U'] <= 49)), 'age_group'] = '40_49'
-df_b2.loc[((df_b2['U'] >= 50) & (df_b2['U'] <= 59)), 'age_group'] = '50_59'
-df_b2.loc[((df_b2['U'] >= 60) & (df_b2['U'] <= 69)), 'age_group'] = '60_69'
-df_b2.loc[(df_b2['U'] >= 70), 'age_group'] = '70+'
-
 # b2: Separate column for number of income-generating members
 b2_income_gen = df_b2.groupby('HID')['PP'].sum().reset_index().rename(columns={'PP': 'income_gen_members'})
 
@@ -311,7 +303,6 @@ dict_rename = \
         'PKIR': 'member_relation',
         'J': 'male',
         'U': 'age',
-        # 'age_group': 'age_group',
         'KW': 'malaysian',
         'TP': 'marriage',
         # 'PP': 'receives_income',
@@ -365,7 +356,6 @@ dict_dtypes_19 = \
         'adolescent': 'int',
         'child': 'int',
         'male': 'int',
-        'age_group': 'str',
         'marriage': 'str',
         'emp_status': 'str',
         'industry': 'str',
