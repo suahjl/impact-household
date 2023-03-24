@@ -20,10 +20,10 @@ path_2016 = './data/hies_2016/'
 path_2019 = './data/hies_2019/'
 
 # I --- Load processed vintages
-df_09 = pd.read_parquet(path_2009 + 'hies_2009_consol.parquet')
-df_14 = pd.read_parquet(path_2014 + 'hies_2014_consol.parquet')
-df_16 = pd.read_parquet(path_2016 + 'hies_2016_consol.parquet')
-df_19 = pd.read_parquet(path_2019 + 'hies_2019_consol.parquet')
+df_09 = pd.read_parquet(path_2009 + 'hies_2009_consol_trimmedoutliers.parquet')
+df_14 = pd.read_parquet(path_2014 + 'hies_2014_consol_trimmedoutliers.parquet')
+df_16 = pd.read_parquet(path_2016 + 'hies_2016_consol_trimmedoutliers.parquet')
+df_19 = pd.read_parquet(path_2019 + 'hies_2019_consol_trimmedoutliers.parquet')
 
 # II --- Identify common columns
 common_cols_14_19 = list(set(df_14.columns) & set(df_16.columns) & set(df_19.columns))
@@ -32,7 +32,7 @@ common_col_09_19 = list(set(df_09.columns) & set(df_14.columns) & set(df_16.colu
 # III --- Pre-merger cleaning
 
 # Harmonise ethnicity levels (to lowest; 2014)
-df_16.loc[~(df_19['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
+df_16.loc[~(df_16['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
 df_19.loc[~(df_19['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
 
 # Not useful
