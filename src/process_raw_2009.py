@@ -212,6 +212,9 @@ df = df.reset_index(drop=True)
 # Column name
 df.columns.name = None
 
+# post-merge: birth year
+df['birth_year'] = 2009 - df['age']
+
 # Drop NAs
 df = df.dropna(axis=0, how='any')
 
@@ -227,6 +230,7 @@ dict_dtypes_09 = \
         'cons_01_13': 'float',
         'gross_income': 'float',
         'age': 'int',
+        'birth_year': 'int',
         'marriage': 'str',
         'occupation': 'str',
         'education': 'str',

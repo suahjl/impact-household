@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.ensemble import IsolationForest
 from src.helper import telsendmsg, telsendimg, telsendfiles
 from tabulate import tabulate
 from tqdm import tqdm
@@ -20,6 +21,7 @@ path_2009 = './data/hies_2009/'
 path_2014 = './data/hies_2014/'
 path_2016 = './data/hies_2016/'
 path_2019 = './data/hies_2019/'
+opt_random_state = 11353415
 
 # I --- Load processed vintages
 df_09 = pd.read_parquet(path_2009 + 'hies_2009_consol.parquet')
@@ -29,12 +31,19 @@ df_19 = pd.read_parquet(path_2019 + 'hies_2019_consol.parquet')
 
 
 # II --- Outliers by income and spending (items 1 - 12)
-
+# Define functions
 def outlier_kmeans(data, cols_y_x, threshold):
     # Prelims
     d = data.copy()
     # Model
-    dist = KMeans(n_clusters=5, init='random', n_init='auto', random_state=11353415, copy_x=True, algorithm='lloyd') \
+    dist = KMeans(
+        n_clusters=5,
+        init='random',
+        n_init='auto',
+        random_state=opt_random_state,
+        copy_x=True,
+        algorithm='lloyd'
+    ) \
         .fit_transform(d[cols_y_x])
     dist = pd.DataFrame(dist)
     # Narrow down to own-cluster distance
@@ -45,6 +54,8 @@ def outlier_kmeans(data, cols_y_x, threshold):
     dist = dist[['own_cluster_dist', 'outlier']]
     # Merge back with main data
     d = d.merge(dist, right_index=True, left_index=True)
+    # Tabulate outliers
+    print(tabulate(pd.DataFrame(d['outlier'].value_counts()), tablefmt='psql', headers='keys', showindex='always'))
     # Drop outliers
     d = d[d['outlier'] == 0].copy()
     # Trim columns
@@ -54,10 +65,55 @@ def outlier_kmeans(data, cols_y_x, threshold):
     return d
 
 
-df_19 = outlier_kmeans(data=df_19, cols_y_x=['gross_income', 'cons_01_12'], threshold=0.95)
-df_16 = outlier_kmeans(data=df_16, cols_y_x=['gross_income', 'cons_01_12'], threshold=0.95)
-df_14 = outlier_kmeans(data=df_14, cols_y_x=['gross_income', 'cons_01_12'], threshold=0.95)
-df_09 = outlier_kmeans(data=df_09, cols_y_x=['gross_income', 'cons_01_12'], threshold=0.95)
+def outlier_isolationforest(data, cols_x, opt_max_samples, opt_threshold):
+    # Prelims
+    d = data.copy()
+    # Model
+    res = IsolationForest(
+        random_state=opt_random_state,
+        max_samples=opt_max_samples,
+        n_jobs=7,
+        contamination=opt_threshold
+    ) \
+        .fit_predict(d[cols_x])
+    res = pd.DataFrame(res, columns=['outlier'])
+    # Merge with original
+    d = d.merge(res, right_index=True, left_index=True)
+    # Tabulate outliers
+    print(tabulate(pd.DataFrame(d['outlier'].value_counts()), tablefmt='psql', headers='keys', showindex='always'))
+    # Drop outliers
+    d = d[d['outlier'] == 1].copy()  # outliers = -1
+    # Trim columns
+    for i in ['outlier']:
+        del d[i]
+    # Output
+    return d
+
+
+# detect and drop outliers
+cols_features = ['gross_income'] + \
+                ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers'] + \
+                ['cons_01_12', 'cons_01_13'] + \
+                ['cons_0' + str(i) for i in range(1, 10)] + \
+                ['cons_1' + str(i) for i in range(0, 4)]
+
+use_iforest = True
+if use_iforest:
+    df_19 = outlier_isolationforest(data=df_19, cols_x=cols_features,
+                                    opt_max_samples=int(len(df_19) / 100), opt_threshold='auto')
+    df_16 = outlier_isolationforest(data=df_16, cols_x=cols_features,
+                                    opt_max_samples=int(len(df_16) / 100), opt_threshold='auto')
+    df_14 = outlier_isolationforest(data=df_14, cols_x=cols_features,
+                                    opt_max_samples=int(len(df_14) / 100), opt_threshold='auto')
+    df_09 = outlier_isolationforest(data=df_09, cols_x=cols_features,
+                                    opt_max_samples=int(len(df_09) / 100), opt_threshold='auto')
+
+use_kmeans = False
+if use_kmeans:
+    df_19 = outlier_kmeans(data=df_19, cols_y_x=cols_features, threshold=0.95)
+    df_16 = outlier_kmeans(data=df_16, cols_y_x=cols_features, threshold=0.95)
+    df_14 = outlier_kmeans(data=df_14, cols_y_x=cols_features, threshold=0.95)
+    df_09 = outlier_kmeans(data=df_09, cols_y_x=cols_features, threshold=0.95)
 
 # X --- Output
 df_19.to_parquet(path_2019 + 'hies_2019_consol_trimmedoutliers.parquet')

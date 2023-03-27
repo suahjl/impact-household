@@ -79,7 +79,7 @@ def fe_reg(
         eqn = y_col + '~' + '+'.join(x_cols)
     if fixed_effects and not time_effects:
         eqn = y_col + '~' + '+'.join(x_cols) + '+EntityEffects'
-    if time_effects and fixed_effects:
+    if time_effects and not fixed_effects:
         eqn = y_col + '~' + '+'.join(x_cols) + '+TimeEffects'
     if fixed_effects and time_effects:
         eqn = y_col + '~' + '+'.join(x_cols) + '+EntityEffects+TimeEffects'

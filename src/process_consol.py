@@ -121,6 +121,7 @@ collapse_emp_status(data=df_14)
 collapse_emp_status(data=df_16)
 collapse_emp_status(data=df_19)
 
+
 # collapse industry
 # def collapse_industry(data):
 #     data.loc[((data['']) |
@@ -140,13 +141,33 @@ def gen_age_group(data, aggregation):
         data.loc[(data['age'] <= 39), 'age_group'] = '0_39'
         data.loc[((data['age'] >= 40) & (data['age'] <= 59)), 'age_group'] = '40_59'
         data.loc[(data['age'] >= 60), 'age_group'] = '60+'
-
     del data['age']
 
 
 gen_age_group(data=df_14, aggregation=2)
 gen_age_group(data=df_16, aggregation=2)
 gen_age_group(data=df_19, aggregation=2)
+
+
+# Birth year groups
+def gen_birth_year_group(data, aggregation):
+    if aggregation == 1:
+        data.loc[(data['birth_year'] >= 1990), 'birth_year_group'] = '1990+'
+        data.loc[((data['birth_year'] >= 1980) & (data['birth_year'] <= 1989)), 'birth_year_group'] = '1980s'
+        data.loc[((data['birth_year'] >= 1970) & (data['birth_year'] <= 1979)), 'birth_year_group'] = '1970s'
+        data.loc[((data['birth_year'] >= 1960) & (data['birth_year'] <= 1969)), 'birth_year_group'] = '1960s'
+        data.loc[((data['birth_year'] >= 1950) & (data['birth_year'] <= 1959)), 'birth_year_group'] = '1950s'
+        data.loc[(data['birth_year'] <= 1949), 'birth_year_group'] = '1949-'
+    elif aggregation == 2:
+        data.loc[(data['birth_year'] >= 1980), 'birth_year_group'] = '1980+'
+        data.loc[((data['birth_year'] >= 1960) & (data['birth_year'] <= 1979)), 'birth_year_group'] = '1960_79'
+        data.loc[(data['birth_year'] <= 1959), 'birth_year_group'] = '1959-'
+    del data['birth_year']
+
+
+gen_birth_year_group(data=df_14, aggregation=2)
+gen_birth_year_group(data=df_16, aggregation=2)
+gen_birth_year_group(data=df_19, aggregation=2)
 
 # IV.A --- Merger (group-level; 2014 - 2019)
 
@@ -189,7 +210,7 @@ col_groups = \
         'adolescent_group',
         'child_group',
         'male',
-        'age_group',
+        'birth_year_group',
         'marriage',
         'emp_status',
         'industry',
@@ -235,6 +256,10 @@ df_agg_balanced = df_agg_balanced.sort_values(by=col_groups + ['year']).reset_in
 # Merge (individual-pooled)
 df_ind = pd.concat([df_14, df_16, df_19], axis=0)
 df_ind = df_ind.sort_values(by=col_groups + ['year']).reset_index(drop=True)
+
+# IV.B --- Merge probabilistically
+
+
 
 # V --- Output
 df_agg.to_parquet(path_data + 'hies_consol_agg.parquet')

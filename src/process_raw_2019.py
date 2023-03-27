@@ -336,11 +336,15 @@ df = df.reset_index(drop=True)
 # post-merge: convert income, expenditure, and margins into monthly per capita
 for i in ['salaried_wages', 'other_wages', 'asset_income',
           'gross_transfers', 'net_transfers', 'gross_income', 'net_income']:
-    df[i] = df[i] * df['hh_size'] / 12
+    # df[i] = df[i] / (12)
+    df[i] = df[i] / (df['hh_size'] * 12)
 for i in ['cons_01_12', 'cons_01_13'] + \
     ['cons_0' + str(i) for i in range(1, 10)] + \
     ['cons_' + str(i) for i in range(11, 14)]:
     df[i] = df[i] / df['hh_size']
+
+# post-merge: birth year
+df['birth_year'] = 2019 - df['age']
 
 # Drop NAs
 df = df.dropna(axis=0, how='any')
@@ -373,6 +377,7 @@ dict_dtypes_19 = \
         'monthly_income': 'float',
         'gross_income': 'float',
         'age': 'int',
+        'birth_year': 'int',
         'cons_01': 'float',
         'cons_02': 'float',
         'cons_03': 'float',

@@ -1,3 +1,5 @@
+# Regression analysis, but overall
+
 import pandas as pd
 import numpy as np
 from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols
@@ -14,7 +16,7 @@ time_start = time.time()
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/hies_consol/'
-outcome_choice = 'cons_01_13'  # cons_01_13
+outcome_choice = 'cons_01_12'  # cons_01_13
 
 # I --- Load data
 df = pd.read_parquet(path_data + 'hies_consol_agg_balanced.parquet')
@@ -36,7 +38,7 @@ col_groups = \
         'adolescent_group',
         'child_group',
         'male',
-        'age_group',
+        'birth_year_group',
         'marriage',
         'emp_status',
         'industry',
@@ -54,15 +56,21 @@ col_cons = ['cons_01', 'cons_02', 'cons_03', 'cons_04',
             'cons_01_12', 'cons_01_13']
 col_inc = ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
 for i in col_cons + col_inc:
-    df[i] = np.log(df[i])
-    df_ind[i] = np.log(df_ind[i])
+    pass
+    # df[i] = np.log(df[i])
+    # df_ind[i] = np.log(df_ind[i])
 
 # III --- Estimation
+# Setup
+opt_income = 'gross_income'
+
+# Execute
+
 mod_fe, res_fe, params_table_fe, joint_teststats_fe, reg_det_fe = \
     fe_reg(
         df=df,
         y_col=outcome_choice,
-        x_cols=['gross_income'],
+        x_cols=[opt_income],
         i_col='cohort_code',
         t_col='year',
         fixed_effects=True,
@@ -70,24 +78,36 @@ mod_fe, res_fe, params_table_fe, joint_teststats_fe, reg_det_fe = \
         cov_choice='robust'
     )
 
+mod_timefe, res_timefe, params_table_timefe, joint_teststats_timefe, reg_det_timefe = \
+    fe_reg(
+        df=df,
+        y_col=outcome_choice,
+        x_cols=[opt_income],
+        i_col='cohort_code',
+        t_col='year',
+        fixed_effects=False,
+        time_effects=True,
+        cov_choice='robust'
+    )
+
 mod_re, res_re, params_table_re, joint_teststats_re, reg_det_re = \
     re_reg(
         df=df,
         y_col=outcome_choice,
-        x_cols=['gross_income'],
+        x_cols=[opt_income],
         i_col='cohort_code',
         t_col='year',
         cov_choice='robust'
     )
 
-mod_ols, res_ols, params_table_ols, joint_teststats_ols, reg_det_ols = \
+mod_ind_ols, res_ind_ols, params_table_ind_ols, joint_teststats_ind_ols, reg_det_ind_ols = \
     reg_ols(
         df=df_ind,
-        eqn=outcome_choice + ' ~ gross_income + ' +
+        eqn=outcome_choice + ' ~ ' + opt_income + ' + ' +
             'C(state) + urban + C(education) + C(ethnicity) + ' +
             'malaysian + C(income_gen_members_group) + C(adolescent_group) +' +
-            'C(child_group) + male + C(age_group) + C(marriage) + ' +
-            'C(emp_status) + C(industry) + C(occupation)'
+            'C(child_group) + male + C(birth_year_group) + C(marriage) + ' +
+            'C(emp_status) + C(industry) + C(occupation) + C(year)'
     )
 
 # X --- Notify
