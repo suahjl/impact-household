@@ -1,4 +1,6 @@
-# Regression analysis, but stratified
+# Regression analysis, but stratified, and by quantile
+
+# --------------------- WIP ---------------------
 
 import pandas as pd
 import numpy as np
@@ -18,7 +20,6 @@ load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/hies_consol/'
 income_choice = os.getenv('INCOME_CHOICE')
-outcome_choice = os.getenv('OUTCOME_CHOICE')
 use_first_diff = ast.literal_eval(os.getenv('USE_FIRST_DIFF'))
 if use_first_diff:
     fd_suffix = 'fd'
@@ -81,19 +82,19 @@ list_outcome_choices = ['cons_01_13', 'cons_01_12'] + \
 
 # Estimates
 round = 1
-for outcome in tqdm(list_outcome_choices):
+for outcome_choice in tqdm(list_outcome_choices):
     mod_fe, res_fe, params_table_fe, joint_teststats_fe, reg_det_fe = \
         fe_reg(
             df=df,
-            y_col=outcome,
-            x_cols=[income_choice],
+            y_col=outcome_choice,
+            x_cols=['gross_income'],
             i_col='cohort_code',
             t_col='year',
             fixed_effects=True,
             time_effects=False,
             cov_choice='robust'
         )
-    params_table_fe['outcome_variable'] = outcome
+    params_table_fe['outcome_variable'] = outcome_choice
     if round == 1:
         params_table_fe_consol = pd.DataFrame(params_table_fe.loc[income_choice]).transpose()
     elif round >= 1:
@@ -103,17 +104,17 @@ for outcome in tqdm(list_outcome_choices):
     round += 1
 params_table_fe_consol = params_table_fe_consol.set_index('outcome_variable')
 dfi.export(params_table_fe_consol,
-           'output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png')
+           'output/params_table_fe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
 telsendimg(conf=tel_config,
-           path='output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
+           path='output/params_table_fe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
+           cap='params_table_fe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
 
 round = 1
-for outcome in tqdm(list_outcome_choices):
+for outcome_choice in tqdm(list_outcome_choices):
     mod_timefe, res_timefe, params_table_timefe, joint_teststats_timefe, reg_det_timefe = \
         fe_reg(
             df=df,
-            y_col=outcome,
+            y_col=outcome_choice,
             x_cols=[income_choice],
             i_col='cohort_code',
             t_col='year',
@@ -121,7 +122,7 @@ for outcome in tqdm(list_outcome_choices):
             time_effects=True,
             cov_choice='robust'
         )
-    params_table_timefe['outcome_variable'] = outcome
+    params_table_timefe['outcome_variable'] = outcome_choice
     if round == 1:
         params_table_timefe_consol = pd.DataFrame(params_table_timefe.loc[income_choice]).transpose()
     elif round >= 1:
@@ -131,23 +132,23 @@ for outcome in tqdm(list_outcome_choices):
     round += 1
 params_table_timefe_consol = params_table_timefe_consol.set_index('outcome_variable')
 dfi.export(params_table_timefe_consol,
-           'output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png')
+           'output/params_table_timefe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
 telsendimg(conf=tel_config,
-           path='output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
+           path='output/params_table_timefe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
+           cap='params_table_timefe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
 
 round = 1
-for outcome in tqdm(list_outcome_choices):
+for outcome_choice in tqdm(list_outcome_choices):
     mod_re, res_re, params_table_re, joint_teststats_re, reg_det_re = \
         re_reg(
             df=df,
-            y_col=outcome,
+            y_col=outcome_choice,
             x_cols=[income_choice],
             i_col='cohort_code',
             t_col='year',
             cov_choice='robust'
         )
-    params_table_re['outcome_variable'] = outcome
+    params_table_re['outcome_variable'] = outcome_choice
     if round == 1:
         params_table_re_consol = pd.DataFrame(params_table_re.loc[income_choice]).transpose()
     elif round >= 1:
@@ -157,36 +158,36 @@ for outcome in tqdm(list_outcome_choices):
     round += 1
 params_table_re_consol = params_table_re_consol.set_index('outcome_variable')
 dfi.export(params_table_re_consol,
-           'output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png')
+           'output/params_table_re_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
 telsendimg(conf=tel_config,
-           path='output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
+           path='output/params_table_re_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
+           cap='params_table_re_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
 
 round = 1
-for outcome in tqdm(list_outcome_choices):
+for outcome_choice in tqdm(list_outcome_choices):
     mod_ind_ols, res_ind_ols, params_table_ind_ols, joint_teststats_ind_ols, reg_det_ind_ols = \
         reg_ols(
             df=df_ind,
-            eqn=outcome + ' ~ ' + income_choice + ' + ' +
+            eqn=outcome_choice + ' ~ ' + income_choice + ' + ' +
                 'C(state) + urban + C(education) + C(ethnicity) + ' +
                 'malaysian + C(income_gen_members_group) + C(adolescent_group) +' +
                 'C(child_group) + male + C(birth_year_group) + C(marriage) + ' +
                 'C(emp_status) + C(industry) + C(occupation) + C(year)'
         )
-    params_table_ind_ols['outcome_variable'] = outcome
+    params_table_ind_ols['outcome_variable'] = outcome_choice
     if round == 1:
-        params_table_ind_ols_consol = pd.DataFrame(params_table_ind_ols.loc[income_choice]).transpose()
+        params_table_ind_ols_consol = pd.DataFrame(params_table_ind_ols.loc['gross_income']).transpose()
     elif round >= 1:
         params_table_ind_ols_consol = pd.concat(
-            [params_table_ind_ols_consol, pd.DataFrame(params_table_ind_ols.loc[income_choice]).transpose()],
+            [params_table_ind_ols_consol, pd.DataFrame(params_table_ind_ols.loc['gross_income']).transpose()],
             axis=0)
     round += 1
 params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
 dfi.export(params_table_ind_ols_consol,
-           'output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '.png')
+           'output/params_table_ind_ols_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
 telsendimg(conf=tel_config,
-           path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '.png',
-           cap='params_table_ind_ols_consol_strat_cons' + '_' + income_choice)
+           path='output/params_table_ind_ols_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
+           cap='params_table_ind_ols_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
 
 
 # III.B --- Estimation: stratify by income groups (individual levels; no FD option)
@@ -207,7 +208,7 @@ def gen_gross_income_group(data, aggregation):
         data.loc[(data['gross_income'] < data['gross_income'].quantile(q=0.4)), 'gross_income_group'] = 0
 
 
-gen_gross_income_group(data=df_ind, aggregation=1)
+gen_gross_income_group(data=df_ind, aggregation=2)
 round = 1
 for income_group in tqdm(range(0, int(df_ind['gross_income_group'].max() + 1))):
     d = df_ind[df_ind['gross_income_group'] == income_group]
@@ -231,12 +232,10 @@ for income_group in tqdm(range(0, int(df_ind['gross_income_group'].max() + 1))):
     round += 1
 params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
 dfi.export(params_table_ind_ols_consol,
-           'output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '.png')
+           'output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
 telsendimg(conf=tel_config,
-           path='output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '.png',
-           cap='params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice)
-
-# III.B --- Estimation: stratify by income groups (individual levels; no FD option)
+           path='output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
+           cap='params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
 
 # X --- Notify
 telsendmsg(conf=tel_config,

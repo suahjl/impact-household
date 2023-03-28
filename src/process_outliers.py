@@ -100,13 +100,13 @@ cols_features = ['gross_income'] + \
 use_iforest = True
 if use_iforest:
     df_19 = outlier_isolationforest(data=df_19, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_19) / 100), opt_threshold='auto')
+                                    opt_max_samples=int(len(df_19) / 100), opt_threshold=0.05)
     df_16 = outlier_isolationforest(data=df_16, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_16) / 100), opt_threshold='auto')
+                                    opt_max_samples=int(len(df_16) / 100), opt_threshold=0.05)
     df_14 = outlier_isolationforest(data=df_14, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_14) / 100), opt_threshold='auto')
+                                    opt_max_samples=int(len(df_14) / 100), opt_threshold=0.05)
     df_09 = outlier_isolationforest(data=df_09, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_09) / 100), opt_threshold='auto')
+                                    opt_max_samples=int(len(df_09) / 100), opt_threshold=0.05)
 
 use_kmeans = False
 if use_kmeans:

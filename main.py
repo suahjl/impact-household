@@ -9,21 +9,31 @@ load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 
 # Process raw data
-process_raw = True
+process_raw = False
 if process_raw:
     import src.process_raw_2009
     import src.process_raw_2014
     import src.process_raw_2016
     import src.process_raw_2019
 
-# Cleaning
-import src.process_outliers
-
-# Consolidate into pseudo-panel form
-import src.process_consol
+# Pre-analysis processing
+process_pre_analysis = False
+if process_pre_analysis:
+    import src.process_outliers
+    import src.process_consol_group
 
 # Analyse
-import src.analysis_reg_overall
+generate_adj_analysis = True
+if generate_adj_analysis:
+    import src.analysis_reg_overall
+    import src.analysis_reg_overall_quantile
+    time.sleep(15)
+    import src.analysis_reg_strat
+
+# Descriptive stats
+generate_descriptive = False
+if generate_descriptive:
+    import src.analysis_descriptive
 
 # Notify
 telsendmsg(

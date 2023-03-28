@@ -14,3 +14,5 @@ linearmodels
 scikit-learn
 python-dotenv
 tabulate
+matplotlib
+seaborn

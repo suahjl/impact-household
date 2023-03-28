@@ -1,3 +1,5 @@
+# Merging at the group-level
+
 import pandas as pd
 import numpy as np
 from src.helper import telsendmsg, telsendimg, telsendfiles
@@ -25,6 +27,11 @@ df_14 = pd.read_parquet(path_2014 + 'hies_2014_consol_trimmedoutliers.parquet')
 df_16 = pd.read_parquet(path_2016 + 'hies_2016_consol_trimmedoutliers.parquet')
 df_19 = pd.read_parquet(path_2019 + 'hies_2019_consol_trimmedoutliers.parquet')
 
+df_09_full = pd.read_parquet(path_2009 + 'hies_2009_consol.parquet')
+df_14_full = pd.read_parquet(path_2014 + 'hies_2014_consol.parquet')
+df_16_full = pd.read_parquet(path_2016 + 'hies_2016_consol.parquet')
+df_19_full = pd.read_parquet(path_2019 + 'hies_2019_consol.parquet')
+
 # II --- Identify common columns
 common_cols_14_19 = list(set(df_14.columns) & set(df_16.columns) & set(df_19.columns))
 common_col_09_19 = list(set(df_09.columns) & set(df_14.columns) & set(df_16.columns) & set(df_19.columns))
@@ -35,12 +42,20 @@ common_col_09_19 = list(set(df_09.columns) & set(df_14.columns) & set(df_16.colu
 df_16.loc[~(df_16['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
 df_19.loc[~(df_19['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
 
+df_16_full.loc[~(df_16_full['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
+df_19_full.loc[~(df_19_full['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
+
 # Not useful
 for i in ['id', 'svy_weight']:
     del df_09[i]
     del df_14[i]
     del df_16[i]
     del df_19[i]
+
+    del df_09_full[i]
+    del df_14_full[i]
+    del df_16_full[i]
+    del df_19_full[i]
 
 
 # Buckets for number of income_gen_members, child, and adolescents, and marriage status (age done separately)
@@ -56,6 +71,10 @@ gen_igm_group(data=df_14)
 gen_igm_group(data=df_16)
 gen_igm_group(data=df_19)
 
+gen_igm_group(data=df_14_full)
+gen_igm_group(data=df_16_full)
+gen_igm_group(data=df_19_full)
+
 
 # child (1, 2, 3+)
 def gen_child_group(data):
@@ -70,6 +89,9 @@ gen_child_group(data=df_14)
 gen_child_group(data=df_16)
 gen_child_group(data=df_19)
 
+gen_child_group(data=df_14_full)
+gen_child_group(data=df_16_full)
+gen_child_group(data=df_19_full)
 
 # adolescents (1, 2, 3+)
 def gen_adolescent_group(data):
@@ -83,6 +105,9 @@ gen_adolescent_group(data=df_14)
 gen_adolescent_group(data=df_16)
 gen_adolescent_group(data=df_19)
 
+gen_adolescent_group(data=df_14_full)
+gen_adolescent_group(data=df_16_full)
+gen_adolescent_group(data=df_19_full)
 
 # collapse marriage groups
 def collapse_marriage(data):
@@ -96,6 +121,9 @@ collapse_marriage(data=df_14)
 collapse_marriage(data=df_16)
 collapse_marriage(data=df_19)
 
+collapse_marriage(data=df_14_full)
+collapse_marriage(data=df_16_full)
+collapse_marriage(data=df_19_full)
 
 # collapse education
 def collapse_education(data):
@@ -108,6 +136,9 @@ collapse_education(data=df_14)
 collapse_education(data=df_16)
 collapse_education(data=df_19)
 
+collapse_education(data=df_14_full)
+collapse_education(data=df_16_full)
+collapse_education(data=df_19_full)
 
 # collapse emp_status
 def collapse_emp_status(data):
@@ -121,12 +152,9 @@ collapse_emp_status(data=df_14)
 collapse_emp_status(data=df_16)
 collapse_emp_status(data=df_19)
 
-
-# collapse industry
-# def collapse_industry(data):
-#     data.loc[((data['']) |
-#               ())]
-
+collapse_emp_status(data=df_14_full)
+collapse_emp_status(data=df_16_full)
+collapse_emp_status(data=df_19_full)
 
 # age groups
 def gen_age_group(data, aggregation):
@@ -148,6 +176,9 @@ gen_age_group(data=df_14, aggregation=2)
 gen_age_group(data=df_16, aggregation=2)
 gen_age_group(data=df_19, aggregation=2)
 
+gen_age_group(data=df_14_full, aggregation=2)
+gen_age_group(data=df_16_full, aggregation=2)
+gen_age_group(data=df_19_full, aggregation=2)
 
 # Birth year groups
 def gen_birth_year_group(data, aggregation):
@@ -168,6 +199,10 @@ def gen_birth_year_group(data, aggregation):
 gen_birth_year_group(data=df_14, aggregation=2)
 gen_birth_year_group(data=df_16, aggregation=2)
 gen_birth_year_group(data=df_19, aggregation=2)
+
+gen_birth_year_group(data=df_14_full, aggregation=2)
+gen_birth_year_group(data=df_16_full, aggregation=2)
+gen_birth_year_group(data=df_19_full, aggregation=2)
 
 # IV.A --- Merger (group-level; 2014 - 2019)
 
@@ -222,53 +257,101 @@ for i in ['hh_size']:
     del df_14[i]
     del df_16[i]
     del df_19[i]
+
+    del df_14_full[i]
+    del df_16_full[i]
+    del df_19_full[i]
+
 for i in ['monthly_income', 'net_income', 'net_transfers', 'net_margin']:
     del df_16[i]
     del df_19[i]
 
-# groupby operation
-df_14_agg = df_14.groupby(col_groups).mean(numeric_only=True).reset_index()
-df_16_agg = df_16.groupby(col_groups).mean(numeric_only=True).reset_index()
-df_19_agg = df_19.groupby(col_groups).mean(numeric_only=True).reset_index()
+    del df_16_full[i]
+    del df_19_full[i]
 
-# Generate time identifiers
-df_14_agg['year'] = 2014
-df_16_agg['year'] = 2016
-df_19_agg['year'] = 2019
 
+# Cohort merger loop + output
+def gen_pseudopanel(data1, data2, data3, list_cols_cohort, use_mean, use_quantile, quantile_choice, file_suffix):
+    # Groupby operation
+    if use_mean and not use_quantile:
+        df1_agg = data1.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+        df2_agg = data2.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+        df3_agg = data3.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    elif use_quantile and not use_mean:
+        df1_agg = data1.groupby(list_cols_cohort).quantile(numeric_only=True, q=quantile_choice).reset_index()
+        df2_agg = data2.groupby(list_cols_cohort).quantile(numeric_only=True, q=quantile_choice).reset_index()
+        df3_agg = data3.groupby(list_cols_cohort).quantile(numeric_only=True, q=quantile_choice).reset_index()
+    elif use_mean and use_quantile:
+        raise NotImplementedError('Use either mean or quantiles')
+    elif not use_mean and not use_quantile:
+        raise NotImplementedError('Use either mean or quantiles')
+    # Generate time identifiers
+    df1_agg['_time'] = 1
+    df2_agg['_time'] = 2
+    df3_agg['_time'] = 3
+    # Merge (unbalanced)
+    df_agg = pd.concat([df1_agg, df2_agg, df3_agg], axis=0)
+    df_agg = df_agg.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
+    # Merge (balanced)
+    groups_balanced = df1_agg[list_cols_cohort].merge(df2_agg[list_cols_cohort], on=list_cols_cohort, how='inner')
+    groups_balanced = groups_balanced[list_cols_cohort].merge(df3_agg[list_cols_cohort], on=list_cols_cohort,
+                                                              how='inner')
+    groups_balanced['balanced'] = 1
+    df_agg_balanced = df_agg.merge(groups_balanced, on=list_cols_cohort, how='left')
+    df_agg_balanced = df_agg_balanced[df_agg_balanced['balanced'] == 1]
+    del df_agg_balanced['balanced']
+    df_agg_balanced = df_agg_balanced.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
+    # Save to local
+    df_agg.to_parquet(path_data + 'hies_consol_agg_' + file_suffix + '.parquet')
+    df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
+    # Output
+    return df_agg, df_agg_balanced
+
+
+df_agg_mean, df_agg_balanced_mean = gen_pseudopanel(
+    data1=df_14,
+    data2=df_16,
+    data3=df_19,
+    list_cols_cohort=col_groups,
+    use_mean=True,
+    use_quantile=False,
+    quantile_choice=0.5,
+    file_suffix='mean'
+)
+
+list_quantiles = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+list_suffixes = ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p']
+for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
+    df_agg_quantile, df_agg_balanced_quantile = gen_pseudopanel(
+        data1=df_14,
+        data2=df_16,
+        data3=df_19,
+        list_cols_cohort=col_groups,
+        use_mean=False,
+        use_quantile=True,
+        quantile_choice=quantile,
+        file_suffix=suffix
+    )
+
+# Individual pooled data + output
 df_14['year'] = 2014
 df_16['year'] = 2016
 df_19['year'] = 2019
-
-# Merge (unbalanced)
-df_agg = pd.concat([df_14_agg, df_16_agg, df_19_agg], axis=0)
-df_agg = df_agg.sort_values(by=col_groups + ['year']).reset_index(drop=True)
-
-# Merge (balanced)
-groups_balanced = df_14_agg[col_groups].merge(df_16_agg[col_groups], on=col_groups, how='inner')
-groups_balanced = groups_balanced[col_groups].merge(df_19_agg[col_groups], on=col_groups, how='inner')
-groups_balanced['balanced'] = 1
-df_agg_balanced = df_agg.merge(groups_balanced, on=col_groups, how='left')
-df_agg_balanced = df_agg_balanced[df_agg_balanced['balanced'] == 1]
-del df_agg_balanced['balanced']
-df_agg_balanced = df_agg_balanced.sort_values(by=col_groups + ['year']).reset_index(drop=True)
-
-# Merge (individual-pooled)
 df_ind = pd.concat([df_14, df_16, df_19], axis=0)
 df_ind = df_ind.sort_values(by=col_groups + ['year']).reset_index(drop=True)
-
-# IV.B --- Merge probabilistically
-
-
-
-# V --- Output
-df_agg.to_parquet(path_data + 'hies_consol_agg.parquet')
-df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced.parquet')
 df_ind.to_parquet(path_data + 'hies_consol_ind.parquet')
+
+# Individual pooled data + output (with outliers)
+df_14_full['year'] = 2014
+df_16_full['year'] = 2016
+df_19_full['year'] = 2019
+df_ind_full = pd.concat([df_14_full, df_16_full, df_19_full], axis=0)
+df_ind_full = df_ind_full.sort_values(by=col_groups + ['year']).reset_index(drop=True)
+df_ind_full.to_parquet(path_data + 'hies_consol_ind_full.parquet')
 
 # X --- Notify
 telsendmsg(conf=tel_config,
-           msg='impact-household --- process_consol: COMPLETED')
+           msg='impact-household --- process_consol_group: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

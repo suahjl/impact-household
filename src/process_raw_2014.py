@@ -262,7 +262,7 @@ del df_b3_item13
 df['cons_01_13'] = df['Jum_Perbelanjaan'] + df['cons_13']
 
 # Margins
-df['gross_margin'] = (df['INCS09'] / 12) - df['Jum_Perbelanjaan']
+df['gross_margin'] = (df['INCS09'] / 12) - (df['Jum_Perbelanjaan'] / 12)
 # df['net_margin'] = (df['INCS08_hh'] / 12) - df['Jum_Perbelanjaan']
 
 # Rename columns to be more intuitive
@@ -331,7 +331,7 @@ for i in ['salaried_wages', 'other_wages', 'asset_income',
 for i in ['cons_01_12', 'cons_01_13'] + \
     ['cons_0' + str(i) for i in range(1, 10)] + \
     ['cons_' + str(i) for i in range(11, 14)]:
-    df[i] = df[i] / df['hh_size']
+    df[i] = df[i] / (df['hh_size'] * 12)
 
 # post-merge: birth year
 df['birth_year'] = 2014 - df['age']

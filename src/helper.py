@@ -2,6 +2,10 @@ import pandas as pd
 import telegram_send
 from linearmodels import PanelOLS, RandomEffects
 import statsmodels.formula.api as smf
+import matplotlib.pyplot as plt
+import seaborn as sns
+from datetime import date
+from PIL import Image
 
 
 def telsendimg(conf='', path='', cap=''):
@@ -162,3 +166,46 @@ def re_reg(
 
     # Output
     return mod, res, params_table, joint_teststats, reg_det
+
+
+def heatmap(input: pd.DataFrame, mask: bool, colourmap: str, outputfile: str, title: str, lb: float, ub: float,
+            format: str):
+    fig = plt.figure()
+    sns.heatmap(input,
+                mask=mask,
+                annot=True,
+                cmap=colourmap,
+                center=0,
+                annot_kws={'size': 7},
+                vmin=lb,
+                vmax=ub,
+                xticklabels=True,
+                yticklabels=True,
+                fmt=format)
+    plt.title(title, fontsize=11)
+    plt.xticks(fontsize=9)
+    plt.yticks(fontsize=7)
+    fig.tight_layout()
+    fig.savefig(outputfile)
+    plt.close()
+    return fig
+
+
+def pil_img2pdf(list_images: list, extension: str, pdf_name: str):
+    seq = list_images.copy()  # deep copy
+    list_img = []
+    file_pdf = pdf_name + '.pdf'
+    run = 0
+    for i in seq:
+        img = Image.open(i + '.' + extension)
+        img = img.convert('RGB')  # PIL cannot save RGBA files as pdf
+        if run == 0:
+            first_img = img.copy()
+        elif run > 0:
+            list_img = list_img + [img]
+        run += 1
+    first_img.save(file_pdf,
+                   'PDF',
+                   resolution=100.0,
+                   save_all=True,
+                   append_images=list_img)
