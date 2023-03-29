@@ -263,7 +263,7 @@ df['cons_01_13'] = df['Jum_Perbelanjaan'] + df['cons_13']
 
 # Margins (already bulanan)
 df['gross_margin'] = (df['INCS09']) - (df['Jum_Perbelanjaan'])
-# df['net_margin'] = (df['INCS08_hh'] / 12) - df['Jum_Perbelanjaan']
+# df['net_margin'] = (df['INCS08_hh']) - df['Jum_Perbelanjaan']
 
 # Rename columns to be more intuitive
 dict_rename = \
@@ -325,16 +325,19 @@ df = df.reset_index(drop=True)
 
 # post-merge: convert income, expenditure, and margins into monthly per capita
 for i in ['salaried_wages', 'other_wages', 'asset_income',
-          'gross_transfers']:  # somehow these are annual
-    df[i] = df[i] / (df['hh_size'] * 12)
-for i in ['gross_income']:  # and this is monthly
-    df[i] = df[i] / df['hh_size']
+          'gross_transfers']:
+    df[i] = df[i] / 12
+for i in ['gross_income']:
+    df[i] = df[i]
+    # df[i] = df[i] / (df['hh_size'] * 12)
+# for i in ['cons_01_12', 'cons_01_13'] + \
+#     ['cons_0' + str(i) for i in range(1, 10)] + \
+#     ['cons_' + str(i) for i in range(11, 14)]:
+#     df[i] = df[i] / (df['hh_size'] * 12)
 for i in ['cons_01_12', 'cons_01_13'] + \
     ['cons_0' + str(i) for i in range(1, 10)] + \
     ['cons_' + str(i) for i in range(11, 14)]:
-    df[i] = df[i] / (df['hh_size'])
-for i in ['gross_margin']:
-    df[i] = df[i] / df['hh_size']
+    df[i] = df[i]
 
 # post-merge: birth year
 df['birth_year'] = 2014 - df['age']
@@ -387,11 +390,11 @@ dict_dtypes_14 = \
 df = df.astype(dict_dtypes_14)
 
 # V --- Save output
-df.to_parquet(path_data + 'hies_2014_consol.parquet', compression='brotli')
+df.to_parquet(path_data + 'hies_2014_consol_hhbasis.parquet', compression='brotli')
 
 # VI --- Notify
 telsendmsg(conf=tel_config,
-           msg='impact-household --- process_raw_2014: COMPLETED')
+           msg='impact-household --- process_raw_2014_hhbasis: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

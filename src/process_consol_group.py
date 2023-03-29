@@ -27,10 +27,18 @@ df_14 = pd.read_parquet(path_2014 + 'hies_2014_consol_trimmedoutliers.parquet')
 df_16 = pd.read_parquet(path_2016 + 'hies_2016_consol_trimmedoutliers.parquet')
 df_19 = pd.read_parquet(path_2019 + 'hies_2019_consol_trimmedoutliers.parquet')
 
+df_14_hhbasis = pd.read_parquet(path_2014 + 'hies_2014_consol_hhbasis_trimmedoutliers.parquet')
+df_16_hhbasis = pd.read_parquet(path_2016 + 'hies_2016_consol_hhbasis_trimmedoutliers.parquet')
+df_19_hhbasis = pd.read_parquet(path_2019 + 'hies_2019_consol_hhbasis_trimmedoutliers.parquet')
+
 df_09_full = pd.read_parquet(path_2009 + 'hies_2009_consol.parquet')
 df_14_full = pd.read_parquet(path_2014 + 'hies_2014_consol.parquet')
 df_16_full = pd.read_parquet(path_2016 + 'hies_2016_consol.parquet')
 df_19_full = pd.read_parquet(path_2019 + 'hies_2019_consol.parquet')
+
+df_14_full_hhbasis = pd.read_parquet(path_2014 + 'hies_2014_consol_hhbasis.parquet')
+df_16_full_hhbasis = pd.read_parquet(path_2016 + 'hies_2016_consol_hhbasis.parquet')
+df_19_full_hhbasis = pd.read_parquet(path_2019 + 'hies_2019_consol_hhbasis.parquet')
 
 # II --- Identify common columns
 common_cols_14_19 = list(set(df_14.columns) & set(df_16.columns) & set(df_19.columns))
@@ -45,6 +53,9 @@ df_19.loc[~(df_19['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
 df_16_full.loc[~(df_16_full['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
 df_19_full.loc[~(df_19_full['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
 
+df_16_full_hhbasis.loc[~(df_16_full_hhbasis['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
+df_19_full_hhbasis.loc[~(df_19_full_hhbasis['ethnicity'] == 'bumiputera'), 'ethnicity'] = 'non_bumiputera'
+
 # Not useful
 for i in ['id', 'svy_weight']:
     del df_09[i]
@@ -52,10 +63,18 @@ for i in ['id', 'svy_weight']:
     del df_16[i]
     del df_19[i]
 
+    del df_14_hhbasis[i]
+    del df_16_hhbasis[i]
+    del df_19_hhbasis[i]
+
     del df_09_full[i]
     del df_14_full[i]
     del df_16_full[i]
     del df_19_full[i]
+
+    del df_14_full_hhbasis[i]
+    del df_16_full_hhbasis[i]
+    del df_19_full_hhbasis[i]
 
 
 # Buckets for number of income_gen_members, child, and adolescents, and marriage status (age done separately)
@@ -71,9 +90,17 @@ gen_igm_group(data=df_14)
 gen_igm_group(data=df_16)
 gen_igm_group(data=df_19)
 
+gen_igm_group(data=df_14_hhbasis)
+gen_igm_group(data=df_16_hhbasis)
+gen_igm_group(data=df_19_hhbasis)
+
 gen_igm_group(data=df_14_full)
 gen_igm_group(data=df_16_full)
 gen_igm_group(data=df_19_full)
+
+gen_igm_group(data=df_14_full_hhbasis)
+gen_igm_group(data=df_16_full_hhbasis)
+gen_igm_group(data=df_19_full_hhbasis)
 
 
 # child (1, 2, 3+)
@@ -89,9 +116,18 @@ gen_child_group(data=df_14)
 gen_child_group(data=df_16)
 gen_child_group(data=df_19)
 
+gen_child_group(data=df_14_hhbasis)
+gen_child_group(data=df_16_hhbasis)
+gen_child_group(data=df_19_hhbasis)
+
 gen_child_group(data=df_14_full)
 gen_child_group(data=df_16_full)
 gen_child_group(data=df_19_full)
+
+gen_child_group(data=df_14_full_hhbasis)
+gen_child_group(data=df_16_full_hhbasis)
+gen_child_group(data=df_19_full_hhbasis)
+
 
 # adolescents (1, 2, 3+)
 def gen_adolescent_group(data):
@@ -105,9 +141,18 @@ gen_adolescent_group(data=df_14)
 gen_adolescent_group(data=df_16)
 gen_adolescent_group(data=df_19)
 
+gen_adolescent_group(data=df_14_hhbasis)
+gen_adolescent_group(data=df_16_hhbasis)
+gen_adolescent_group(data=df_19_hhbasis)
+
 gen_adolescent_group(data=df_14_full)
 gen_adolescent_group(data=df_16_full)
 gen_adolescent_group(data=df_19_full)
+
+gen_adolescent_group(data=df_14_full_hhbasis)
+gen_adolescent_group(data=df_16_full_hhbasis)
+gen_adolescent_group(data=df_19_full_hhbasis)
+
 
 # collapse marriage groups
 def collapse_marriage(data):
@@ -121,9 +166,18 @@ collapse_marriage(data=df_14)
 collapse_marriage(data=df_16)
 collapse_marriage(data=df_19)
 
+collapse_marriage(data=df_14_hhbasis)
+collapse_marriage(data=df_16_hhbasis)
+collapse_marriage(data=df_19_hhbasis)
+
 collapse_marriage(data=df_14_full)
 collapse_marriage(data=df_16_full)
 collapse_marriage(data=df_19_full)
+
+collapse_marriage(data=df_14_full_hhbasis)
+collapse_marriage(data=df_16_full_hhbasis)
+collapse_marriage(data=df_19_full_hhbasis)
+
 
 # collapse education
 def collapse_education(data):
@@ -136,9 +190,18 @@ collapse_education(data=df_14)
 collapse_education(data=df_16)
 collapse_education(data=df_19)
 
+collapse_education(data=df_14_hhbasis)
+collapse_education(data=df_16_hhbasis)
+collapse_education(data=df_19_hhbasis)
+
 collapse_education(data=df_14_full)
 collapse_education(data=df_16_full)
 collapse_education(data=df_19_full)
+
+collapse_education(data=df_14_full_hhbasis)
+collapse_education(data=df_16_full_hhbasis)
+collapse_education(data=df_19_full_hhbasis)
+
 
 # collapse emp_status
 def collapse_emp_status(data):
@@ -152,9 +215,18 @@ collapse_emp_status(data=df_14)
 collapse_emp_status(data=df_16)
 collapse_emp_status(data=df_19)
 
+collapse_emp_status(data=df_14_hhbasis)
+collapse_emp_status(data=df_16_hhbasis)
+collapse_emp_status(data=df_19_hhbasis)
+
 collapse_emp_status(data=df_14_full)
 collapse_emp_status(data=df_16_full)
 collapse_emp_status(data=df_19_full)
+
+collapse_emp_status(data=df_14_full_hhbasis)
+collapse_emp_status(data=df_16_full_hhbasis)
+collapse_emp_status(data=df_19_full_hhbasis)
+
 
 # age groups
 def gen_age_group(data, aggregation):
@@ -176,9 +248,18 @@ gen_age_group(data=df_14, aggregation=2)
 gen_age_group(data=df_16, aggregation=2)
 gen_age_group(data=df_19, aggregation=2)
 
+gen_age_group(data=df_14_hhbasis, aggregation=2)
+gen_age_group(data=df_16_hhbasis, aggregation=2)
+gen_age_group(data=df_19_hhbasis, aggregation=2)
+
 gen_age_group(data=df_14_full, aggregation=2)
 gen_age_group(data=df_16_full, aggregation=2)
 gen_age_group(data=df_19_full, aggregation=2)
+
+gen_age_group(data=df_14_full_hhbasis, aggregation=2)
+gen_age_group(data=df_16_full_hhbasis, aggregation=2)
+gen_age_group(data=df_19_full_hhbasis, aggregation=2)
+
 
 # Birth year groups
 def gen_birth_year_group(data, aggregation):
@@ -200,9 +281,17 @@ gen_birth_year_group(data=df_14, aggregation=2)
 gen_birth_year_group(data=df_16, aggregation=2)
 gen_birth_year_group(data=df_19, aggregation=2)
 
+gen_birth_year_group(data=df_14_hhbasis, aggregation=2)
+gen_birth_year_group(data=df_16_hhbasis, aggregation=2)
+gen_birth_year_group(data=df_19_hhbasis, aggregation=2)
+
 gen_birth_year_group(data=df_14_full, aggregation=2)
 gen_birth_year_group(data=df_16_full, aggregation=2)
 gen_birth_year_group(data=df_19_full, aggregation=2)
+
+gen_birth_year_group(data=df_14_full_hhbasis, aggregation=2)
+gen_birth_year_group(data=df_16_full_hhbasis, aggregation=2)
+gen_birth_year_group(data=df_19_full_hhbasis, aggregation=2)
 
 # IV.A --- Merger (group-level; 2014 - 2019)
 
@@ -252,7 +341,7 @@ col_groups = \
         'occupation'
     ]
 
-# Delete redundant columns
+# Delete redundant columns; keep hh_size for hhbasis dataset
 for i in ['hh_size']:
     del df_14[i]
     del df_16[i]
@@ -266,8 +355,14 @@ for i in ['monthly_income', 'net_income', 'net_transfers', 'net_margin']:
     del df_16[i]
     del df_19[i]
 
+    del df_16_hhbasis[i]
+    del df_19_hhbasis[i]
+
     del df_16_full[i]
     del df_19_full[i]
+
+    del df_16_full_hhbasis[i]
+    del df_19_full_hhbasis[i]
 
 
 # Cohort merger loop + output
@@ -341,6 +436,15 @@ df_ind = pd.concat([df_14, df_16, df_19], axis=0)
 df_ind = df_ind.sort_values(by=col_groups + ['year']).reset_index(drop=True)
 df_ind.to_parquet(path_data + 'hies_consol_ind.parquet')
 
+# Individual pooled data + output (household basis)
+df_14_hhbasis['year'] = 2014
+df_16_hhbasis['year'] = 2016
+df_19_hhbasis['year'] = 2019
+df_ind_hhbasis = pd.concat([df_14_hhbasis, df_16_hhbasis, df_19_hhbasis], axis=0)
+df_ind_hhbasis = df_ind_hhbasis.sort_values(by=col_groups + ['year']).reset_index(drop=True)
+df_ind_hhbasis.to_parquet(path_data + 'hies_consol_ind_hhbasis.parquet')
+
+
 # Individual pooled data + output (with outliers)
 df_14_full['year'] = 2014
 df_16_full['year'] = 2016
@@ -348,6 +452,14 @@ df_19_full['year'] = 2019
 df_ind_full = pd.concat([df_14_full, df_16_full, df_19_full], axis=0)
 df_ind_full = df_ind_full.sort_values(by=col_groups + ['year']).reset_index(drop=True)
 df_ind_full.to_parquet(path_data + 'hies_consol_ind_full.parquet')
+
+# Individual pooled data + output (with outliers and household basis)
+df_14_full_hhbasis['year'] = 2014
+df_16_full_hhbasis['year'] = 2016
+df_19_full_hhbasis['year'] = 2019
+df_ind_full_hhbasis = pd.concat([df_14_full_hhbasis, df_16_full_hhbasis, df_19_full_hhbasis], axis=0)
+df_ind_full_hhbasis = df_ind_full_hhbasis.sort_values(by=col_groups + ['year']).reset_index(drop=True)
+df_ind_full_hhbasis.to_parquet(path_data + 'hies_consol_ind_full_hhbasis.parquet')
 
 # X --- Notify
 telsendmsg(conf=tel_config,

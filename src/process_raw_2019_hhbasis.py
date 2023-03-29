@@ -336,14 +336,14 @@ df = df.reset_index(drop=True)
 # post-merge: convert income, expenditure, and margins into monthly per capita
 for i in ['salaried_wages', 'other_wages', 'asset_income',
           'gross_transfers', 'net_transfers', 'gross_income', 'net_income']:
-    # df[i] = df[i] / (12)
-    df[i] = df[i] / (df['hh_size'] * 12)
-for i in ['cons_01_12', 'cons_01_13'] + \
-         ['cons_0' + str(i) for i in range(1, 10)] + \
-         ['cons_' + str(i) for i in range(11, 14)]:
-    df[i] = df[i] / df['hh_size']
-for i in ['net_margin', 'gross_margin']:
-    df[i] = df[i] / df['hh_size']
+    df[i] = df[i] / 12
+    # df[i] = df[i] / (df['hh_size'] * 12)
+# for i in ['cons_01_12', 'cons_01_13'] + \
+#          ['cons_0' + str(i) for i in range(1, 10)] + \
+#          ['cons_' + str(i) for i in range(11, 14)]:
+#     df[i] = df[i] / df['hh_size']
+# for i in ['net_margin', 'gross_margin']:
+#     df[i] = df[i] / df['hh_size']
 
 # post-merge: birth year
 df['birth_year'] = 2019 - df['age']
@@ -399,11 +399,11 @@ dict_dtypes_19 = \
 df = df.astype(dict_dtypes_19)
 
 # V --- Save output
-df.to_parquet(path_data + 'hies_2019_consol.parquet', compression='brotli')
+df.to_parquet(path_data + 'hies_2019_consol_hhbasis.parquet', compression='brotli')
 
 # VI --- Notify
 telsendmsg(conf=tel_config,
-           msg='impact-household --- process_raw_2019: COMPLETED')
+           msg='impact-household --- process_raw_2019_hhbasis: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

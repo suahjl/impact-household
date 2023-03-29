@@ -4,6 +4,7 @@ from linearmodels import PanelOLS, RandomEffects
 import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.graph_objects as go
 from datetime import date
 from PIL import Image
 
@@ -176,7 +177,7 @@ def heatmap(input: pd.DataFrame, mask: bool, colourmap: str, outputfile: str, ti
                 annot=True,
                 cmap=colourmap,
                 center=0,
-                annot_kws={'size': 7},
+                annot_kws={'size': 8},
                 vmin=lb,
                 vmax=ub,
                 xticklabels=True,
@@ -209,3 +210,90 @@ def pil_img2pdf(list_images: list, extension: str, pdf_name: str):
                    resolution=100.0,
                    save_all=True,
                    append_images=list_img)
+
+
+def boxplot(
+        data: pd.DataFrame,
+        y_cols: list,
+        x_col: str,
+        trace_names: list,
+        colours: list,
+        main_title: str
+):
+    # prelims
+    d = data.copy()
+    # generate figure
+    fig = go.Figure()
+    # add box plots one by one
+    max_candidates = []
+    min_candidates = []
+    for y, trace_name, colour in zip(y_cols, trace_names, colours):
+        fig.add_trace(
+            go.Box(
+                y=d[y],
+                x=d[x_col],
+                name=trace_name,
+                marker=dict(opacity=0, color=colour),
+                boxpoints='outliers'
+            )
+        )
+        max_candidates = max_candidates + [d[y].quantile(q=0.99)]
+        min_candidates = min_candidates + [d[y].min()]
+    fig.update_yaxes(range=[min(min_candidates), max(max_candidates)],
+                     showgrid=True, gridwidth=1, gridcolor='grey')
+    # layouts
+    fig.update_layout(
+        title=main_title,
+        plotbg_color='white',
+        boxmode='group',
+        height=768,
+        width=1366
+    )
+    fig.update_xaxes(categoryorder='category ascending')
+    # output
+    return fig
+
+
+def boxplot_time(
+        data: pd.DataFrame,
+        y_col: str,
+        x_col: str,
+        t_col: str,
+        colours: list,
+        main_title: str
+):
+    # prelims
+    d = data.copy()
+    list_t = list(d[t_col].unique())
+    list_t.sort()
+    # generate figure
+    fig = go.Figure()
+    # add box plots one by one
+    max_candidates = []
+    min_candidates = []
+    for t, colour in zip(list_t, colours):
+        fig.add_trace(
+            go.Box(
+                y=d.loc[d[t_col] == t, y_col],
+                x=d.loc[d[t_col] == t, x_col],
+                name=str(t),
+                marker=dict(opacity=0, color=colour),
+                boxpoints='outliers'
+            )
+        )
+        max_candidates = max_candidates + [d.loc[d[t_col] == t, y_col].quantile(q=0.99)]
+        min_candidates = min_candidates + [d.loc[d[t_col] == t, y_col].min()]
+    fig.update_yaxes(range=[min(min_candidates), max(max_candidates)],
+                     showgrid=True, gridwidth=1, gridcolor='grey')
+    # layouts
+    fig.update_layout(
+        title=main_title,
+        plot_bgcolor='white',
+        boxmode='group',
+        font=dict(color='black', size=12),
+        height=768,
+        width=1366
+    )
+    fig.update_xaxes(categoryorder='category ascending')
+    # output
+    return fig

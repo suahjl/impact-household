@@ -29,6 +29,10 @@ df_14 = pd.read_parquet(path_2014 + 'hies_2014_consol.parquet')
 df_16 = pd.read_parquet(path_2016 + 'hies_2016_consol.parquet')
 df_19 = pd.read_parquet(path_2019 + 'hies_2019_consol.parquet')
 
+df_14_hhbasis = pd.read_parquet(path_2014 + 'hies_2014_consol_hhbasis.parquet')
+df_16_hhbasis = pd.read_parquet(path_2016 + 'hies_2016_consol_hhbasis.parquet')
+df_19_hhbasis = pd.read_parquet(path_2019 + 'hies_2019_consol_hhbasis.parquet')
+
 
 # II --- Outliers by income and spending (items 1 - 12)
 # Define functions
@@ -108,6 +112,14 @@ if use_iforest:
     df_09 = outlier_isolationforest(data=df_09, cols_x=cols_features,
                                     opt_max_samples=int(len(df_09) / 100), opt_threshold=0.05)
 
+
+    df_19_hhbasis = outlier_isolationforest(data=df_19_hhbasis, cols_x=cols_features,
+                                    opt_max_samples=int(len(df_19) / 100), opt_threshold=0.05)
+    df_16_hhbasis = outlier_isolationforest(data=df_16_hhbasis, cols_x=cols_features,
+                                    opt_max_samples=int(len(df_16) / 100), opt_threshold=0.05)
+    df_14_hhbasis = outlier_isolationforest(data=df_14_hhbasis, cols_x=cols_features,
+                                    opt_max_samples=int(len(df_14) / 100), opt_threshold=0.05)
+
 use_kmeans = False
 if use_kmeans:
     df_19 = outlier_kmeans(data=df_19, cols_y_x=cols_features, threshold=0.95)
@@ -115,11 +127,19 @@ if use_kmeans:
     df_14 = outlier_kmeans(data=df_14, cols_y_x=cols_features, threshold=0.95)
     df_09 = outlier_kmeans(data=df_09, cols_y_x=cols_features, threshold=0.95)
 
+    df_19_hhbasis = outlier_kmeans(data=df_19_hhbasis, cols_y_x=cols_features, threshold=0.95)
+    df_16_hhbasis = outlier_kmeans(data=df_16_hhbasis, cols_y_x=cols_features, threshold=0.95)
+    df_14_hhbasis = outlier_kmeans(data=df_14_hhbasis, cols_y_x=cols_features, threshold=0.95)
+
 # X --- Output
 df_19.to_parquet(path_2019 + 'hies_2019_consol_trimmedoutliers.parquet')
 df_16.to_parquet(path_2016 + 'hies_2016_consol_trimmedoutliers.parquet')
 df_14.to_parquet(path_2014 + 'hies_2014_consol_trimmedoutliers.parquet')
 df_09.to_parquet(path_2009 + 'hies_2009_consol_trimmedoutliers.parquet')
+
+df_19_hhbasis.to_parquet(path_2019 + 'hies_2019_consol_hhbasis_trimmedoutliers.parquet')
+df_16_hhbasis.to_parquet(path_2016 + 'hies_2016_consol_hhbasis_trimmedoutliers.parquet')
+df_14_hhbasis.to_parquet(path_2014 + 'hies_2014_consol_hhbasis_trimmedoutliers.parquet')
 
 # X --- Notify
 telsendmsg(conf=tel_config,
