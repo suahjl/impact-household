@@ -18,6 +18,7 @@ time_start = time.time()
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/hies_consol/'
+use_spending_income_ratio = ast.literal_eval(os.getenv('USE_SPENDING_INCOME_RATIO'))
 
 # I --- Load data
 df = pd.read_parquet(
@@ -63,6 +64,13 @@ list_quantiles_nice = ['5p', '10p', '15p', '20p', '25p', '30p', '35p', '40p', '4
 # Colour scheme for time
 list_colours_time = ['black', 'darkblue', 'crimson']
 
+# Convert consumption into % of income
+list_all_cons = ['cons_01_13', 'cons_01_12'] + \
+                ['cons_0' + str(i) for i in range(1, 10)] + \
+                ['cons_1' + str(i) for i in range(0, 4)]
+if use_spending_income_ratio:
+    for cons in list_all_cons:
+        df[cons] = 100 * df[cons] / df['gross_income']
 
 # III.0 --- Define function
 
