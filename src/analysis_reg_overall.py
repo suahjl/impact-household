@@ -114,9 +114,13 @@ mod_re, res_re, params_table_re, joint_teststats_re, reg_det_re = \
     )
 params_table_re['method'] = 'RE'
 
+# Mega merge
 params_table_cohort = pd.concat([pd.DataFrame(params_table_fe.loc[income_choice]).transpose(),
                                  pd.DataFrame(params_table_timefe.loc[income_choice]).transpose(),
                                  pd.DataFrame(params_table_re.loc[income_choice]).transpose()], axis=0)
+# Order columns
+params_table_cohort = params_table_cohort[['method', 'Parameter', 'LowerCI', 'UpperCI']]
+# Export
 dfi.export(params_table_cohort,
            'output/params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
 telsendimg(

@@ -46,6 +46,8 @@ def reg_ols(
     params_table['LowerCI'] = params_table['Parameter'] - 1.96 * params_table['SE']
     params_table['UpperCI'] = params_table['Parameter'] + 1.96 * params_table['SE']
 
+    del params_table['SE']
+
     # Return joint test statistics
     joint_teststats = pd.DataFrame(
         {'F-Test': [res.fvalue, res.f_pvalue], }
@@ -100,6 +102,8 @@ def fe_reg(
     params_table['LowerCI'] = params_table['Parameter'] - 1.96 * params_table['SE']
     params_table['UpperCI'] = params_table['Parameter'] + 1.96 * params_table['SE']
 
+    del params_table['SE']
+
     # Return joint test statistics
     joint_teststats = pd.DataFrame(
         {'F-Test (Poolability)': [res.f_pooled.stat, res.f_pooled.pval],
@@ -147,6 +151,8 @@ def re_reg(
     params_table.columns = ['Parameter', 'SE']
     params_table['LowerCI'] = params_table['Parameter'] - 1.96 * params_table['SE']
     params_table['UpperCI'] = params_table['Parameter'] + 1.96 * params_table['SE']
+
+    del params_table['SE']
 
     # Return joint test statistics
     joint_teststats = pd.DataFrame(

@@ -118,7 +118,7 @@ def load_clean_estimate(input_suffix, opt_income, opt_consumption, opt_first_dif
 
 
 # Loop to estimate all quantiles
-list_quantiles = [0.2, 0.4, 0.6, 0.8] # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+list_quantiles = [0.2, 0.4, 0.6, 0.8]  # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 list_suffixes = ['20p', '40p', '60p', '80p']  # ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p']
 round = 1
 for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
@@ -164,7 +164,7 @@ for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
 # Set type
 dict_dtype = {
     'Parameter': 'float',
-    'SE': 'float',
+    # 'SE': 'float',
     'LowerCI': 'float',
     'UpperCI': 'float',
     'quantile': 'float'
@@ -178,6 +178,9 @@ params_table_consol = pd.concat(
     [params_table_fe_consol, params_table_timefe_consol, params_table_re_consol],
     axis=0
 )
+# Order columns
+params_table_consol = params_table_consol[['outcome_variable', 'method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']]
+# Export
 dfi.export(params_table_consol,
            'output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
            fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)  # to overcome mar2023 error
