@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols
+from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap
 from tabulate import tabulate
 from tqdm import tqdm
 import dataframe_image as dfi
@@ -74,6 +74,25 @@ if use_first_diff:
     df = df.dropna(axis=0)
 
 # III.A --- Estimation: stratify by outcomes (consumption categories)
+# Nice names for consumption categories
+dict_cons_nice = \
+    {
+        'cons_01_12': 'Consumption',
+        'cons_01_13': 'Consumption + Fin. Expenses',
+        'cons_01': 'Food & Beverages',
+        'cons_02': 'Alcohol & Tobacco',
+        'cons_03': 'Clothing & Footwear',
+        'cons_04': 'Rent & Utilities',
+        'cons_05': 'Furnishing, HH Equipment & Maintenance',
+        'cons_06': 'Healthcare',
+        'cons_07': 'Transport',
+        'cons_08': 'Communication',
+        'cons_09': 'Recreation & Culture',
+        'cons_10': 'Education',
+        'cons_11': 'Restaurant & Hotels',
+        'cons_12': 'Misc',
+        'cons_13': 'Financial Expenses'
+    }
 # Define outcome lists
 list_outcome_choices = ['cons_01_13', 'cons_01_12'] + \
                        ['cons_0' + str(i) for i in range(1, 10)] + \
@@ -101,9 +120,21 @@ for outcome in tqdm(list_outcome_choices):
             [params_table_fe_consol, pd.DataFrame(params_table_fe.loc[income_choice]).transpose()],
             axis=0)
     round += 1
+params_table_fe_consol['outcome_variable'] = \
+    params_table_fe_consol['outcome_variable'] \
+        .replace(dict_cons_nice)
 params_table_fe_consol = params_table_fe_consol.set_index('outcome_variable')
-dfi.export(params_table_fe_consol,
-           'output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png')
+params_table_fe_consol = params_table_fe_consol.astype('float')
+heatmap_params_table_fe_consol = heatmap(
+    input=params_table_fe_consol,
+    mask=False,
+    colourmap='vlag',
+    outputfile='output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
+    title='',
+    lb=0,
+    ub=0.6,
+    format='.3f'
+)
 telsendimg(conf=tel_config,
            path='output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
            cap='params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
@@ -129,9 +160,21 @@ for outcome in tqdm(list_outcome_choices):
             [params_table_timefe_consol, pd.DataFrame(params_table_timefe.loc[income_choice]).transpose()],
             axis=0)
     round += 1
+params_table_timefe_consol['outcome_variable'] = \
+    params_table_timefe_consol['outcome_variable'] \
+        .replace(dict_cons_nice)
 params_table_timefe_consol = params_table_timefe_consol.set_index('outcome_variable')
-dfi.export(params_table_timefe_consol,
-           'output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png')
+params_table_timefe_consol = params_table_timefe_consol.astype('float')
+heatmap_params_table_timefe_consol = heatmap(
+    input=params_table_timefe_consol,
+    mask=False,
+    colourmap='vlag',
+    outputfile='output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
+    title='',
+    lb=0,
+    ub=0.6,
+    format='.3f'
+)
 telsendimg(conf=tel_config,
            path='output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
            cap='params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
@@ -155,9 +198,21 @@ for outcome in tqdm(list_outcome_choices):
             [params_table_re_consol, pd.DataFrame(params_table_re.loc[income_choice]).transpose()],
             axis=0)
     round += 1
+params_table_re_consol['outcome_variable'] = \
+    params_table_re_consol['outcome_variable'] \
+        .replace(dict_cons_nice)
 params_table_re_consol = params_table_re_consol.set_index('outcome_variable')
-dfi.export(params_table_re_consol,
-           'output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png')
+params_table_re_consol = params_table_re_consol.astype('float')
+heatmap_params_table_re_consol = heatmap(
+    input=params_table_re_consol,
+    mask=False,
+    colourmap='vlag',
+    outputfile='output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
+    title='',
+    lb=0,
+    ub=0.6,
+    format='.3f'
+)
 telsendimg(conf=tel_config,
            path='output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
            cap='params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
@@ -181,9 +236,21 @@ for outcome in tqdm(list_outcome_choices):
             [params_table_ind_ols_consol, pd.DataFrame(params_table_ind_ols.loc[income_choice]).transpose()],
             axis=0)
     round += 1
+params_table_ind_ols_consol['outcome_variable'] = \
+    params_table_ind_ols_consol['outcome_variable'] \
+        .replace(dict_cons_nice)
 params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
-dfi.export(params_table_ind_ols_consol,
-           'output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '.png')
+params_table_ind_ols_consol = params_table_ind_ols_consol.astype('float')
+heatmap_params_table_ind_ols_consol = heatmap(
+    input=params_table_ind_ols_consol,
+    mask=False,
+    colourmap='vlag',
+    outputfile='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
+    title='',
+    lb=0,
+    ub=0.6,
+    format='.3f'
+)
 telsendimg(conf=tel_config,
            path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '.png',
            cap='params_table_ind_ols_consol_strat_cons' + '_' + income_choice)
@@ -229,14 +296,16 @@ for income_group in tqdm(range(0, int(df_ind['gross_income_group'].max() + 1))):
             [params_table_ind_ols_consol, pd.DataFrame(params_table_ind_ols.loc[income_choice]).transpose()],
             axis=0)
     round += 1
+params_table_ind_ols_consol['outcome_variable'] = \
+    params_table_ind_ols_consol['outcome_variable']\
+        .replace(dict_cons_nice)
 params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
+params_table_ind_ols_consol = params_table_ind_ols_consol[['gross_income_group', 'Parameter', 'LowerCI', 'UpperCI']]
 dfi.export(params_table_ind_ols_consol,
            'output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '.png')
 telsendimg(conf=tel_config,
            path='output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '.png',
            cap='params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice)
-
-# III.B --- Estimation: stratify by income groups (individual levels; no FD option)
 
 # X --- Notify
 telsendmsg(conf=tel_config,

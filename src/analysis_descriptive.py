@@ -72,6 +72,7 @@ if use_spending_income_ratio:
     for cons in list_all_cons:
         df[cons] = 100 * df[cons] / df['gross_income']
 
+
 # III.0 --- Define function
 
 
@@ -319,7 +320,8 @@ for y in tqdm(list_outcomes):
     list_boxplot_names = list_boxplot_names + [boxplot_name]
     boxplot_marginsinccons_incgroup.write_image('output/boxplot_' + y + '_incgroup_years.png')
     # Latest medians
-    latest_median_marginsinccons_incgroup = df[df['year'] == 2019].groupby('gross_income_group')[y].median().reset_index()
+    latest_median_marginsinccons_incgroup = df[df['year'] == 2019].groupby('gross_income_group')[
+        y].median().reset_index()
     latest_median_name = 'output/latest_median_' + y + '_incgroup_years'
     list_latest_median_names = list_latest_median_names + [latest_median_name]
     dfi.export(latest_median_marginsinccons_incgroup, latest_median_name + '.png')
@@ -399,7 +401,8 @@ for x in tqdm(list_groups):
         latest_median_marginsinccons_obs = df[df['year'] == 2019].groupby(x)[y].median().reset_index()
         latest_median_name = 'output/latest_median_' + y + '_' + x + '_years'
         list_latest_median_names = list_latest_median_names + [latest_median_name]
-        dfi.export(latest_median_marginsinccons_obs, latest_median_name + '.png')
+        dfi.export(latest_median_marginsinccons_obs, latest_median_name + '.png',
+                   fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)
         # Heatmaps
         for t in df['year'].unique():
             tab_marginsinccons_obs = capybara_mini(

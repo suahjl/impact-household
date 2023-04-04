@@ -183,7 +183,7 @@ def heatmap(input: pd.DataFrame, mask: bool, colourmap: str, outputfile: str, ti
                 annot=True,
                 cmap=colourmap,
                 center=0,
-                annot_kws={'size': 8},
+                annot_kws={'size': 9},
                 vmin=lb,
                 vmax=ub,
                 xticklabels=True,

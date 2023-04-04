@@ -35,6 +35,8 @@ if generate_adj_analysis:
     import src.analysis_reg_overall_quantile
     time.sleep(15)
     import src.analysis_reg_strat
+    time.sleep(15)
+    import src.analysis_reg_strat_quantile
 
 # Descriptive stats (uses full total-hh-basis data frame)
 generate_descriptive = False

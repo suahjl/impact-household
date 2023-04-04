@@ -118,8 +118,10 @@ def load_clean_estimate(input_suffix, opt_income, opt_consumption, opt_first_dif
 
 
 # Loop to estimate all quantiles
-list_quantiles = [0.2, 0.4, 0.6, 0.8]  # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-list_suffixes = ['20p', '40p', '60p', '80p']  # ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p']
+list_quantiles = ['0-20', '20-40', '40-60', '60-80', '80-100']
+# [0.2, 0.4, 0.6, 0.8]  # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+list_suffixes = ['20p', '40p', '60p', '80p', '100p']
+# ['20p', '40p', '60p', '80p']  # ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p']
 round = 1
 for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
     # Load, clean, and estimate
@@ -167,7 +169,7 @@ dict_dtype = {
     # 'SE': 'float',
     'LowerCI': 'float',
     'UpperCI': 'float',
-    'quantile': 'float'
+    'quantile': 'str'
 }
 params_table_fe_consol = params_table_fe_consol.astype(dict_dtype)
 params_table_timefe_consol = params_table_timefe_consol.astype(dict_dtype)

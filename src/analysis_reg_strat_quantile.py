@@ -1,10 +1,8 @@
-# Regression analysis, but stratified, and by quantile
-
-# --------------------- WIP ---------------------
+# Regression analysis, but stratified, and by quantiles
 
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols
+from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap, pil_img2pdf
 from tabulate import tabulate
 from tqdm import tqdm
 import dataframe_image as dfi
@@ -20,226 +18,353 @@ load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/hies_consol/'
 income_choice = os.getenv('INCOME_CHOICE')
+outcome_choice = os.getenv('OUTCOME_CHOICE')
 use_first_diff = ast.literal_eval(os.getenv('USE_FIRST_DIFF'))
 if use_first_diff:
     fd_suffix = 'fd'
 elif not use_first_diff:
     fd_suffix = 'level'
 
-# I --- Load data
-df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_mean.parquet')
-df_ind = pd.read_parquet(path_data + 'hies_consol_ind.parquet')
 
-# II --- Pre-analysis prep
-# Redefine year
-df = df.rename(columns={'_time': 'year'})
-# Keep only entity + time + time-variant variables
-col_groups = \
-    [
-        'state',
-        'urban',
-        'education',
-        'ethnicity',
-        'malaysian',
-        'income_gen_members_group',
-        'adolescent_group',
-        'child_group',
-        'male',
-        'birth_year_group',
-        'marriage',
-        'emp_status',
-        'industry',
-        'occupation'
-    ]
-df[col_groups] = df[col_groups].astype('str')
-df['cohort_code'] = df[col_groups].sum(axis=1)
-df = df.drop(col_groups, axis=1)
+# --------- Analysis Starts (only cohort pseudo-panel data regressions) ---------
 
-# logs
-col_cons = ['cons_01', 'cons_02', 'cons_03', 'cons_04',
-            'cons_05', 'cons_06', 'cons_07', 'cons_08',
-            'cons_09', 'cons_10', 'cons_11', 'cons_12',
-            'cons_13',
-            'cons_01_12', 'cons_01_13']
-col_inc = ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
-for i in col_cons + col_inc:
-    pass
-    # df[i] = np.log(df[i])
-    # df_ind[i] = np.log(df_ind[i])
 
-# First diff
-if use_first_diff:
-    for y in col_cons + col_inc:
-        # df[y] = 100 * (df[y] - df.groupby('cohort_code')[y].shift(1)) / df.groupby('cohort_code')[y].shift(1)
-        df[y] = 100 * (df[y] - df.groupby('cohort_code')[y].shift(1))
-    df = df.dropna(axis=0)
+def load_clean_estimate(
+        input_suffix,
+        opt_income,
+        opt_first_diff
+):
+    # I --- Load data
+    df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_' + input_suffix + '.parquet')
 
-# III.A --- Estimation: stratify by outcomes (consumption categories)
-# Define outcome lists
-list_outcome_choices = ['cons_01_13', 'cons_01_12'] + \
-                       ['cons_0' + str(i) for i in range(1, 10)] + \
-                       ['cons_1' + str(i) for i in range(0, 4)]
+    # II --- Pre-analysis prep
+    # Redefine year
+    df = df.rename(columns={'_time': 'year'})
+    # Keep only entity + time + time-variant variables
+    col_groups = \
+        [
+            'state',
+            'urban',
+            'education',
+            'ethnicity',
+            'malaysian',
+            'income_gen_members_group',
+            'adolescent_group',
+            'child_group',
+            'male',
+            'birth_year_group',
+            'marriage',
+            'emp_status',
+            'industry',
+            'occupation'
+        ]
+    df[col_groups] = df[col_groups].astype('str')
+    df['cohort_code'] = df[col_groups].sum(axis=1)
+    df = df.drop(col_groups, axis=1)
 
-# Estimates
+    # logs
+    col_cons = ['cons_01', 'cons_02', 'cons_03', 'cons_04',
+                'cons_05', 'cons_06', 'cons_07', 'cons_08',
+                'cons_09', 'cons_10', 'cons_11', 'cons_12',
+                'cons_13',
+                'cons_01_12', 'cons_01_13']
+    col_inc = ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
+    for i in col_cons + col_inc:
+        pass
+        # df[i] = np.log(df[i])
+        # df_ind[i] = np.log(df_ind[i])
+
+    # First diff
+    if opt_first_diff:
+        for y in col_cons + col_inc:
+            # df[y] = 100 * (df[y] - df.groupby('cohort_code')[y].shift(1)) / df.groupby('cohort_code')[y].shift(1)
+            df[y] = 100 * (df[y] - df.groupby('cohort_code')[y].shift(1))
+        df = df.dropna(axis=0)
+
+    # III.A --- Estimation: stratify by outcomes (consumption categories)
+    # Nice names for consumption categories
+    dict_cons_nice = \
+        {
+            'cons_01_12': 'Consumption',
+            'cons_01_13': 'Consumption + Fin. Expenses',
+            'cons_01': 'Food & Beverages',
+            'cons_02': 'Alcohol & Tobacco',
+            'cons_03': 'Clothing & Footwear',
+            'cons_04': 'Rent & Utilities',
+            'cons_05': 'Furnishing, HH Equipment & Maintenance',
+            'cons_06': 'Healthcare',
+            'cons_07': 'Transport',
+            'cons_08': 'Communication',
+            'cons_09': 'Recreation & Culture',
+            'cons_10': 'Education',
+            'cons_11': 'Restaurant & Hotels',
+            'cons_12': 'Misc',
+            'cons_13': 'Financial Expenses'
+        }
+    # Define outcome lists
+    list_outcome_choices = ['cons_01_13', 'cons_01_12'] + \
+                           ['cons_0' + str(i) for i in range(1, 10)] + \
+                           ['cons_1' + str(i) for i in range(0, 4)]
+    # Estimates: FE
+    round = 1
+    for outcome in tqdm(list_outcome_choices):
+        mod_fe, res_fe, params_table_fe, joint_teststats_fe, reg_det_fe = \
+            fe_reg(
+                df=df,
+                y_col=outcome,
+                x_cols=[opt_income],
+                i_col='cohort_code',
+                t_col='year',
+                fixed_effects=True,
+                time_effects=False,
+                cov_choice='robust'
+            )
+        params_table_fe['outcome_variable'] = outcome
+        if round == 1:
+            params_table_fe_consol = pd.DataFrame(params_table_fe.loc[opt_income]).transpose()
+        elif round >= 1:
+            params_table_fe_consol = pd.concat(
+                [params_table_fe_consol, pd.DataFrame(params_table_fe.loc[opt_income]).transpose()],
+                axis=0)
+        round += 1
+    params_table_fe_consol['outcome_variable'] = \
+        params_table_fe_consol['outcome_variable'] \
+            .replace(dict_cons_nice)
+    params_table_fe_consol = params_table_fe_consol.set_index('outcome_variable')
+    params_table_fe_consol = params_table_fe_consol.astype('float')
+
+    # Estimates: time FE
+    round = 1
+    for outcome in tqdm(list_outcome_choices):
+        mod_timefe, res_timefe, params_table_timefe, joint_teststats_timefe, reg_det_timefe = \
+            fe_reg(
+                df=df,
+                y_col=outcome,
+                x_cols=[opt_income],
+                i_col='cohort_code',
+                t_col='year',
+                fixed_effects=False,
+                time_effects=True,
+                cov_choice='robust'
+            )
+        params_table_timefe['outcome_variable'] = outcome
+        if round == 1:
+            params_table_timefe_consol = pd.DataFrame(params_table_timefe.loc[opt_income]).transpose()
+        elif round >= 1:
+            params_table_timefe_consol = pd.concat(
+                [params_table_timefe_consol, pd.DataFrame(params_table_timefe.loc[opt_income]).transpose()],
+                axis=0)
+        round += 1
+    params_table_timefe_consol['outcome_variable'] = \
+        params_table_timefe_consol['outcome_variable'] \
+            .replace(dict_cons_nice)
+    params_table_timefe_consol = params_table_timefe_consol.set_index('outcome_variable')
+    params_table_timefe_consol = params_table_timefe_consol.astype('float')
+
+    # Estimates: RE
+    round = 1
+    for outcome in tqdm(list_outcome_choices):
+        mod_re, res_re, params_table_re, joint_teststats_re, reg_det_re = \
+            re_reg(
+                df=df,
+                y_col=outcome,
+                x_cols=[opt_income],
+                i_col='cohort_code',
+                t_col='year',
+                cov_choice='robust'
+            )
+        params_table_re['outcome_variable'] = outcome
+        if round == 1:
+            params_table_re_consol = pd.DataFrame(params_table_re.loc[opt_income]).transpose()
+        elif round >= 1:
+            params_table_re_consol = pd.concat(
+                [params_table_re_consol, pd.DataFrame(params_table_re.loc[opt_income]).transpose()],
+                axis=0)
+        round += 1
+    params_table_re_consol['outcome_variable'] = \
+        params_table_re_consol['outcome_variable'] \
+            .replace(dict_cons_nice)
+    params_table_re_consol = params_table_re_consol.set_index('outcome_variable')
+    params_table_re_consol = params_table_re_consol.astype('float')
+
+    # IV --- Output
+    return params_table_fe_consol, params_table_timefe_consol, params_table_re_consol
+
+
+# Loop to estimate all quantiles
+list_quantiles = ['0-20', '20-40', '40-60', '60-80', '80-100']
+# [0.2, 0.4, 0.6, 0.8]  # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+list_suffixes = ['20p', '40p', '60p', '80p', '100p']
+# ['20p', '40p', '60p', '80p']  # ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p']
+list_filenames_fe = []
+list_filenames_timefe = []
+list_filenames_re = []
 round = 1
-for outcome_choice in tqdm(list_outcome_choices):
-    mod_fe, res_fe, params_table_fe, joint_teststats_fe, reg_det_fe = \
-        fe_reg(
-            df=df,
-            y_col=outcome_choice,
-            x_cols=['gross_income'],
-            i_col='cohort_code',
-            t_col='year',
-            fixed_effects=True,
-            time_effects=False,
-            cov_choice='robust'
-        )
-    params_table_fe['outcome_variable'] = outcome_choice
+for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
+    # Load, clean, and estimate
+    params_table_fe, params_table_timefe, params_table_re = load_clean_estimate(
+        input_suffix=suffix,
+        opt_income=income_choice,
+        opt_first_diff=use_first_diff
+    )
+    # Save quantile-method-specific frame as heatmap
+    # FE
+    heatmap_params_table_fe = heatmap(
+        input=params_table_fe,
+        mask=False,
+        colourmap='vlag',
+        outputfile='./output/params_table_fe_strat_cons_' +
+                   income_choice + '_' + fd_suffix + '_' + suffix + '.png',
+        title='Fixed effects: MPC by cons type for ' + quantile + ' group',
+        lb=0,
+        ub=0.6,
+        format='.3f'
+    )
+    list_filenames_fe = list_filenames_fe + ['./output/params_table_fe_strat_cons_' +
+                                             income_choice + '_' + fd_suffix + '_' + suffix]
+    # telsendimg(
+    #     conf=tel_config,
+    #     path='./output/params_table_fe_strat_cons_' +
+    #          income_choice + '_' + fd_suffix + '_' + suffix + '.png',
+    #     cap='params_table_fe_strat_cons_' +
+    #         income_choice + '_' + fd_suffix + '_' + suffix
+    # )
+    # Time FE
+    heatmap_params_table_timefe = heatmap(
+        input=params_table_timefe,
+        mask=False,
+        colourmap='vlag',
+        outputfile='./output/params_table_timefe_strat_cons_' +
+                   income_choice + '_' + fd_suffix + '_' + suffix + '.png',
+        title='Time FE: MPC by cons type for ' + quantile + ' group',
+        lb=0,
+        ub=0.6,
+        format='.3f'
+    )
+    list_filenames_timefe = list_filenames_timefe + ['./output/params_table_timefe_strat_cons_' +
+                                                     income_choice + '_' + fd_suffix + '_' + suffix]
+    # telsendimg(
+    #     conf=tel_config,
+    #     path='./output/params_table_timefe_strat_cons_' +
+    #          income_choice + '_' + fd_suffix + '_' + suffix + '.png',
+    #     cap='params_table_timefe_strat_cons_' +
+    #         income_choice + '_' + fd_suffix + '_' + suffix
+    # )
+    # RE
+    heatmap_params_table_re = heatmap(
+        input=params_table_re,
+        mask=False,
+        colourmap='vlag',
+        outputfile='./output/params_table_re_strat_cons_' +
+                   income_choice + '_' + fd_suffix + '_' + suffix + '.png',
+        title='Random Effects: MPC by cons type for ' + quantile + ' group',
+        lb=0,
+        ub=0.6,
+        format='.3f'
+    )
+    list_filenames_re = list_filenames_re + ['./output/params_table_re_strat_cons_' +
+                                             income_choice + '_' + fd_suffix + '_' + suffix]
+    # telsendimg(
+    #     conf=tel_config,
+    #     path='./output/params_table_re_strat_cons_' +
+    #          income_choice + '_' + fd_suffix + '_' + suffix + '.png',
+    #     cap='params_table_re_strat_cons_' +
+    #         income_choice + '_' + fd_suffix + '_' + suffix
+    # )
+    # Indicate quantile variable
+    params_table_fe['quantile'] = quantile
+    params_table_timefe['quantile'] = quantile
+    params_table_re['quantile'] = quantile
+    # Indicate method
+    params_table_fe['method'] = 'FE'
+    params_table_timefe['method'] = 'TimeFE'
+    params_table_re['method'] = 'RE'
+    # Consolidate quantiles
     if round == 1:
-        params_table_fe_consol = pd.DataFrame(params_table_fe.loc[income_choice]).transpose()
+        params_table_fe_consol = params_table_fe.copy()
+        params_table_timefe_consol = params_table_timefe.copy()
+        params_table_re_consol = params_table_re.copy()
     elif round >= 1:
         params_table_fe_consol = pd.concat(
-            [params_table_fe_consol, pd.DataFrame(params_table_fe.loc[income_choice]).transpose()],
-            axis=0)
-    round += 1
-params_table_fe_consol = params_table_fe_consol.set_index('outcome_variable')
-dfi.export(params_table_fe_consol,
-           'output/params_table_fe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
-telsendimg(conf=tel_config,
-           path='output/params_table_fe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_fe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
-
-round = 1
-for outcome_choice in tqdm(list_outcome_choices):
-    mod_timefe, res_timefe, params_table_timefe, joint_teststats_timefe, reg_det_timefe = \
-        fe_reg(
-            df=df,
-            y_col=outcome_choice,
-            x_cols=[income_choice],
-            i_col='cohort_code',
-            t_col='year',
-            fixed_effects=False,
-            time_effects=True,
-            cov_choice='robust'
+            [params_table_fe_consol, params_table_fe.copy()],
+            axis=0
         )
-    params_table_timefe['outcome_variable'] = outcome_choice
-    if round == 1:
-        params_table_timefe_consol = pd.DataFrame(params_table_timefe.loc[income_choice]).transpose()
-    elif round >= 1:
         params_table_timefe_consol = pd.concat(
-            [params_table_timefe_consol, pd.DataFrame(params_table_timefe.loc[income_choice]).transpose()],
-            axis=0)
-    round += 1
-params_table_timefe_consol = params_table_timefe_consol.set_index('outcome_variable')
-dfi.export(params_table_timefe_consol,
-           'output/params_table_timefe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
-telsendimg(conf=tel_config,
-           path='output/params_table_timefe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_timefe_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
-
-round = 1
-for outcome_choice in tqdm(list_outcome_choices):
-    mod_re, res_re, params_table_re, joint_teststats_re, reg_det_re = \
-        re_reg(
-            df=df,
-            y_col=outcome_choice,
-            x_cols=[income_choice],
-            i_col='cohort_code',
-            t_col='year',
-            cov_choice='robust'
+            [params_table_timefe_consol, params_table_timefe.copy()],
+            axis=0
         )
-    params_table_re['outcome_variable'] = outcome_choice
-    if round == 1:
-        params_table_re_consol = pd.DataFrame(params_table_re.loc[income_choice]).transpose()
-    elif round >= 1:
         params_table_re_consol = pd.concat(
-            [params_table_re_consol, pd.DataFrame(params_table_re.loc[income_choice]).transpose()],
-            axis=0)
-    round += 1
-params_table_re_consol = params_table_re_consol.set_index('outcome_variable')
-dfi.export(params_table_re_consol,
-           'output/params_table_re_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
-telsendimg(conf=tel_config,
-           path='output/params_table_re_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_re_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
-
-round = 1
-for outcome_choice in tqdm(list_outcome_choices):
-    mod_ind_ols, res_ind_ols, params_table_ind_ols, joint_teststats_ind_ols, reg_det_ind_ols = \
-        reg_ols(
-            df=df_ind,
-            eqn=outcome_choice + ' ~ ' + income_choice + ' + ' +
-                'C(state) + urban + C(education) + C(ethnicity) + ' +
-                'malaysian + C(income_gen_members_group) + C(adolescent_group) +' +
-                'C(child_group) + male + C(birth_year_group) + C(marriage) + ' +
-                'C(emp_status) + C(industry) + C(occupation) + C(year)'
+            [params_table_re_consol, params_table_re.copy()],
+            axis=0
         )
-    params_table_ind_ols['outcome_variable'] = outcome_choice
-    if round == 1:
-        params_table_ind_ols_consol = pd.DataFrame(params_table_ind_ols.loc['gross_income']).transpose()
-    elif round >= 1:
-        params_table_ind_ols_consol = pd.concat(
-            [params_table_ind_ols_consol, pd.DataFrame(params_table_ind_ols.loc['gross_income']).transpose()],
-            axis=0)
     round += 1
-params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
-dfi.export(params_table_ind_ols_consol,
-           'output/params_table_ind_ols_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
-telsendimg(conf=tel_config,
-           path='output/params_table_ind_ols_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_ind_ols_consol_strat_cons' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
 
+# Compile heatmaps into pdfs
+pil_img2pdf(
+    list_images=list_filenames_fe,
+    extension='png',
+    pdf_name='./output/params_table_fe_strat_cons_' + income_choice + '_' + fd_suffix + '_quantile'
+)
+pil_img2pdf(
+    list_images=list_filenames_timefe,
+    extension='png',
+    pdf_name='./output/params_table_timefe_strat_cons_' + income_choice + '_' + fd_suffix + '_quantile'
+)
+pil_img2pdf(
+    list_images=list_filenames_re,
+    extension='png',
+    pdf_name='./output/params_table_re_strat_cons_' + income_choice + '_' + fd_suffix + '_quantile'
+)
+for i in [
+    './output/params_table_fe_strat_cons_' + income_choice + '_' + fd_suffix + '_quantile',
+    './output/params_table_timefe_strat_cons_' + income_choice + '_' + fd_suffix + '_quantile',
+    './output/params_table_re_strat_cons_' + income_choice + '_' + fd_suffix + '_quantile'
+]:
+    telsendfiles(
+        conf=tel_config,
+        path=i + '.pdf',
+        cap=i
+    )
 
-# III.B --- Estimation: stratify by income groups (individual levels; no FD option)
-def gen_gross_income_group(data, aggregation):
-    if aggregation == 1:
-        data.loc[(data['gross_income'] >= data['gross_income'].quantile(q=0.8)), 'gross_income_group'] = 4
-        data.loc[((data['gross_income'] >= data['gross_income'].quantile(q=0.6)) &
-                  (data['gross_income'] < data['gross_income'].quantile(q=0.8))), 'gross_income_group'] = 3
-        data.loc[((data['gross_income'] >= data['gross_income'].quantile(q=0.4)) &
-                  (data['gross_income'] < data['gross_income'].quantile(q=0.6))), 'gross_income_group'] = 2
-        data.loc[((data['gross_income'] >= data['gross_income'].quantile(q=0.2)) &
-                  (data['gross_income'] < data['gross_income'].quantile(q=0.4))), 'gross_income_group'] = 1
-        data.loc[(data['gross_income'] < data['gross_income'].quantile(q=0.2)), 'gross_income_group'] = 0
-    elif aggregation == 2:
-        data.loc[(data['gross_income'] >= data['gross_income'].quantile(q=0.8)), 'gross_income_group'] = 2
-        data.loc[((data['gross_income'] >= data['gross_income'].quantile(q=0.4)) &
-                  (data['gross_income'] < data['gross_income'].quantile(q=0.8))), 'gross_income_group'] = 1
-        data.loc[(data['gross_income'] < data['gross_income'].quantile(q=0.4)), 'gross_income_group'] = 0
+# Set type for consolidated dataframe
+dict_dtype = {
+    'Parameter': 'float',
+    # 'SE': 'float',
+    'LowerCI': 'float',
+    'UpperCI': 'float',
+    'quantile': 'str'
+}
+params_table_fe_consol = params_table_fe_consol.astype(dict_dtype)
+params_table_timefe_consol = params_table_timefe_consol.astype(dict_dtype)
+params_table_re_consol = params_table_re_consol.astype(dict_dtype)
 
+# Sort subgroups
+col_sort_order = ['method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']
+params_table_fe_consol = params_table_fe_consol[col_sort_order]
+params_table_timefe_consol = params_table_timefe_consol[col_sort_order]
+params_table_re_consol = params_table_re_consol[col_sort_order]
 
-gen_gross_income_group(data=df_ind, aggregation=2)
-round = 1
-for income_group in tqdm(range(0, int(df_ind['gross_income_group'].max() + 1))):
-    d = df_ind[df_ind['gross_income_group'] == income_group]
-    mod_ind_ols, res_ind_ols, params_table_ind_ols, joint_teststats_ind_ols, reg_det_ind_ols = \
-        reg_ols(
-            df=d,
-            eqn=outcome_choice + ' ~ ' + income_choice + ' + ' +
-                'C(state) + urban + C(education) + C(ethnicity) + ' +
-                'malaysian + C(income_gen_members_group) + C(adolescent_group) +' +
-                'C(child_group) + male + C(birth_year_group) + C(marriage) + ' +
-                'C(emp_status) + C(industry) + C(occupation) + C(year)'
-        )
-    params_table_ind_ols['outcome_variable'] = outcome_choice
-    params_table_ind_ols['gross_income_group'] = income_group
-    if round == 1:
-        params_table_ind_ols_consol = pd.DataFrame(params_table_ind_ols.loc[income_choice]).transpose()
-    elif round >= 1:
-        params_table_ind_ols_consol = pd.concat(
-            [params_table_ind_ols_consol, pd.DataFrame(params_table_ind_ols.loc[income_choice]).transpose()],
-            axis=0)
-    round += 1
-params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
-dfi.export(params_table_ind_ols_consol,
-           'output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
-telsendimg(conf=tel_config,
-           path='output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix)
+# Output full output
+params_table_fe_consol.to_csv('./output/params_table_fe_consol_strat_cons_' +
+                              income_choice + '_' + fd_suffix + '.csv')
+params_table_fe_consol.to_parquet('./output/params_table_fe_consol_strat_cons_' +
+                                  income_choice + '_' + fd_suffix + '.parquet')
+
+params_table_timefe_consol.to_csv('./output/params_table_timefe_consol_strat_cons_' +
+                                  income_choice + '_' + fd_suffix + '.csv')
+params_table_timefe_consol.to_parquet('./output/params_table_timefe_consol_strat_cons_' +
+                                      income_choice + '_' + fd_suffix + '.parquet')
+
+params_table_re_consol.to_csv('./output/params_table_re_consol_strat_cons_' +
+                              income_choice + '_' + fd_suffix + '.csv')
+params_table_re_consol.to_parquet('./output/params_table_re_consol_strat_cons_' +
+                                  income_choice + '_' + fd_suffix + '.parquet')
+
+# --------- Analysis Ends ---------
 
 # X --- Notify
 telsendmsg(conf=tel_config,
-           msg='impact-household --- analysis_reg_strat: COMPLETED')
+           msg='impact-household --- analysis_reg_strat_quantile: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

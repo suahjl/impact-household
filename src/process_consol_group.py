@@ -403,6 +403,144 @@ def gen_pseudopanel(data1, data2, data3, list_cols_cohort, use_mean, use_quantil
     return df_agg, df_agg_balanced
 
 
+def gen_pseudopanel_quantile_fixed_axis(
+        data1,
+        data2,
+        data3,
+        list_cols_cohort,
+        fixed_axis,
+        quantile_choice,
+        file_suffix
+):
+    # Prelims
+    df1 = data1.copy()
+    df2 = data2.copy()
+    df3 = data3.copy()
+    # Create reference point on fixed axis
+    df1_ref = data1.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=quantile_choice, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_fixed_axis'})
+    df2_ref = data2.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=quantile_choice, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_fixed_axis'})
+    df3_ref = data3.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=quantile_choice, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_fixed_axis'})
+    # Merge back
+    df1 = df1.merge(df1_ref, on=list_cols_cohort, how='left')
+    df2 = df2.merge(df2_ref, on=list_cols_cohort, how='left')
+    df3 = df3.merge(df3_ref, on=list_cols_cohort, how='left')
+    # Keep rows where quantile ref point match
+    df1 = df1[df1[fixed_axis] == df1['_fixed_axis']]
+    df2 = df2[df2[fixed_axis] == df2['_fixed_axis']]
+    df3 = df3[df3[fixed_axis] == df3['_fixed_axis']]
+    # Collapse
+    df1_agg = df1.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    df2_agg = df2.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    df3_agg = df3.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    # Generate time identifiers
+    df1_agg['_time'] = 1
+    df2_agg['_time'] = 2
+    df3_agg['_time'] = 3
+    # Merge (unbalanced)
+    df_agg = pd.concat([df1_agg, df2_agg, df3_agg], axis=0)
+    df_agg = df_agg.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
+    # Merge (balanced)
+    groups_balanced = df1_agg[list_cols_cohort].merge(df2_agg[list_cols_cohort], on=list_cols_cohort, how='inner')
+    groups_balanced = groups_balanced[list_cols_cohort].merge(df3_agg[list_cols_cohort], on=list_cols_cohort,
+                                                              how='inner')
+    groups_balanced['balanced'] = 1
+    df_agg_balanced = df_agg.merge(groups_balanced, on=list_cols_cohort, how='left')
+    df_agg_balanced = df_agg_balanced[df_agg_balanced['balanced'] == 1]
+    del df_agg_balanced['balanced']
+    df_agg_balanced = df_agg_balanced.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
+    # Delete fixed axes
+    del df_agg['_fixed_axis']
+    del df_agg_balanced['_fixed_axis']
+    # Save to local
+    df_agg.to_parquet(path_data + 'hies_consol_agg_' + file_suffix + '.parquet')
+    df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
+    # Output
+    return df_agg, df_agg_balanced
+
+
+def gen_pseudopanel_distgroup_fixed_axis(
+        data1,
+        data2,
+        data3,
+        list_cols_cohort,
+        fixed_axis,
+        distbounds,
+        file_suffix
+):
+    # Prelims
+    df1 = data1.copy()
+    df2 = data2.copy()
+    df3 = data3.copy()
+    q_lb = distbounds[0]  # lower bound of distribution
+    q_ub = distbounds[1]  # upper bound of distribution
+    # Create reference points (LB and UB) on fixed axis
+    df1_lb = data1.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=q_lb, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_lb_fixed_axis'})
+    df1_ub = data1.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=q_ub, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_ub_fixed_axis'})
+    df2_lb = data2.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=q_lb, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_lb_fixed_axis'})
+    df2_ub = data2.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=q_ub, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_ub_fixed_axis'})
+    df3_lb = data3.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=q_lb, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_lb_fixed_axis'})
+    df3_ub = data3.groupby(list_cols_cohort)[fixed_axis] \
+        .quantile(numeric_only=True, q=q_ub, interpolation='nearest') \
+        .reset_index().rename(columns={fixed_axis: '_ub_fixed_axis'})
+    # Merge back
+    df1 = df1.merge(df1_lb, on=list_cols_cohort, how='left')
+    df1 = df1.merge(df1_ub, on=list_cols_cohort, how='left')
+    df2 = df2.merge(df2_lb, on=list_cols_cohort, how='left')
+    df2 = df2.merge(df2_ub, on=list_cols_cohort, how='left')
+    df3 = df3.merge(df3_lb, on=list_cols_cohort, how='left')
+    df3 = df3.merge(df3_ub, on=list_cols_cohort, how='left')
+    # Keep rows where fixed axis observations fall within range
+    df1 = df1[(df1[fixed_axis] >= df1['_lb_fixed_axis']) & (df1[fixed_axis] <= df1['_ub_fixed_axis'])]
+    df2 = df2[(df2[fixed_axis] >= df2['_lb_fixed_axis']) & (df2[fixed_axis] <= df2['_ub_fixed_axis'])]
+    df3 = df3[(df3[fixed_axis] >= df3['_lb_fixed_axis']) & (df3[fixed_axis] <= df3['_ub_fixed_axis'])]
+    # Collapse
+    df1_agg = df1.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    df2_agg = df2.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    df3_agg = df3.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    # Generate time identifiers
+    df1_agg['_time'] = 1
+    df2_agg['_time'] = 2
+    df3_agg['_time'] = 3
+    # Merge (unbalanced)
+    df_agg = pd.concat([df1_agg, df2_agg, df3_agg], axis=0)
+    df_agg = df_agg.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
+    # Merge (balanced)
+    groups_balanced = df1_agg[list_cols_cohort].merge(df2_agg[list_cols_cohort], on=list_cols_cohort, how='inner')
+    groups_balanced = groups_balanced[list_cols_cohort].merge(df3_agg[list_cols_cohort], on=list_cols_cohort,
+                                                              how='inner')
+    groups_balanced['balanced'] = 1
+    df_agg_balanced = df_agg.merge(groups_balanced, on=list_cols_cohort, how='left')
+    df_agg_balanced = df_agg_balanced[df_agg_balanced['balanced'] == 1]
+    del df_agg_balanced['balanced']
+    df_agg_balanced = df_agg_balanced.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
+    # Delete fixed axes
+    del df_agg['_lb_fixed_axis']
+    del df_agg['_ub_fixed_axis']
+    del df_agg_balanced['_lb_fixed_axis']
+    del df_agg_balanced['_ub_fixed_axis']
+    # Save to local
+    df_agg.to_parquet(path_data + 'hies_consol_agg_' + file_suffix + '.parquet')
+    df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
+    # Output
+    return df_agg, df_agg_balanced
+
+
 df_agg_mean, df_agg_balanced_mean = gen_pseudopanel(
     data1=df_14,
     data2=df_16,
@@ -414,17 +552,62 @@ df_agg_mean, df_agg_balanced_mean = gen_pseudopanel(
     file_suffix='mean'
 )
 
-list_quantiles = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-list_suffixes = ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p']
-for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
-    df_agg_quantile, df_agg_balanced_quantile = gen_pseudopanel(
+# list_quantiles = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+# list_suffixes = ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', '100p']
+# for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
+    # Quantiles across all income and consumption categories
+    # df_agg_quantile, df_agg_balanced_quantile = gen_pseudopanel(
+    #     data1=df_14,
+    #     data2=df_16,
+    #     data3=df_19,
+    #     list_cols_cohort=col_groups,
+    #     use_mean=False,
+    #     use_quantile=True,
+    #     quantile_choice=quantile,
+    #     file_suffix=suffix
+    # )
+
+    # Use fixed axis on gross income when generating quantile-specific cohort panel
+    # df_agg_quantile, df_agg_balanced_quantile = gen_pseudopanel_quantile_fixed_axis(
+    #     data1=df_14,
+    #     data2=df_16,
+    #     data3=df_19,
+    #     fixed_axis='gross_income',
+    #     list_cols_cohort=col_groups,
+    #     quantile_choice=quantile,
+    #     file_suffix=suffix
+    # )
+
+# list_distbounds = [
+#     [0, 0.1],
+#     [0.1, 0.2],
+#     [0.2, 0.3],
+#     [0.3, 0.4],
+#     [0.4, 0.5],
+#     [0.5, 0.6],
+#     [0.6, 0.7],
+#     [0.7, 0.8],
+#     [0.8, 0.9],
+#     [0.9, 1]
+# ]
+list_distbounds = [
+    [0, 0.2],
+    [0.2, 0.4],
+    [0.4, 0.6],
+    [0.6, 0.8],
+    [0.8, 1]
+]
+list_suffixes = ['20p', '40p', '60p', '80p', '100p']
+# list_suffixes = ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', '100p']
+for distbound, suffix in tqdm(zip(list_distbounds, list_suffixes)):
+    # Use fixed axis on gross income when generating 10pp width buckets cohort panel
+    df_agg_quantile, df_agg_balanced_quantile = gen_pseudopanel_distgroup_fixed_axis(
         data1=df_14,
         data2=df_16,
         data3=df_19,
+        fixed_axis='gross_income',
         list_cols_cohort=col_groups,
-        use_mean=False,
-        use_quantile=True,
-        quantile_choice=quantile,
+        distbounds=distbound,
         file_suffix=suffix
     )
 
@@ -443,7 +626,6 @@ df_19_hhbasis['year'] = 2019
 df_ind_hhbasis = pd.concat([df_14_hhbasis, df_16_hhbasis, df_19_hhbasis], axis=0)
 df_ind_hhbasis = df_ind_hhbasis.sort_values(by=col_groups + ['year']).reset_index(drop=True)
 df_ind_hhbasis.to_parquet(path_data + 'hies_consol_ind_hhbasis.parquet')
-
 
 # Individual pooled data + output (with outliers)
 df_14_full['year'] = 2014
