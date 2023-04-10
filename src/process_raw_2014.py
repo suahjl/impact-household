@@ -216,6 +216,30 @@ del b2_kids
 for i in ['Kawasan', 'No_IR', 'No_AIR', 'Perhubungan_KIR', 'Penerima_Pendapatan']:
     del df[i]
 
+# b3: isolate special subitems
+# Fuel only: item 0722
+cons_fuel = df_b3[df_b3['FourD'] == 722]
+cons_fuel = cons_fuel.groupby(['ID', 'FourD'])['Amaun'].sum().reset_index()
+cons_fuel = pd.pivot(cons_fuel, index='ID', columns='FourD', values='Amaun').reset_index()  # long to wide
+cons_fuel = cons_fuel.rename(
+    columns={
+        722: 'cons_0722_fuel'
+    }
+)
+# Transport ex cars, motorcycles, bicycles, and servicing
+cons_transport_ex_bigticket = \
+    df_b3[~(df_b3['FourD'].isin(
+        [711, 712, 713, 723]
+    )) & (df_b3['TwoD'] == 7)]  # exclude cars, motorcycles, bicycles, and servicing
+cons_transport_ex_bigticket = cons_transport_ex_bigticket.groupby(['ID', 'TwoD'])['Amaun'].sum().reset_index()
+cons_transport_ex_bigticket = \
+    pd.pivot(cons_transport_ex_bigticket, index='ID', columns='TwoD', values='Amaun').reset_index()  # long to wide
+cons_transport_ex_bigticket = cons_transport_ex_bigticket.rename(
+    columns={
+        7: 'cons_07_ex_bigticket'
+    }
+)
+
 # b3: group expenditure by items
 cons_two_digits = df_b3.groupby(['ID', 'TwoD'])['Amaun'].sum().reset_index()
 cons_two_digits = pd.pivot(cons_two_digits, index='ID', columns='TwoD', values='Amaun').reset_index()  # long to wide
@@ -253,10 +277,14 @@ cons_two_digits = cons_two_digits.fillna(0)
 
 # b1 + b2 + b3
 df = df.merge(cons_two_digits, on='ID', how='left', validate='one_to_one')
+df = df.merge(cons_fuel, on='ID', how='left', validate='one_to_one')
+df = df.merge(cons_transport_ex_bigticket, on='ID', how='left', validate='one_to_one')
 del df_b3
 del cons_two_digits
 del b3_item13
 del df_b3_item13
+del cons_fuel
+del cons_transport_ex_bigticket
 
 # Total spending
 df['cons_01_13'] = df['Jum_Perbelanjaan'] + df['cons_13']
@@ -315,6 +343,8 @@ dict_rename = \
         # 'cons_11': '',
         # 'cons_12': '',
         # 'cons_13': '',
+        # 'cons_0722_fuel': '',
+        # 'cons_07_ex_bigticket': '',
     }
 df = df.rename(columns=dict_rename)
 
@@ -330,8 +360,9 @@ for i in ['salaried_wages', 'other_wages', 'asset_income',
 for i in ['gross_income']:  # and this is monthly
     df[i] = df[i] / df['hh_size']
 for i in ['cons_01_12', 'cons_01_13'] + \
-    ['cons_0' + str(i) for i in range(1, 10)] + \
-    ['cons_' + str(i) for i in range(11, 14)]:
+         ['cons_0' + str(i) for i in range(1, 10)] + \
+         ['cons_' + str(i) for i in range(11, 14)] + \
+         ['cons_0722_fuel', 'cons_07_ex_bigticket']:
     df[i] = df[i] / (df['hh_size'])
 for i in ['gross_margin']:
     df[i] = df[i] / df['hh_size']
@@ -381,6 +412,8 @@ dict_dtypes_14 = \
         'cons_11': 'float',
         'cons_12': 'float',
         'cons_13': 'float',
+        'cons_0722_fuel': 'float',
+        'cons_07_ex_bigticket': 'float',
         'cons_01_13': 'float',
         'gross_margin': 'float',
     }

@@ -53,8 +53,9 @@ list_cat_outcomes = ['hh_size_group'] + list_groups
 list_outcomes = ['gross_income'] + \
                 ['gross_transfers'] + \
                 ['cons_01_13', 'cons_01_12'] + \
-                ['cons_01', 'cons_04', 'cons_06', 'cons_07',
-                 'cons_10']  # F&B, util, healthcare, transport & fuels, education
+                ['cons_01', 'cons_04', 'cons_06', 'cons_07', 'cons_10'] + \
+                ['cons_0722_fuel', 'cons_07_ex_bigticket']
+# F&B, util, healthcare, transport & fuels, education
 # ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
 # Define list of quantiles
 list_quantiles = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
@@ -67,7 +68,8 @@ list_colours_time = ['black', 'darkblue', 'crimson']
 # Convert consumption into % of income
 list_all_cons = ['cons_01_13', 'cons_01_12'] + \
                 ['cons_0' + str(i) for i in range(1, 10)] + \
-                ['cons_1' + str(i) for i in range(0, 4)]
+                ['cons_1' + str(i) for i in range(0, 4)] + \
+                ['cons_0722_fuel', 'cons_07_ex_bigticket']
 if use_spending_income_ratio:
     for cons in list_all_cons:
         df[cons] = 100 * df[cons] / df['gross_income']

@@ -59,7 +59,8 @@ col_cons = ['cons_01', 'cons_02', 'cons_03', 'cons_04',
             'cons_05', 'cons_06', 'cons_07', 'cons_08',
             'cons_09', 'cons_10', 'cons_11', 'cons_12',
             'cons_13',
-            'cons_01_12', 'cons_01_13']
+            'cons_01_12', 'cons_01_13',
+            'cons_0722_fuel', 'cons_07_ex_bigticket']
 col_inc = ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
 for i in col_cons + col_inc:
     pass

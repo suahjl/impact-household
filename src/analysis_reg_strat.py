@@ -59,7 +59,8 @@ col_cons = ['cons_01', 'cons_02', 'cons_03', 'cons_04',
             'cons_05', 'cons_06', 'cons_07', 'cons_08',
             'cons_09', 'cons_10', 'cons_11', 'cons_12',
             'cons_13',
-            'cons_01_12', 'cons_01_13']
+            'cons_01_12', 'cons_01_13',
+            'cons_0722_fuel', 'cons_07_ex_bigticket']
 col_inc = ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
 for i in col_cons + col_inc:
     pass
@@ -91,13 +92,15 @@ dict_cons_nice = \
         'cons_10': 'Education',
         'cons_11': 'Restaurant & Hotels',
         'cons_12': 'Misc',
-        'cons_13': 'Financial Expenses'
+        'cons_13': 'Financial Expenses',
+        'cons_0722_fuel': 'Transport: Fuel Only',
+        'cons_07_ex_bigticket': 'Transport ex. Vehicles & Maintenance'
     }
 # Define outcome lists
 list_outcome_choices = ['cons_01_13', 'cons_01_12'] + \
                        ['cons_0' + str(i) for i in range(1, 10)] + \
-                       ['cons_1' + str(i) for i in range(0, 4)]
-
+                       ['cons_1' + str(i) for i in range(0, 4)] + \
+                       ['cons_0722_fuel', 'cons_07_ex_bigticket']
 # Estimates
 round = 1
 for outcome in tqdm(list_outcome_choices):
@@ -252,8 +255,8 @@ heatmap_params_table_ind_ols_consol = heatmap(
     format='.3f'
 )
 telsendimg(conf=tel_config,
-           path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '.png',
-           cap='params_table_ind_ols_consol_strat_cons' + '_' + income_choice)
+           path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix  + '.png',
+           cap='params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
 
 
 # III.B --- Estimation: stratify by income groups (individual levels; no FD option)
@@ -297,7 +300,7 @@ for income_group in tqdm(range(0, int(df_ind['gross_income_group'].max() + 1))):
             axis=0)
     round += 1
 params_table_ind_ols_consol['outcome_variable'] = \
-    params_table_ind_ols_consol['outcome_variable']\
+    params_table_ind_ols_consol['outcome_variable'] \
         .replace(dict_cons_nice)
 params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
 params_table_ind_ols_consol = params_table_ind_ols_consol[['gross_income_group', 'Parameter', 'LowerCI', 'UpperCI']]

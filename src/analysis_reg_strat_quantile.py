@@ -67,7 +67,8 @@ def load_clean_estimate(
                 'cons_05', 'cons_06', 'cons_07', 'cons_08',
                 'cons_09', 'cons_10', 'cons_11', 'cons_12',
                 'cons_13',
-                'cons_01_12', 'cons_01_13']
+                'cons_01_12', 'cons_01_13',
+                'cons_0722_fuel', 'cons_07_ex_bigticket']
     col_inc = ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
     for i in col_cons + col_inc:
         pass
@@ -99,12 +100,15 @@ def load_clean_estimate(
             'cons_10': 'Education',
             'cons_11': 'Restaurant & Hotels',
             'cons_12': 'Misc',
-            'cons_13': 'Financial Expenses'
+            'cons_13': 'Financial Expenses',
+            'cons_0722_fuel': 'Transport: Fuel Only',
+            'cons_07_ex_bigticket': 'Transport ex. Vehicles & Maintenance'
         }
     # Define outcome lists
     list_outcome_choices = ['cons_01_13', 'cons_01_12'] + \
                            ['cons_0' + str(i) for i in range(1, 10)] + \
-                           ['cons_1' + str(i) for i in range(0, 4)]
+                           ['cons_1' + str(i) for i in range(0, 4)] + \
+                           ['cons_0722_fuel', 'cons_07_ex_bigticket']
     # Estimates: FE
     round = 1
     for outcome in tqdm(list_outcome_choices):
