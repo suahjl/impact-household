@@ -364,6 +364,137 @@ params_table_re_consol.to_csv('./output/params_table_re_consol_strat_cons_' +
 params_table_re_consol.to_parquet('./output/params_table_re_consol_strat_cons_' +
                                   income_choice + '_' + fd_suffix + '.parquet')
 
+# Generate consumption-specific distribution of MPCs along income quantile groups (the opposite of earlier)
+list_outcomes = ['cons_01_13', 'cons_01_12'] + \
+                ['cons_0' + str(i) for i in range(1, 10)] + \
+                ['cons_1' + str(i) for i in range(0, 4)] + \
+                ['cons_0722_fuel', 'cons_07_ex_bigticket']
+list_outcomes_nice = ['Consumption + Fin. Expenses',
+                      'Consumption',
+                      'Food & Beverages',
+                      'Alcohol & Tobacco',
+                      'Clothing & Footwear',
+                      'Rent & Utilities',
+                      'Furnishing, HH Equipment & Maintenance',
+                      'Healthcare',
+                      'Transport',
+                      'Communication',
+                      'Recreation & Culture',
+                      'Education',
+                      'Restaurant & Hotels',
+                      'Misc',
+                      'Financial Expenses',
+                      'Transport: Fuel Only',
+                      'Transport ex. Vehicles & Maintenance']
+list_filenames_fe = []
+list_filenames_timefe = []
+list_filenames_re = []
+params_table_fe_consol = params_table_fe_consol.reset_index()
+params_table_timefe_consol = params_table_timefe_consol.reset_index()
+params_table_re_consol = params_table_re_consol.reset_index()
+for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
+    # Fixed Effects
+    params_table_fe_cons = params_table_fe_consol[params_table_fe_consol['outcome_variable'] == outcome_nice].copy()
+    for col in ['outcome_variable', 'method']:
+        del params_table_fe_cons[col]
+    params_table_fe_cons = params_table_fe_cons.sort_values(by='quantile', ascending=True)
+    params_table_fe_cons = params_table_fe_cons.set_index('quantile')
+    heatmap_params_table_fe_cons = heatmap(
+        input=params_table_fe_cons,
+        mask=False,
+        colourmap='vlag',
+        outputfile='./output/params_table_fe_' + outcome + '_strat_incgroup_' +
+                   income_choice + '_' + fd_suffix + '.png',
+        title='FE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
+        lb=0,
+        ub=0.6,
+        format='.3f'
+    )
+    list_filenames_fe = list_filenames_fe + ['./output/params_table_fe_' + outcome + '_strat_incgroup_' +
+                                             income_choice + '_' + fd_suffix]
+    # Time Fixed Effects
+    params_table_timefe_cons = params_table_timefe_consol[
+        params_table_timefe_consol['outcome_variable'] == outcome_nice].copy()
+    for col in ['outcome_variable', 'method']:
+        del params_table_timefe_cons[col]
+    params_table_timefe_cons = params_table_timefe_cons.sort_values(by='quantile', ascending=True)
+    params_table_timefe_cons = params_table_timefe_cons.set_index('quantile')
+    heatmap_params_table_timefe_cons = heatmap(
+        input=params_table_timefe_cons,
+        mask=False,
+        colourmap='vlag',
+        outputfile='./output/params_table_timefe_' + outcome + '_strat_incgroup_' +
+                   income_choice + '_' + fd_suffix + '.png',
+        title='Time FE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
+        lb=0,
+        ub=0.6,
+        format='.3f'
+    )
+    list_filenames_timefe = list_filenames_timefe + ['./output/params_table_timefe_' + outcome + '_strat_incgroup_' +
+                                                     income_choice + '_' + fd_suffix]
+    # Random Effects
+    params_table_re_cons = params_table_re_consol[params_table_re_consol['outcome_variable'] == outcome_nice].copy()
+    for col in ['outcome_variable', 'method']:
+        del params_table_re_cons[col]
+    params_table_re_cons = params_table_re_cons.sort_values(by='quantile', ascending=True)
+    params_table_re_cons = params_table_re_cons.set_index('quantile')
+    heatmap_params_table_re_cons = heatmap(
+        input=params_table_re_cons,
+        mask=False,
+        colourmap='vlag',
+        outputfile='./output/params_table_re_' + outcome + '_strat_incgroup_' +
+                   income_choice + '_' + fd_suffix + '.png',
+        title='RE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
+        lb=0,
+        ub=0.6,
+        format='.3f'
+    )
+    list_filenames_re = list_filenames_re + ['./output/params_table_re_' + outcome + '_strat_incgroup_' +
+                                             income_choice + '_' + fd_suffix]
+
+# Group charts of c-specific mpcs by ygroups into pdf by methodology
+# FE
+pil_img2pdf(list_images=list_filenames_fe,
+            extension='png',
+            pdf_name='./output/params_table_fe_' + 'cons' + '_strat_incgroup_' +
+                     income_choice + '_' + fd_suffix)
+# Time FE
+pil_img2pdf(list_images=list_filenames_timefe,
+            extension='png',
+            pdf_name='./output/params_table_timefe_' + 'cons' + '_strat_incgroup_' +
+                     income_choice + '_' + fd_suffix)
+# RE
+pil_img2pdf(list_images=list_filenames_re,
+            extension='png',
+            pdf_name='./output/params_table_re_' + 'cons' + '_strat_incgroup_' +
+                     income_choice + '_' + fd_suffix)
+
+# Send charts of c-specific mpcs by ygroups into pdf by methodology
+# FE
+telsendfiles(
+    conf=tel_config,
+    path='./output/params_table_fe_' + 'cons' + '_strat_incgroup_' +
+         income_choice + '_' + fd_suffix + '.pdf',
+    cap='params_table_fe_' + 'cons' + '_strat_incgroup_' +
+        income_choice + '_' + fd_suffix
+)
+# Time FE
+telsendfiles(
+    conf=tel_config,
+    path='./output/params_table_timefe_' + 'cons' + '_strat_incgroup_' +
+         income_choice + '_' + fd_suffix + '.pdf',
+    cap='params_table_timefe_' + 'cons' + '_strat_incgroup_' +
+        income_choice + '_' + fd_suffix
+)
+# RE
+telsendfiles(
+    conf=tel_config,
+    path='./output/params_table_re_' + 'cons' + '_strat_incgroup_' +
+         income_choice + '_' + fd_suffix + '.pdf',
+    cap='params_table_re_' + 'cons' + '_strat_incgroup_' +
+        income_choice + '_' + fd_suffix
+)
+
 # --------- Analysis Ends ---------
 
 # X --- Notify

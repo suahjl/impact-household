@@ -8,6 +8,8 @@ import plotly.graph_objects as go
 from datetime import date
 from PIL import Image
 
+plt.switch_backend('agg')
+
 
 def telsendimg(conf='', path='', cap=''):
     with open(path, 'rb') as f:
@@ -183,7 +185,7 @@ def heatmap(input: pd.DataFrame, mask: bool, colourmap: str, outputfile: str, ti
                 annot=True,
                 cmap=colourmap,
                 center=0,
-                annot_kws={'size': 9},
+                annot_kws={'size': 12},
                 vmin=lb,
                 vmax=ub,
                 xticklabels=True,
@@ -191,7 +193,7 @@ def heatmap(input: pd.DataFrame, mask: bool, colourmap: str, outputfile: str, ti
                 fmt=format)
     plt.title(title, fontsize=11)
     plt.xticks(fontsize=9)
-    plt.yticks(fontsize=7)
+    plt.yticks(fontsize=9)
     fig.tight_layout()
     fig.savefig(outputfile)
     plt.close()
