@@ -83,7 +83,7 @@ def gen_igm_group(data):
     data.loc[data['income_gen_members'] == 1, 'income_gen_members_group'] = '1'
     data.loc[data['income_gen_members'] == 2, 'income_gen_members_group'] = '2'
     data.loc[data['income_gen_members'] >= 3, 'income_gen_members_group'] = '3+'
-    del data['income_gen_members']
+    # del data['income_gen_members']
 
 
 gen_igm_group(data=df_14)
@@ -109,7 +109,7 @@ def gen_child_group(data):
     data.loc[data['child'] == 1, 'child_group'] = '1'
     data.loc[data['child'] == 2, 'child_group'] = '2'
     data.loc[data['child'] >= 3, 'child_group'] = '3+'
-    del data['child']
+    # del data['child']
 
 
 gen_child_group(data=df_14)
@@ -134,7 +134,7 @@ def gen_adolescent_group(data):
     data.loc[data['adolescent'] == 0, 'adolescent_group'] = '0'
     data.loc[data['adolescent'] == 1, 'adolescent_group'] = '1'
     data.loc[data['adolescent'] >= 2, 'adolescent_group'] = '2+'
-    del data['adolescent']
+    # del data['adolescent']
 
 
 gen_adolescent_group(data=df_14)
@@ -241,7 +241,7 @@ def gen_age_group(data, aggregation):
         data.loc[(data['age'] <= 39), 'age_group'] = '0_39'
         data.loc[((data['age'] >= 40) & (data['age'] <= 59)), 'age_group'] = '40_59'
         data.loc[(data['age'] >= 60), 'age_group'] = '60+'
-    del data['age']
+    # del data['age']
 
 
 gen_age_group(data=df_14, aggregation=2)
@@ -274,7 +274,7 @@ def gen_birth_year_group(data, aggregation):
         data.loc[(data['birth_year'] >= 1980), 'birth_year_group'] = '1980+'
         data.loc[((data['birth_year'] >= 1960) & (data['birth_year'] <= 1979)), 'birth_year_group'] = '1960_79'
         data.loc[(data['birth_year'] <= 1959), 'birth_year_group'] = '1959-'
-    del data['birth_year']
+    # del data['birth_year']
 
 
 gen_birth_year_group(data=df_14, aggregation=2)
@@ -292,54 +292,6 @@ gen_birth_year_group(data=df_19_full, aggregation=2)
 gen_birth_year_group(data=df_14_full_hhbasis, aggregation=2)
 gen_birth_year_group(data=df_16_full_hhbasis, aggregation=2)
 gen_birth_year_group(data=df_19_full_hhbasis, aggregation=2)
-
-# IV.A --- Merger (group-level; 2014 - 2019)
-
-# Aggregation rule
-# dict_agg_rule = \
-#     {
-#         'salaried_wages': np.mean,
-#         'other_wages': np.mean,
-#         'asset_income': np.mean,
-#         'gross_transfers': np.mean,
-#         'gross_income': np.mean,
-#         'gross_margin': np.mean,
-#         'income_gen_members': np.mean,
-#         'cons_01_12': np.mean,
-#         'cons_01_13': np.mean,
-#         'cons_01': np.mean,
-#         'cons_02': np.mean,
-#         'cons_03': np.mean,
-#         'cons_04': np.mean,
-#         'cons_05': np.mean,
-#         'cons_06': np.mean,
-#         'cons_07': np.mean,
-#         'cons_08': np.mean,
-#         'cons_09': np.mean,
-#         'cons_10': np.mean,
-#         'cons_11': np.mean,
-#         'cons_12': np.mean,
-#         'cons_13': np.mean,
-#     }
-
-# Observables to be grouped on
-col_groups = \
-    [
-        'state',
-        'urban',
-        'education',
-        'ethnicity',
-        'malaysian',
-        'income_gen_members_group',
-        'adolescent_group',
-        'child_group',
-        'male',
-        'birth_year_group',
-        'marriage',
-        'emp_status',
-        'industry',
-        'occupation'
-    ]
 
 # Delete redundant columns; keep hh_size for hhbasis dataset
 for i in ['hh_size']:
@@ -364,8 +316,58 @@ for i in ['monthly_income', 'net_income', 'net_transfers', 'net_margin']:
     del df_16_full_hhbasis[i]
     del df_19_full_hhbasis[i]
 
+# Create copy of dataframes with base columns that have been transformed into categoricals
+df_14_withbase = df_14.copy()
+df_16_withbase = df_16.copy()
+df_19_withbase = df_19.copy()
+df_14_hhbasis_withbase = df_14_hhbasis.copy()
+df_16_hhbasis_withbase = df_16_hhbasis.copy()
+df_19_hhbasis_withbase = df_19_hhbasis.copy()
+df_14_full_withbase = df_14_full.copy()
+df_16_full_withbase = df_16_full.copy()
+df_19_full_withbase = df_19_full.copy()
+df_14_full_hhbasis_withbase = df_14_full_hhbasis.copy()
+df_16_full_hhbasis_withbase = df_16_full_hhbasis.copy()
+df_19_full_hhbasis_withbase = df_19_full_hhbasis.copy()
 
-# Cohort merger loop + output
+# Delete base columns that have been transformed into categoricals
+cols_base_group_transformed = ['age', 'income_gen_members', 'child', 'adolescent', 'birth_year']
+for i in cols_base_group_transformed:
+    del df_14[i]
+    del df_16[i]
+    del df_19[i]
+    del df_14_hhbasis[i]
+    del df_16_hhbasis[i]
+    del df_19_hhbasis[i]
+    del df_14_full[i]
+    del df_16_full[i]
+    del df_19_full[i]
+    del df_14_full_hhbasis[i]
+    del df_16_full_hhbasis[i]
+    del df_19_full_hhbasis[i]
+
+# IV.A --- Merger (group-level; 2014 - 2019)
+# Observables to be grouped on
+col_groups = \
+    [
+        'state',
+        'urban',
+        'education',
+        'ethnicity',
+        'malaysian',
+        'income_gen_members_group',
+        'adolescent_group',
+        'child_group',
+        'male',
+        'birth_year_group',
+        'marriage',
+        'emp_status',
+        'industry',
+        'occupation'
+    ]
+
+
+# Functions
 def gen_pseudopanel(data1, data2, data3, list_cols_cohort, use_mean, use_quantile, quantile_choice, file_suffix):
     # Groupby operation
     if use_mean and not use_quantile:
@@ -541,6 +543,7 @@ def gen_pseudopanel_distgroup_fixed_axis(
     return df_agg, df_agg_balanced
 
 
+# The merging part
 df_agg_mean, df_agg_balanced_mean = gen_pseudopanel(
     data1=df_14,
     data2=df_16,
@@ -552,44 +555,6 @@ df_agg_mean, df_agg_balanced_mean = gen_pseudopanel(
     file_suffix='mean'
 )
 
-# list_quantiles = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-# list_suffixes = ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p', '100p']
-# for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
-    # Quantiles across all income and consumption categories
-    # df_agg_quantile, df_agg_balanced_quantile = gen_pseudopanel(
-    #     data1=df_14,
-    #     data2=df_16,
-    #     data3=df_19,
-    #     list_cols_cohort=col_groups,
-    #     use_mean=False,
-    #     use_quantile=True,
-    #     quantile_choice=quantile,
-    #     file_suffix=suffix
-    # )
-
-    # Use fixed axis on gross income when generating quantile-specific cohort panel
-    # df_agg_quantile, df_agg_balanced_quantile = gen_pseudopanel_quantile_fixed_axis(
-    #     data1=df_14,
-    #     data2=df_16,
-    #     data3=df_19,
-    #     fixed_axis='gross_income',
-    #     list_cols_cohort=col_groups,
-    #     quantile_choice=quantile,
-    #     file_suffix=suffix
-    # )
-
-# list_distbounds = [
-#     [0, 0.1],
-#     [0.1, 0.2],
-#     [0.2, 0.3],
-#     [0.3, 0.4],
-#     [0.4, 0.5],
-#     [0.5, 0.6],
-#     [0.6, 0.7],
-#     [0.7, 0.8],
-#     [0.8, 0.9],
-#     [0.9, 1]
-# ]
 list_distbounds = [
     [0, 0.2],
     [0.2, 0.4],
@@ -642,6 +607,114 @@ df_19_full_hhbasis['year'] = 2019
 df_ind_full_hhbasis = pd.concat([df_14_full_hhbasis, df_16_full_hhbasis, df_19_full_hhbasis], axis=0)
 df_ind_full_hhbasis = df_ind_full_hhbasis.sort_values(by=col_groups + ['year']).reset_index(drop=True)
 df_ind_full_hhbasis.to_parquet(path_data + 'hies_consol_ind_full_hhbasis.parquet')
+
+# IV.B --- Merger (group-level; 2014 - 2019; for subgroup analyses)
+# Remove years
+del df_14['year']
+del df_16['year']
+del df_19['year']
+# All B40
+df_14_b40 = df_14_withbase[df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)].copy()
+df_16_b40 = df_16_withbase[df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)].copy()
+df_19_b40 = df_19_withbase[df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)].copy()
+for i in cols_base_group_transformed:
+    del df_14_b40[i]
+    del df_16_b40[i]
+    del df_19_b40[i]
+df_agg_mean_b40, df_agg_balanced_mean_b40 = gen_pseudopanel(
+    data1=df_14_b40,
+    data2=df_16_b40,
+    data3=df_19_b40,
+    list_cols_cohort=col_groups,
+    use_mean=True,
+    use_quantile=False,
+    quantile_choice=0.5,
+    file_suffix='mean_b40'
+)
+
+# B40 with no children
+df_14_b40_0c = df_14_withbase[((df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)) &
+                               ((df_14_withbase['child'] == 0) & (df_14_withbase['adolescent']) == 0))].copy()
+df_16_b40_0c = df_16_withbase[((df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)) &
+                               ((df_16_withbase['child'] == 0) & (df_16_withbase['adolescent']) == 0))].copy()
+df_19_b40_0c = df_19_withbase[((df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)) &
+                               ((df_19_withbase['child'] == 0) & (df_19_withbase['adolescent']) == 0))].copy()
+for i in cols_base_group_transformed:
+    del df_14_b40_0c[i]
+    del df_16_b40_0c[i]
+    del df_19_b40_0c[i]
+df_agg_mean_b40_0c, df_agg_balanced_mean_b40_0c = gen_pseudopanel(
+    data1=df_14_b40_0c,
+    data2=df_16_b40_0c,
+    data3=df_19_b40_0c,
+    list_cols_cohort=col_groups,
+    use_mean=True,
+    use_quantile=False,
+    quantile_choice=0.5,
+    file_suffix='mean_b40_0c'
+)
+
+# B40 with at least one child / adolescents
+df_14_b40_1c = df_14_withbase[((df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)) &
+                               ((df_14_withbase['child'] >= 1) | (df_14_withbase['adolescent']) >= 1))].copy()
+df_16_b40_1c = df_16_withbase[((df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)) &
+                               ((df_16_withbase['child'] >= 1) | (df_16_withbase['adolescent']) >= 1))].copy()
+df_19_b40_1c = df_19_withbase[((df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)) &
+                               ((df_19_withbase['child'] >= 1) | (df_19_withbase['adolescent']) >= 1))].copy()
+for i in cols_base_group_transformed:
+    del df_14_b40_1c[i]
+    del df_16_b40_1c[i]
+    del df_19_b40_1c[i]
+df_agg_mean_b40_1c, df_agg_balanced_mean_b40_1c = gen_pseudopanel(
+    data1=df_14_b40_1c,
+    data2=df_16_b40_1c,
+    data3=df_19_b40_1c,
+    list_cols_cohort=col_groups,
+    use_mean=True,
+    use_quantile=False,
+    quantile_choice=0.5,
+    file_suffix='mean_b40_1c'
+)
+
+# B60 working age
+df_14_b60_workage = df_14_withbase[((df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.6)) &
+                                    ((df_14_withbase['age'] >= 18) & (df_14_withbase['age']) <= 69))].copy()
+df_16_b60_workage = df_16_withbase[((df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.6)) &
+                                    ((df_16_withbase['age'] >= 18) & (df_16_withbase['age']) <= 69))].copy()
+df_19_b60_workage = df_19_withbase[((df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.6)) &
+                                    ((df_19_withbase['age'] >= 18) & (df_19_withbase['age']) <= 69))].copy()
+for i in cols_base_group_transformed:
+    del df_14_b60_workage[i]
+    del df_16_b60_workage[i]
+    del df_19_b60_workage[i]
+df_agg_mean_b60_workage, df_agg_balanced_mean_b60_workage = gen_pseudopanel(
+    data1=df_14_b60_workage,
+    data2=df_16_b60_workage,
+    data3=df_19_b60_workage,
+    list_cols_cohort=col_groups,
+    use_mean=True,
+    use_quantile=False,
+    quantile_choice=0.5,
+    file_suffix='mean_b60_workage'
+)
+# All elderly
+df_14_elderly = df_14_withbase[df_14_withbase['age'] >= 70].copy()
+df_16_elderly = df_16_withbase[df_16_withbase['age'] >= 70].copy()
+df_19_elderly = df_19_withbase[df_19_withbase['age'] >= 70].copy()
+for i in cols_base_group_transformed:
+    del df_14_elderly[i]
+    del df_16_elderly[i]
+    del df_19_elderly[i]
+df_agg_mean_elderly, df_agg_balanced_mean_elderly = gen_pseudopanel(
+    data1=df_14_elderly,
+    data2=df_16_elderly,
+    data3=df_19_elderly,
+    list_cols_cohort=col_groups,
+    use_mean=True,
+    use_quantile=False,
+    quantile_choice=0.5,
+    file_suffix='mean_elderly'
+)
 
 # X --- Notify
 telsendmsg(conf=tel_config,
