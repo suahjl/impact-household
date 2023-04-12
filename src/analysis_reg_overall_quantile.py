@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols
+from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, barchart
 from tabulate import tabulate
 import dataframe_image as dfi
 from tqdm import tqdm
@@ -24,7 +24,7 @@ if use_first_diff:
     fd_suffix = 'fd'
 elif not use_first_diff:
     fd_suffix = 'level'
-
+show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 
 # --------- Analysis Starts ---------
 
@@ -165,13 +165,20 @@ for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
     round += 1
 
 # Set type
-dict_dtype = {
-    'Parameter': 'float',
-    # 'SE': 'float',
-    'LowerCI': 'float',
-    'UpperCI': 'float',
-    'quantile': 'str'
-}
+if show_ci:
+    dict_dtype = {
+        'Parameter': 'float',
+        # 'SE': 'float',
+        'LowerCI': 'float',
+        'UpperCI': 'float',
+        'quantile': 'str'
+    }
+if not show_ci:
+    dict_dtype = {
+        'Parameter': 'float',
+        # 'SE': 'float',
+        'quantile': 'str'
+    }
 params_table_fe_consol = params_table_fe_consol.astype(dict_dtype)
 params_table_timefe_consol = params_table_timefe_consol.astype(dict_dtype)
 params_table_re_consol = params_table_re_consol.astype(dict_dtype)

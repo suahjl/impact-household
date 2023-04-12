@@ -318,6 +318,9 @@ for y in tqdm(list_outcomes):
         colours=list_colours_time,
         main_title='Boxplot of ' + y + ' by ' + 'gross_income_group' + ' over time'
     )
+    if y == 'gross_transfers':  # special y axis range for transfers
+        boxplot_marginsinccons_incgroup.update_yaxes(range=[0, 2500],
+                                                     showgrid=True, gridwidth=1, gridcolor='grey')
     boxplot_name = 'output/boxplot_' + y + '_incgroup_years'
     list_boxplot_names = list_boxplot_names + [boxplot_name]
     boxplot_marginsinccons_incgroup.write_image('output/boxplot_' + y + '_incgroup_years.png')
@@ -382,81 +385,83 @@ telsendfiles(
 )
 
 # III.C --- Stratify quantiles of consumption type and income type, by observables and by time
-# Generate heat tables (y by categorical observables)
-for x in tqdm(list_groups):
-    list_boxplot_names = []  # reset every x loop
-    list_heattable_names = []  # reset every x loop
-    for y in list_outcomes:
-        # Box plots
-        boxplot_marginsinccons_obs = boxplot_time(
-            data=df,
-            y_col=y,
-            x_col=x,
-            t_col='year',
-            colours=list_colours_time,
-            main_title='Boxplot of ' + y + ' by ' + x + ' over time'
-        )
-        boxplot_name = 'output/boxplot_' + y + '_' + x + '_years'
-        list_boxplot_names = list_boxplot_names + [boxplot_name]
-        boxplot_marginsinccons_obs.write_image('output/boxplot_' + y + '_' + x + '_years.png')
-        # Latest medians
-        latest_median_marginsinccons_obs = df[df['year'] == 2019].groupby(x)[y].median().reset_index()
-        latest_median_name = 'output/latest_median_' + y + '_' + x + '_years'
-        list_latest_median_names = list_latest_median_names + [latest_median_name]
-        dfi.export(latest_median_marginsinccons_obs, latest_median_name + '.png',
-                   fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)
-        # Heatmaps
-        for t in df['year'].unique():
-            tab_marginsinccons_obs = capybara_mini(
-                data=df[df['year'] == t],
+skip_inc_cons_by_obs = True
+if not skip_inc_cons_by_obs:
+    # Generate heat tables (y by categorical observables)
+    for x in tqdm(list_groups):
+        list_boxplot_names = []  # reset every x loop
+        list_heattable_names = []  # reset every x loop
+        for y in list_outcomes:
+            # Box plots
+            boxplot_marginsinccons_obs = boxplot_time(
+                data=df,
                 y_col=y,
                 x_col=x,
-                quantiles=list_quantiles,
-                quantiles_nice=list_quantiles_nice
+                t_col='year',
+                colours=list_colours_time,
+                main_title='Boxplot of ' + y + ' by ' + x + ' over time'
             )
-            tab_marginsinccons_obs = tab_marginsinccons_obs.transpose()  # more space horizontally for values
-            heattable_name = 'output/tab_' + y + '_' + x + '_' + str(t)
-            list_heattable_names = list_heattable_names + [heattable_name]
-            fig_marginsinccons_incgroup = heatmap(
-                input=tab_marginsinccons_obs,
-                mask=False,
-                colourmap='vlag',
-                outputfile=heattable_name + '.png',
-                title='Quantiles of ' + y + ' by ' + x + ' for year ' + str(t),
-                lb=tab_marginsinccons_obs.min().max(),
-                ub=tab_marginsinccons_obs.max().max(),
-                format='.0f'
-            )
-    pil_img2pdf(
-        list_images=list_heattable_names,
-        extension='png', pdf_name='output/tab_marginsinccons_' + x + '_years'
-    )
-    # telsendfiles(
-    #     conf=tel_config,
-    #     path='output/tab_marginsinccons_' + x + '_years.pdf',
-    #     cap='tab_marginsinccons_' + x + '_years'
-    # )
-    # Continue boxplots
-    pil_img2pdf(
-        list_images=list_boxplot_names,
-        extension='png', pdf_name='output/boxplot_marginsinccons_' + x + '_years'
-    )
-    # telsendfiles(
-    #     conf=tel_config,
-    #     path='output/boxplot_marginsinccons_' + x + '_years.pdf',
-    #     cap='boxplot_marginsinccons_' + x + '_years.pdf'
-    # )
-    # Continue latest medians
-    pil_img2pdf(
-        list_images=list_latest_median_names,
-        extension='png',
-        pdf_name='output/latest_median_marginsinccons_' + x + '_years'
-    )
-    # telsendfiles(
-    #     conf=tel_config,
-    #     path='output/latest_median_marginsinccons_' + x + '_years.pdf',
-    #     cap='latest_median_marginsinccons_' + x + '_years'
-    # )
+            boxplot_name = 'output/boxplot_' + y + '_' + x + '_years'
+            list_boxplot_names = list_boxplot_names + [boxplot_name]
+            boxplot_marginsinccons_obs.write_image('output/boxplot_' + y + '_' + x + '_years.png')
+            # Latest medians
+            latest_median_marginsinccons_obs = df[df['year'] == 2019].groupby(x)[y].median().reset_index()
+            latest_median_name = 'output/latest_median_' + y + '_' + x + '_years'
+            list_latest_median_names = list_latest_median_names + [latest_median_name]
+            dfi.export(latest_median_marginsinccons_obs, latest_median_name + '.png',
+                       fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)
+            # Heatmaps
+            for t in df['year'].unique():
+                tab_marginsinccons_obs = capybara_mini(
+                    data=df[df['year'] == t],
+                    y_col=y,
+                    x_col=x,
+                    quantiles=list_quantiles,
+                    quantiles_nice=list_quantiles_nice
+                )
+                tab_marginsinccons_obs = tab_marginsinccons_obs.transpose()  # more space horizontally for values
+                heattable_name = 'output/tab_' + y + '_' + x + '_' + str(t)
+                list_heattable_names = list_heattable_names + [heattable_name]
+                fig_marginsinccons_incgroup = heatmap(
+                    input=tab_marginsinccons_obs,
+                    mask=False,
+                    colourmap='vlag',
+                    outputfile=heattable_name + '.png',
+                    title='Quantiles of ' + y + ' by ' + x + ' for year ' + str(t),
+                    lb=tab_marginsinccons_obs.min().max(),
+                    ub=tab_marginsinccons_obs.max().max(),
+                    format='.0f'
+                )
+        pil_img2pdf(
+            list_images=list_heattable_names,
+            extension='png', pdf_name='output/tab_marginsinccons_' + x + '_years'
+        )
+        # telsendfiles(
+        #     conf=tel_config,
+        #     path='output/tab_marginsinccons_' + x + '_years.pdf',
+        #     cap='tab_marginsinccons_' + x + '_years'
+        # )
+        # Continue boxplots
+        pil_img2pdf(
+            list_images=list_boxplot_names,
+            extension='png', pdf_name='output/boxplot_marginsinccons_' + x + '_years'
+        )
+        # telsendfiles(
+        #     conf=tel_config,
+        #     path='output/boxplot_marginsinccons_' + x + '_years.pdf',
+        #     cap='boxplot_marginsinccons_' + x + '_years.pdf'
+        # )
+        # Continue latest medians
+        pil_img2pdf(
+            list_images=list_latest_median_names,
+            extension='png',
+            pdf_name='output/latest_median_marginsinccons_' + x + '_years'
+        )
+        # telsendfiles(
+        #     conf=tel_config,
+        #     path='output/latest_median_marginsinccons_' + x + '_years.pdf',
+        #     cap='latest_median_marginsinccons_' + x + '_years'
+        # )
 
 # X --- Notify
 telsendmsg(conf=tel_config,

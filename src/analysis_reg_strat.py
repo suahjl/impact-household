@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap
+from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap, barchart
 from tabulate import tabulate
 from tqdm import tqdm
 import dataframe_image as dfi
@@ -24,6 +24,7 @@ if use_first_diff:
     fd_suffix = 'fd'
 elif not use_first_diff:
     fd_suffix = 'level'
+show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 
 # I --- Load data
 df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_mean.parquet')
@@ -128,6 +129,9 @@ params_table_fe_consol['outcome_variable'] = \
         .replace(dict_cons_nice)
 params_table_fe_consol = params_table_fe_consol.set_index('outcome_variable')
 params_table_fe_consol = params_table_fe_consol.astype('float')
+if not show_ci:
+    for col in ['LowerCI', 'UpperCI']:
+        del params_table_fe_consol[col]
 heatmap_params_table_fe_consol = heatmap(
     input=params_table_fe_consol,
     mask=False,
@@ -136,7 +140,7 @@ heatmap_params_table_fe_consol = heatmap(
     title='',
     lb=0,
     ub=0.6,
-    format='.3f'
+    format='.2f'
 )
 telsendimg(conf=tel_config,
            path='output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
@@ -168,6 +172,9 @@ params_table_timefe_consol['outcome_variable'] = \
         .replace(dict_cons_nice)
 params_table_timefe_consol = params_table_timefe_consol.set_index('outcome_variable')
 params_table_timefe_consol = params_table_timefe_consol.astype('float')
+if not show_ci:
+    for col in ['LowerCI', 'UpperCI']:
+        del params_table_timefe_consol[col]
 heatmap_params_table_timefe_consol = heatmap(
     input=params_table_timefe_consol,
     mask=False,
@@ -176,7 +183,7 @@ heatmap_params_table_timefe_consol = heatmap(
     title='',
     lb=0,
     ub=0.6,
-    format='.3f'
+    format='.2f'
 )
 telsendimg(conf=tel_config,
            path='output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
@@ -206,6 +213,9 @@ params_table_re_consol['outcome_variable'] = \
         .replace(dict_cons_nice)
 params_table_re_consol = params_table_re_consol.set_index('outcome_variable')
 params_table_re_consol = params_table_re_consol.astype('float')
+if not show_ci:
+    for col in ['LowerCI', 'UpperCI']:
+        del params_table_re_consol[col]
 heatmap_params_table_re_consol = heatmap(
     input=params_table_re_consol,
     mask=False,
@@ -214,7 +224,7 @@ heatmap_params_table_re_consol = heatmap(
     title='',
     lb=0,
     ub=0.6,
-    format='.3f'
+    format='.2f'
 )
 telsendimg(conf=tel_config,
            path='output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
@@ -244,6 +254,9 @@ params_table_ind_ols_consol['outcome_variable'] = \
         .replace(dict_cons_nice)
 params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
 params_table_ind_ols_consol = params_table_ind_ols_consol.astype('float')
+if not show_ci:
+    for col in ['LowerCI', 'UpperCI']:
+        del params_table_ind_ols_consol[col]
 heatmap_params_table_ind_ols_consol = heatmap(
     input=params_table_ind_ols_consol,
     mask=False,
@@ -252,7 +265,7 @@ heatmap_params_table_ind_ols_consol = heatmap(
     title='',
     lb=0,
     ub=0.6,
-    format='.3f'
+    format='.2f'
 )
 telsendimg(conf=tel_config,
            path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix  + '.png',
@@ -304,6 +317,9 @@ params_table_ind_ols_consol['outcome_variable'] = \
         .replace(dict_cons_nice)
 params_table_ind_ols_consol = params_table_ind_ols_consol.set_index('outcome_variable')
 params_table_ind_ols_consol = params_table_ind_ols_consol[['gross_income_group', 'Parameter', 'LowerCI', 'UpperCI']]
+if not show_ci:
+    for col in ['LowerCI', 'UpperCI']:
+        del params_table_ind_ols_consol[col]
 dfi.export(params_table_ind_ols_consol,
            'output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '.png')
 telsendimg(conf=tel_config,

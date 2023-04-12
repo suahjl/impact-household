@@ -168,6 +168,7 @@ _temp_pyceic.py
 /output/*
 /presentations/*
 /papers/*
+/spreadsheets/*
 
 # seasonal adjustment exe file
 x13as_ascii.exe

@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap, pil_img2pdf
+from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap, pil_img2pdf, barchart
 from tabulate import tabulate
 from tqdm import tqdm
 import dataframe_image as dfi
@@ -24,6 +24,7 @@ if use_first_diff:
     fd_suffix = 'fd'
 elif not use_first_diff:
     fd_suffix = 'level'
+show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 
 
 # --------- Analysis Starts (only cohort pseudo-panel data regressions) ---------
@@ -32,7 +33,8 @@ elif not use_first_diff:
 def load_clean_estimate(
         input_suffix,
         opt_income,
-        opt_first_diff
+        opt_first_diff,
+        opt_show_ci
 ):
     # I --- Load data
     df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_' + input_suffix + '.parquet')
@@ -136,6 +138,9 @@ def load_clean_estimate(
             .replace(dict_cons_nice)
     params_table_fe_consol = params_table_fe_consol.set_index('outcome_variable')
     params_table_fe_consol = params_table_fe_consol.astype('float')
+    if not opt_show_ci:
+        for col in ['LowerCI', 'UpperCI']:
+            del params_table_fe_consol[col]
 
     # Estimates: time FE
     round = 1
@@ -164,6 +169,9 @@ def load_clean_estimate(
             .replace(dict_cons_nice)
     params_table_timefe_consol = params_table_timefe_consol.set_index('outcome_variable')
     params_table_timefe_consol = params_table_timefe_consol.astype('float')
+    if not opt_show_ci:
+        for col in ['LowerCI', 'UpperCI']:
+            del params_table_timefe_consol[col]
 
     # Estimates: RE
     round = 1
@@ -190,6 +198,9 @@ def load_clean_estimate(
             .replace(dict_cons_nice)
     params_table_re_consol = params_table_re_consol.set_index('outcome_variable')
     params_table_re_consol = params_table_re_consol.astype('float')
+    if not opt_show_ci:
+        for col in ['LowerCI', 'UpperCI']:
+            del params_table_re_consol[col]
 
     # IV --- Output
     return params_table_fe_consol, params_table_timefe_consol, params_table_re_consol
@@ -209,7 +220,8 @@ for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
     params_table_fe, params_table_timefe, params_table_re = load_clean_estimate(
         input_suffix=suffix,
         opt_income=income_choice,
-        opt_first_diff=use_first_diff
+        opt_first_diff=use_first_diff,
+        opt_show_ci=show_ci
     )
     # Save quantile-method-specific frame as heatmap
     # FE
@@ -222,7 +234,7 @@ for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
         title='Fixed effects: MPC by cons type for ' + quantile + ' group',
         lb=0,
         ub=0.6,
-        format='.3f'
+        format='.2f'
     )
     list_filenames_fe = list_filenames_fe + ['./output/params_table_fe_strat_cons_' +
                                              income_choice + '_' + fd_suffix + '_' + suffix]
@@ -243,7 +255,7 @@ for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
         title='Time FE: MPC by cons type for ' + quantile + ' group',
         lb=0,
         ub=0.6,
-        format='.3f'
+        format='.2f'
     )
     list_filenames_timefe = list_filenames_timefe + ['./output/params_table_timefe_strat_cons_' +
                                                      income_choice + '_' + fd_suffix + '_' + suffix]
@@ -264,7 +276,7 @@ for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
         title='Random Effects: MPC by cons type for ' + quantile + ' group',
         lb=0,
         ub=0.6,
-        format='.3f'
+        format='.2f'
     )
     list_filenames_re = list_filenames_re + ['./output/params_table_re_strat_cons_' +
                                              income_choice + '_' + fd_suffix + '_' + suffix]
@@ -331,19 +343,29 @@ for i in [
     )
 
 # Set type for consolidated dataframe
-dict_dtype = {
-    'Parameter': 'float',
-    # 'SE': 'float',
-    'LowerCI': 'float',
-    'UpperCI': 'float',
-    'quantile': 'str'
-}
+if show_ci:
+    dict_dtype = {
+        'Parameter': 'float',
+        # 'SE': 'float',
+        'LowerCI': 'float',
+        'UpperCI': 'float',
+        'quantile': 'str'
+    }
+if not show_ci:
+    dict_dtype = {
+        'Parameter': 'float',
+        # 'SE': 'float',
+        'quantile': 'str'
+    }
 params_table_fe_consol = params_table_fe_consol.astype(dict_dtype)
 params_table_timefe_consol = params_table_timefe_consol.astype(dict_dtype)
 params_table_re_consol = params_table_re_consol.astype(dict_dtype)
 
 # Sort subgroups
-col_sort_order = ['method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']
+if show_ci:
+    col_sort_order = ['method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']
+if not show_ci:
+    col_sort_order = ['method', 'quantile', 'Parameter']
 params_table_fe_consol = params_table_fe_consol[col_sort_order]
 params_table_timefe_consol = params_table_timefe_consol[col_sort_order]
 params_table_re_consol = params_table_re_consol[col_sort_order]
@@ -408,10 +430,23 @@ for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
         title='FE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
         lb=0,
         ub=0.6,
-        format='.3f'
+        format='.2f'
     )
     list_filenames_fe = list_filenames_fe + ['./output/params_table_fe_' + outcome + '_strat_incgroup_' +
                                              income_choice + '_' + fd_suffix]
+    params_table_fe_cons = params_table_fe_cons.reset_index()
+    bar_params_table_fe_cons = barchart(
+        data=params_table_fe_cons,
+        y_col='Parameter',
+        x_col='quantile',
+        main_title='FE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
+        decimal_points=2
+    )
+    bar_params_table_fe_cons.write_image('./output/bar_params_table_fe_' + outcome + '_strat_incgroup_' +
+                                         income_choice + '_' + fd_suffix + '.png')
+    list_filenames_fe = list_filenames_fe + ['./output/bar_params_table_fe_' + outcome + '_strat_incgroup_' +
+                                             income_choice + '_' + fd_suffix]
+
     # Time Fixed Effects
     params_table_timefe_cons = params_table_timefe_consol[
         params_table_timefe_consol['outcome_variable'] == outcome_nice].copy()
@@ -428,10 +463,24 @@ for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
         title='Time FE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
         lb=0,
         ub=0.6,
-        format='.3f'
+        format='.2f'
     )
     list_filenames_timefe = list_filenames_timefe + ['./output/params_table_timefe_' + outcome + '_strat_incgroup_' +
                                                      income_choice + '_' + fd_suffix]
+    params_table_timefe_cons = params_table_timefe_cons.reset_index()
+    bar_params_table_timefe_cons = barchart(
+        data=params_table_timefe_cons,
+        y_col='Parameter',
+        x_col='quantile',
+        main_title='Time FE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
+        decimal_points=2
+    )
+    bar_params_table_timefe_cons.write_image('./output/bar_params_table_timefe_' + outcome + '_strat_incgroup_' +
+                                             income_choice + '_' + fd_suffix + '.png')
+    list_filenames_timefe = list_filenames_timefe + [
+        './output/bar_params_table_timefe_' + outcome + '_strat_incgroup_' +
+        income_choice + '_' + fd_suffix]
+
     # Random Effects
     params_table_re_cons = params_table_re_consol[params_table_re_consol['outcome_variable'] == outcome_nice].copy()
     for col in ['outcome_variable', 'method']:
@@ -447,10 +496,23 @@ for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
         title='RE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
         lb=0,
         ub=0.6,
-        format='.3f'
+        format='.2f'
     )
     list_filenames_re = list_filenames_re + ['./output/params_table_re_' + outcome + '_strat_incgroup_' +
                                              income_choice + '_' + fd_suffix]
+    params_table_re_cons = params_table_re_cons.reset_index()
+    bar_params_table_re_cons = barchart(
+        data=params_table_re_cons,
+        y_col='Parameter',
+        x_col='quantile',
+        main_title='RE: MPC of ' + outcome_nice + ' from ' + income_choice + ' by income quantile groups',
+        decimal_points=2
+    )
+    bar_params_table_re_cons.write_image('./output/bar_params_table_re_' + outcome + '_strat_incgroup_' +
+                                         income_choice + '_' + fd_suffix + '.png')
+    list_filenames_re = list_filenames_re + [
+        './output/bar_params_table_re_' + outcome + '_strat_incgroup_' +
+        income_choice + '_' + fd_suffix]
 
 # Group charts of c-specific mpcs by ygroups into pdf by methodology
 # FE

@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols
+from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, barchart
 from tabulate import tabulate
 import dataframe_image as dfi
 from tqdm import tqdm
@@ -24,6 +24,7 @@ if use_first_diff:
     fd_suffix = 'fd'
 elif not use_first_diff:
     fd_suffix = 'level'
+show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 
 # I --- Load data
 df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_mean.parquet')
@@ -120,7 +121,10 @@ params_table_cohort = pd.concat([pd.DataFrame(params_table_fe.loc[income_choice]
                                  pd.DataFrame(params_table_timefe.loc[income_choice]).transpose(),
                                  pd.DataFrame(params_table_re.loc[income_choice]).transpose()], axis=0)
 # Order columns
-params_table_cohort = params_table_cohort[['method', 'Parameter', 'LowerCI', 'UpperCI']]
+if show_ci:
+    params_table_cohort = params_table_cohort[['method', 'Parameter', 'LowerCI', 'UpperCI']]
+if not show_ci:
+    params_table_cohort = params_table_cohort[['method', 'Parameter']]
 # Export
 dfi.export(params_table_cohort,
            'output/params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
@@ -141,6 +145,9 @@ mod_ind_ols, res_ind_ols, params_table_ind_ols, joint_teststats_ind_ols, reg_det
             'C(child_group) + male + C(birth_year_group) + C(marriage) + ' +
             'C(emp_status) + C(industry) + C(occupation) + C(year)'
     )
+if not show_ci:
+    for col in ['LowerCI', 'UpperCI']:
+        del params_table_ind_ols[col]
 dfi.export(pd.DataFrame(params_table_ind_ols.loc[income_choice]),
            'output/params_table_ind_ols_overall' + '_' + outcome_choice + '_' + income_choice + '.png',
            fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)  # to overcome mar2023 error

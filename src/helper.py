@@ -1,6 +1,7 @@
 import pandas as pd
 import telegram_send
 from linearmodels import PanelOLS, RandomEffects
+import plotly.graph_objects as go
 import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -303,5 +304,36 @@ def boxplot_time(
         width=1366
     )
     fig.update_xaxes(categoryorder='category ascending')
+    # output
+    return fig
+
+def barchart(
+        data: pd.DataFrame,
+        y_col: str,
+        x_col: str,
+        main_title: str,
+        decimal_points: int
+):
+    # generate figure
+    fig = go.Figure()
+    # add bar chart
+    fig.add_trace(
+        go.Bar(
+            x=data[x_col],
+            y=data[y_col],
+            marker=dict(color='lightblue'),
+            text=data[y_col].round(decimal_points).astype('str'),
+            textposition='outside'
+        )
+    )
+    # layouts
+    fig.update_layout(
+        title=main_title,
+        plot_bgcolor='white',
+        font=dict(color='black', size=16),
+        height=768,
+        width=1366,
+    )
+    fig.update_traces(textfont_size=28)
     # output
     return fig
