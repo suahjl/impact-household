@@ -42,8 +42,11 @@ col_groups = \
         'ethnicity',
         'malaysian',
         'income_gen_members_group',
+        'working_adult_females_group',
+        'non_working_adult_females_group',
         'adolescent_group',
         'child_group',
+        'elderly_group',
         'male',
         'birth_year_group',
         'marriage',
@@ -237,8 +240,10 @@ for outcome in tqdm(list_outcome_choices):
             df=df_ind,
             eqn=outcome + ' ~ ' + income_choice + ' + ' +
                 'C(state) + urban + C(education) + C(ethnicity) + ' +
-                'malaysian + C(income_gen_members_group) + C(adolescent_group) +' +
-                'C(child_group) + male + C(birth_year_group) + C(marriage) + ' +
+                'malaysian + C(income_gen_members_group) + ' +
+                'C(non_working_adult_females_group) + C(working_adult_females_group) + ' +
+                'C(adolescent_group) + C(child_group) + C(elderly_group) + ' +
+                'male + C(birth_year_group) + C(marriage) + ' +
                 'C(emp_status) + C(industry) + C(occupation) + C(year)'
         )
     params_table_ind_ols['outcome_variable'] = outcome
@@ -268,7 +273,7 @@ heatmap_params_table_ind_ols_consol = heatmap(
     format='.2f'
 )
 telsendimg(conf=tel_config,
-           path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix  + '.png',
+           path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
            cap='params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
 
 

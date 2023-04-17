@@ -42,8 +42,11 @@ col_groups = \
         'ethnicity',
         'malaysian',
         'income_gen_members_group',
+        'working_adult_females_group',
+        'non_working_adult_females_group',
         'adolescent_group',
         'child_group',
+        'elderly_group',
         'male',
         'birth_year_group',
         'marriage',
@@ -141,8 +144,10 @@ mod_ind_ols, res_ind_ols, params_table_ind_ols, joint_teststats_ind_ols, reg_det
         df=df_ind,
         eqn=outcome_choice + ' ~ ' + income_choice + ' + ' +
             'C(state) + urban + C(education) + C(ethnicity) + ' +
-            'malaysian + C(income_gen_members_group) + C(adolescent_group) +' +
-            'C(child_group) + male + C(birth_year_group) + C(marriage) + ' +
+            'malaysian + C(income_gen_members_group) + ' +
+            'C(non_working_adult_females_group) + C(working_adult_females_group) + ' +
+            'C(adolescent_group) + C(child_group) + C(elderly_group) + ' +
+            'male + C(birth_year_group) + C(marriage) + ' +
             'C(emp_status) + C(industry) + C(occupation) + C(year)'
     )
 if not show_ci:

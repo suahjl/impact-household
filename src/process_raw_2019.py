@@ -205,13 +205,30 @@ df_b2['IND'] = df_b2['IND'].replace(dict_ind)
 # b2: Separate column for number of income-generating members
 b2_income_gen = df_b2.groupby('HID')['PP'].sum().reset_index().rename(columns={'PP': 'income_gen_members'})
 
-# b2: Separate column for <= 12 year-olds, and <= 17 year-olds
+# b2: non-income-generating adult females (18-59)
+b2_idle_women = df_b2[(((df_b2['U'] >= 18) & (df_b2['U'] < 60)) &
+                       (df_b2['PP'] == 0) & (df_b2['J'] == 0))].copy()  # keep only rows corresponding to adult females not working
+b2_idle_women = b2_idle_women.groupby('HID')['PP'] \
+    .count() \
+    .reset_index() \
+    .rename(columns={'PP': 'non_working_adult_females'})
+
+# b2: Income-generating adult females (18-59)
+b2_working_women = df_b2[(((df_b2['U'] >= 18) & (df_b2['U'] < 60)) &
+                          (df_b2['PP'] == 1) & (df_b2['J'] == 0))].copy()  # keep only rows corresponding to working adult females
+b2_working_women = b2_working_women.groupby('HID')['PP'] \
+    .count() \
+    .reset_index() \
+    .rename(columns={'PP': 'working_adult_females'})
+
+# b2: Separate column for <= 12 year-olds, <= 17 year-olds, and elderly (>= 60 year olds)
 b2_kids = df_b2[['HID', 'U']].copy()
 b2_kids.loc[b2_kids['U'] <= 12, 'child'] = 1
 b2_kids.loc[(b2_kids['U'] > 12) & (b2_kids['U'] <= 17), 'adolescent'] = 1
-for i in ['child', 'adolescent']:
+b2_kids.loc[b2_kids['U'] >= 60, 'elderly'] = 1
+for i in ['child', 'adolescent', 'elderly']:
     b2_kids.loc[b2_kids[i].isna(), i] = 0
-b2_kids = b2_kids.groupby('HID')[['child', 'adolescent']].sum().reset_index()
+b2_kids = b2_kids.groupby('HID')[['child', 'adolescent', 'elderly']].sum().reset_index()
 
 # b2: Keep only head of households
 print(tabulate(pd.crosstab(df_b2['PP'], df_b2['PKIR']), showindex=True, headers='keys', tablefmt="pretty"))
@@ -233,10 +250,23 @@ del df_b2
 # b1 + b2 + income-gen
 df = df.merge(b2_income_gen, on='HID', how='left', validate='one_to_one')
 del b2_income_gen
+df.loc[df['income_gen_members'].isna(), 'income_gen_members'] = 0
 
 # b1 + b2 + kids
 df = df.merge(b2_kids, on='HID', how='left', validate='one_to_one')
 del b2_kids
+for i in ['child', 'adolescent', 'elderly']:
+    df.loc[df[i].isna(), i] = 0
+
+# b1 + b2 + idle adult women
+df = df.merge(b2_idle_women, on='HID', how='left', validate='one_to_one')
+del b2_idle_women
+df.loc[df['non_working_adult_females'].isna(), 'non_working_adult_females'] = 0
+
+# b1 + b2 + working adult women
+df = df.merge(b2_working_women, on='HID', how='left', validate='one_to_one')
+del b2_working_women
+df.loc[df['working_adult_females'].isna(), 'working_adult_females'] = 0
 
 # b1 + b2: mismatched labels
 del df['NOAIR']
@@ -312,6 +342,8 @@ dict_rename = \
         'Wajaran': 'svy_weight',
         # 'hh_size': 'hh_size',
         # 'income_gen_members': 'income_gen_members',
+        # 'working_adult_females': '',
+        # 'non_working_adult_females': '',
         'Etnik': 'ethnicity',
         'Negeri': 'state',
         'Strata': 'urban',
@@ -340,6 +372,7 @@ dict_rename = \
         'SJ': 'education',
         # 'child': '',
         # 'adolescent': '',
+        # 'elderly': '',
         # 'cons_01': '',
         # 'cons_02': '',
         # 'cons_03': '',
@@ -390,8 +423,11 @@ dict_dtypes_19 = \
         'ethnicity': 'str',
         'malaysian': 'int',
         'income_gen_members': 'int',
+        'working_adult_females': 'int',
+        'non_working_adult_females': 'int',
         'adolescent': 'int',
         'child': 'int',
+        'elderly': 'int',
         'male': 'int',
         'marriage': 'str',
         'emp_status': 'str',

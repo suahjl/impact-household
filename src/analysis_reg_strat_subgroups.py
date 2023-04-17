@@ -50,8 +50,11 @@ def load_clean_estimate(
             'ethnicity',
             'malaysian',
             'income_gen_members_group',
+            'working_adult_females_group',
+            'non_working_adult_females_group',
             'adolescent_group',
             'child_group',
+            'elderly_group',
             'male',
             'birth_year_group',
             'marriage',
@@ -207,13 +210,31 @@ def load_clean_estimate(
 
 
 # Loop to estimate all scenarios
-list_file_subgroups = ['mean_b40', 'mean_b40_1c', 'mean_b40_0c', 'mean_b60_workage', 'mean_elderly']
-list_subgroups_nice = ['B40', 'B40 With Kid', 'B40 Without Kids', 'B60', 'Elderly (70+)']
+dict_subgroups = {
+    'mean': 'All HHs',
+    'mean_b40': 'B40',
+    'mean_b60': 'B40 & M20-',
+    'mean_b80': 'B40 & M40',
+    'mean_0c': '0 Kid',
+    'mean_1c': '1 Kid',
+    'mean_2cplus': '2 Kids or More',
+    # 'mean_2c': '2 Kids',
+    # 'mean_3c': '3 Kids',
+    # 'mean_4cplus': '4 Kids or More',
+    'mean_b40_0c': 'B40 & 0 Kid',
+    'mean_b40_1c': 'B40 & 1 Kid',
+    'mean_b40_2cplus': 'B40 & 2 Kids or More',
+    # 'mean_b40_2c': 'B40 & 2 Kids',
+    # 'mean_b40_3c': 'B40 & 3 Kids',
+    # 'mean_b40_4cplus': 'B40 & 4 Kids or More',
+    'mean_adults': 'Adults (18-59)',
+    'mean_elderly': 'Elderly (60+)'
+}
 list_filenames_fe = []
 list_filenames_timefe = []
 list_filenames_re = []
 round = 1
-for file_subgroup, subgroup_nice in tqdm(zip(list_file_subgroups, list_subgroups_nice)):
+for file_subgroup, subgroup_nice in tqdm(dict_subgroups.items()):
     # Load, clean, estimate
     params_table_fe, params_table_timefe, params_table_re = load_clean_estimate(
         input_suffix=file_subgroup,
@@ -363,7 +384,7 @@ params_table_re_consol.to_csv('./output/params_table_re_consol_strat_cons_' +
 params_table_re_consol.to_parquet('./output/params_table_re_consol_strat_cons_' +
                                   income_choice + '_' + fd_suffix + '_subgroups' + '.parquet')
 
-# Generate consumption-specific distribution of MPCs by subgroups (the opposite of earlier)
+# Generate heatmaps consumption-specific MPCs by subgroups
 list_outcomes = ['cons_01_13', 'cons_01_12'] + \
                 ['cons_0' + str(i) for i in range(1, 10)] + \
                 ['cons_1' + str(i) for i in range(0, 4)] + \
@@ -396,7 +417,7 @@ for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
     params_table_fe_cons = params_table_fe_consol[params_table_fe_consol['outcome_variable'] == outcome_nice].copy()
     for col in ['outcome_variable', 'method']:
         del params_table_fe_cons[col]
-    params_table_fe_cons = params_table_fe_cons.sort_values(by='subgroup', ascending=True)
+    # params_table_fe_cons = params_table_fe_cons.sort_values(by='subgroup', ascending=True)
     params_table_fe_cons = params_table_fe_cons.set_index('subgroup')
     heatmap_params_table_fe_cons = heatmap(
         input=params_table_fe_cons,
@@ -429,7 +450,7 @@ for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
         params_table_timefe_consol['outcome_variable'] == outcome_nice].copy()
     for col in ['outcome_variable', 'method']:
         del params_table_timefe_cons[col]
-    params_table_timefe_cons = params_table_timefe_cons.sort_values(by='subgroup', ascending=True)
+    # params_table_timefe_cons = params_table_timefe_cons.sort_values(by='subgroup', ascending=True)
     params_table_timefe_cons = params_table_timefe_cons.set_index('subgroup')
     heatmap_params_table_timefe_cons = heatmap(
         input=params_table_timefe_cons,
@@ -463,7 +484,7 @@ for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
         params_table_re_consol['outcome_variable'] == outcome_nice].copy()
     for col in ['outcome_variable', 'method']:
         del params_table_re_cons[col]
-    params_table_re_cons = params_table_re_cons.sort_values(by='subgroup', ascending=True)
+    # params_table_re_cons = params_table_re_cons.sort_values(by='subgroup', ascending=True)
     params_table_re_cons = params_table_re_cons.set_index('subgroup')
     heatmap_params_table_re_cons = heatmap(
         input=params_table_re_cons,

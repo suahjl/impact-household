@@ -29,21 +29,22 @@ if process_pre_analysis:
     import src.process_consol_group
 
 # Analyse (uses trimmed-outliers per-capita data frames)
-generate_adj_analysis = True
+generate_adj_analysis = False
 if generate_adj_analysis:
     import src.analysis_reg_overall
     import src.analysis_reg_overall_quantile
     time.sleep(15)
     import src.analysis_reg_strat
-    time.sleep(30)
+    time.sleep(45)
     import src.analysis_reg_strat_quantile
     time.sleep(30)
     import src.analysis_reg_strat_subgroups
 
 # Descriptive stats (uses full total-hh-basis data frame)
-generate_descriptive = False
+generate_descriptive = True
 if generate_descriptive:
     import src.analysis_descriptive
+    import src.analysis_descriptive_target_groups
 
 # Specific analysis
 generate_specific = False
