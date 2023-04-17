@@ -167,16 +167,28 @@ gen_hh_size_group(data=df)
 # Total HH
 n_total = len(df)
 # Share of B40 households with at least 1 kid
-n_b40_at_least_one_kid = df[((~(df['child_group'] == '0') |
-                              ~(df['adolescent_group'] == '0')) &
-                             ((df['gross_income_group'] == '0_b20-') |
-                              (df['gross_income_group'] == '1_b20+')))].count().reset_index(drop=True)[0]
+n_b40_at_least_one_kid = df[
+    (
+            (
+                    (df['child'] >= 1) | (df['adolescent'] >= 1)
+             ) &
+            (
+                    (df['gross_income_group'] == '0_b20-') | (df['gross_income_group'] == '1_b20+')
+            )
+    )
+].count().reset_index(drop=True)[0]
 perc_b40_at_least_one_kid = 100 * n_b40_at_least_one_kid / n_total
 # Share of B40 households with 0 kids
-n_b40_zero_kid = df[(((df['child_group'] == '0') &
-                      (df['adolescent_group'] == '0')) &
-                     ((df['gross_income_group'] == '0_b20-') |
-                      (df['gross_income_group'] == '1_b20+')))].count().reset_index(drop=True)[0]
+n_b40_zero_kid = df[
+    (
+            (
+                    (df['child'] == 0) | (df['adolescent'] == 0)
+             ) &
+            (
+                    (df['gross_income_group'] == '0_b20-') | (df['gross_income_group'] == '1_b20+')
+            )
+    )
+].count().reset_index(drop=True)[0]
 perc_b40_zero_kid = 100 * n_b40_zero_kid / n_total
 # Output
 print('B40 with at least 1 kid: ' + str(perc_b40_at_least_one_kid) + '%' + '\n' +

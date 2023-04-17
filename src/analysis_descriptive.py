@@ -388,7 +388,7 @@ telsendfiles(
 )
 
 # III.C --- Stratify quantiles of consumption type and income type, by observables and by time
-skip_inc_cons_by_obs = True
+skip_inc_cons_by_obs = False
 if not skip_inc_cons_by_obs:
     # Generate heat tables (y by categorical observables)
     for x in tqdm(list_groups):
