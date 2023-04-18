@@ -105,31 +105,31 @@ cols_features = cols_features_base + ['cons_0722_fuel', 'cons_07_ex_bigticket']
 use_iforest = True
 if use_iforest:
     df_19 = outlier_isolationforest(data=df_19, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_19) / 100), opt_threshold=0.05)
+                                    opt_max_samples=int(len(df_19) / 100), opt_threshold=0.01)
     df_16 = outlier_isolationforest(data=df_16, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_16) / 100), opt_threshold=0.05)
+                                    opt_max_samples=int(len(df_16) / 100), opt_threshold=0.01)
     df_14 = outlier_isolationforest(data=df_14, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_14) / 100), opt_threshold=0.05)
+                                    opt_max_samples=int(len(df_14) / 100), opt_threshold=0.01)
     df_09 = outlier_isolationforest(data=df_09, cols_x=cols_features_base,
-                                    opt_max_samples=int(len(df_09) / 100), opt_threshold=0.05)
+                                    opt_max_samples=int(len(df_09) / 100), opt_threshold=0.01)
 
     df_19_hhbasis = outlier_isolationforest(data=df_19_hhbasis, cols_x=cols_features,
-                                            opt_max_samples=int(len(df_19) / 100), opt_threshold=0.05)
+                                            opt_max_samples=int(len(df_19) / 100), opt_threshold=0.01)
     df_16_hhbasis = outlier_isolationforest(data=df_16_hhbasis, cols_x=cols_features,
-                                            opt_max_samples=int(len(df_16) / 100), opt_threshold=0.05)
+                                            opt_max_samples=int(len(df_16) / 100), opt_threshold=0.01)
     df_14_hhbasis = outlier_isolationforest(data=df_14_hhbasis, cols_x=cols_features,
-                                            opt_max_samples=int(len(df_14) / 100), opt_threshold=0.05)
+                                            opt_max_samples=int(len(df_14) / 100), opt_threshold=0.01)
 
 use_kmeans = False
 if use_kmeans:
-    df_19 = outlier_kmeans(data=df_19, cols_y_x=cols_features, threshold=0.95)
-    df_16 = outlier_kmeans(data=df_16, cols_y_x=cols_features, threshold=0.95)
-    df_14 = outlier_kmeans(data=df_14, cols_y_x=cols_features, threshold=0.95)
-    df_09 = outlier_kmeans(data=df_09, cols_y_x=cols_features_base, threshold=0.95)
+    df_19 = outlier_kmeans(data=df_19, cols_y_x=cols_features, threshold=0.99)
+    df_16 = outlier_kmeans(data=df_16, cols_y_x=cols_features, threshold=0.99)
+    df_14 = outlier_kmeans(data=df_14, cols_y_x=cols_features, threshold=0.99)
+    df_09 = outlier_kmeans(data=df_09, cols_y_x=cols_features_base, threshold=0.99)
 
-    df_19_hhbasis = outlier_kmeans(data=df_19_hhbasis, cols_y_x=cols_features, threshold=0.95)
-    df_16_hhbasis = outlier_kmeans(data=df_16_hhbasis, cols_y_x=cols_features, threshold=0.95)
-    df_14_hhbasis = outlier_kmeans(data=df_14_hhbasis, cols_y_x=cols_features, threshold=0.95)
+    df_19_hhbasis = outlier_kmeans(data=df_19_hhbasis, cols_y_x=cols_features, threshold=0.99)
+    df_16_hhbasis = outlier_kmeans(data=df_16_hhbasis, cols_y_x=cols_features, threshold=0.99)
+    df_14_hhbasis = outlier_kmeans(data=df_14_hhbasis, cols_y_x=cols_features, threshold=0.99)
 
 # X --- Output
 df_19.to_parquet(path_2019 + 'hies_2019_consol_trimmedoutliers.parquet')

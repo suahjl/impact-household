@@ -23,13 +23,13 @@ if process_raw_hhbasis:
     import src.process_raw_2019_hhbasis
 
 # Pre-analysis processing
-process_pre_analysis = False
+process_pre_analysis = True
 if process_pre_analysis:
     import src.process_outliers
     import src.process_consol_group
 
 # Analyse (uses trimmed-outliers per-capita data frames)
-generate_adj_analysis = False
+generate_adj_analysis = True
 if generate_adj_analysis:
     import src.analysis_reg_overall
     import src.analysis_reg_overall_quantile
@@ -41,7 +41,7 @@ if generate_adj_analysis:
     import src.analysis_reg_strat_subgroups
 
 # Descriptive stats (uses full total-hh-basis data frame)
-generate_descriptive = True
+generate_descriptive = False
 if generate_descriptive:
     import src.analysis_descriptive
     import src.analysis_descriptive_target_groups

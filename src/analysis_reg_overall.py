@@ -25,10 +25,17 @@ if use_first_diff:
 elif not use_first_diff:
     fd_suffix = 'level'
 show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
+hhbasis_adj_analysis = ast.literal_eval(os.getenv('HHBASIS_ADJ_ANALYSIS'))
+if hhbasis_adj_analysis:
+    hhbasis_suffix = '_hhbasis'
+elif not hhbasis_adj_analysis:
+    hhbasis_suffix = ''
+show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
+hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 # I --- Load data
-df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_mean.parquet')
-df_ind = pd.read_parquet(path_data + 'hies_consol_ind.parquet')
+df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_mean' + hhbasis_suffix + '.parquet')
+df_ind = pd.read_parquet(path_data + 'hies_consol_ind' + hhbasis_suffix + '.parquet')
 
 # II --- Pre-analysis prep
 # Redefine year
@@ -54,6 +61,8 @@ col_groups = \
         'industry',
         'occupation'
     ]
+if hhbasis_adj_analysis and hhbasis_cohorts_with_hhsize:
+    col_groups = col_groups + ['hh_size_group']
 df[col_groups] = df[col_groups].astype('str')
 df['cohort_code'] = df[col_groups].sum(axis=1)
 df = df.drop(col_groups, axis=1)
@@ -130,10 +139,10 @@ if not show_ci:
     params_table_cohort = params_table_cohort[['method', 'Parameter']]
 # Export
 dfi.export(params_table_cohort,
-           'output/params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
+           'output/params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png')
 telsendimg(
     conf=tel_config,
-    path='output/params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
+    path='output/params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
     cap='params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix
 )
 
@@ -154,12 +163,12 @@ if not show_ci:
     for col in ['LowerCI', 'UpperCI']:
         del params_table_ind_ols[col]
 dfi.export(pd.DataFrame(params_table_ind_ols.loc[income_choice]),
-           'output/params_table_ind_ols_overall' + '_' + outcome_choice + '_' + income_choice + '.png',
+           'output/params_table_ind_ols_overall' + '_' + outcome_choice + '_' + income_choice + hhbasis_suffix + '.png',
            fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)  # to overcome mar2023 error
 telsendimg(
     conf=tel_config,
-    path='output/params_table_ind_ols_overall' + '_' + outcome_choice + '_' + income_choice + '.png',
-    cap='params_table_ind_ols_overall' + '_' + outcome_choice + '_' + income_choice
+    path='output/params_table_ind_ols_overall' + '_' + outcome_choice + '_' + income_choice + hhbasis_suffix + '.png',
+    cap='params_table_ind_ols_overall' + '_' + outcome_choice + '_' + income_choice + hhbasis_suffix
 )
 
 # X --- Notify

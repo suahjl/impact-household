@@ -253,7 +253,7 @@ def gen_gross_income_group(data, aggregation):
 
 def gen_hh_size_group(data):
     data['hh_size_group'] = data['hh_size'].copy()
-    data.loc[data['hh_size'] >= 10, 'hh_size_group'] = '10+'
+    data.loc[data['hh_size'] >= 8, 'hh_size_group'] = '8+'
 
 
 # III.0 --- Generate income groups
@@ -321,7 +321,7 @@ for y in tqdm(list_outcomes):
         colours=list_colours_time,
         main_title='Boxplot of ' + y + ' by ' + 'gross_income_group' + ' over time'
     )
-    if y == 'gross_transfers':  # special y axis range for transfers
+    if y == 'gross_transfers':  # special y-axis range for transfers
         boxplot_marginsinccons_incgroup.update_yaxes(range=[0, 2500],
                                                      showgrid=True, gridwidth=1, gridcolor='grey')
     boxplot_name = 'output/boxplot_' + y + '_incgroup_years'

@@ -25,13 +25,20 @@ if use_first_diff:
 elif not use_first_diff:
     fd_suffix = 'level'
 show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
+hhbasis_adj_analysis = ast.literal_eval(os.getenv('HHBASIS_ADJ_ANALYSIS'))
+if hhbasis_adj_analysis:
+    hhbasis_suffix = '_hhbasis'
+elif not hhbasis_adj_analysis:
+    hhbasis_suffix = ''
+show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
+hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 # --------- Analysis Starts ---------
 
 
 def load_clean_estimate(input_suffix, opt_income, opt_consumption, opt_first_diff):
     # I --- Load data
-    df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_' + input_suffix + '.parquet')
+    df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_' + input_suffix + hhbasis_suffix + '.parquet')
 
     # II --- Pre-analysis prep
     # Redefine year
@@ -57,6 +64,8 @@ def load_clean_estimate(input_suffix, opt_income, opt_consumption, opt_first_dif
             'industry',
             'occupation'
         ]
+    if hhbasis_adj_analysis and hhbasis_cohorts_with_hhsize:
+        col_groups = col_groups + ['hh_size_group']
     df[col_groups] = df[col_groups].astype('str')
     df['cohort_code'] = df[col_groups].sum(axis=1)
     df = df.drop(col_groups, axis=1)
@@ -195,12 +204,12 @@ params_table_consol = pd.concat(
 params_table_consol = params_table_consol[['outcome_variable', 'method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']]
 # Export
 dfi.export(params_table_consol,
-           'output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
+           'output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
            fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)  # to overcome mar2023 error
 telsendimg(
     conf=tel_config,
-    path='output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
-    cap='params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix
+    path='output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+    cap='params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
 )
 
 # Average all quantiles
@@ -208,11 +217,11 @@ params_table_consol_avg = params_table_consol.groupby('method')[['Parameter', 'L
     .mean(numeric_only=True) \
     .reset_index()
 dfi.export(params_table_consol_avg,
-           'output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png')
+           'output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png')
 telsendimg(
     conf=tel_config,
-    path='output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + '.png',
-    cap='params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix
+    path='output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+    cap='params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
 )
 
 # --------- Analysis Ends ---------

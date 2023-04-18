@@ -25,10 +25,17 @@ if use_first_diff:
 elif not use_first_diff:
     fd_suffix = 'level'
 show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
+hhbasis_adj_analysis = ast.literal_eval(os.getenv('HHBASIS_ADJ_ANALYSIS'))
+if hhbasis_adj_analysis:
+    hhbasis_suffix = '_hhbasis'
+elif not hhbasis_adj_analysis:
+    hhbasis_suffix = ''
+show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
+hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 # I --- Load data
-df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_mean.parquet')
-df_ind = pd.read_parquet(path_data + 'hies_consol_ind.parquet')
+df = pd.read_parquet(path_data + 'hies_consol_agg_balanced_mean' + hhbasis_suffix + '.parquet')
+df_ind = pd.read_parquet(path_data + 'hies_consol_ind' + hhbasis_suffix + '.parquet')
 
 # II --- Pre-analysis prep
 # Redefine year
@@ -54,6 +61,8 @@ col_groups = \
         'industry',
         'occupation'
     ]
+if hhbasis_adj_analysis and hhbasis_cohorts_with_hhsize:
+    col_groups = col_groups + ['hh_size_group']
 df[col_groups] = df[col_groups].astype('str')
 df['cohort_code'] = df[col_groups].sum(axis=1)
 df = df.drop(col_groups, axis=1)
@@ -139,15 +148,15 @@ heatmap_params_table_fe_consol = heatmap(
     input=params_table_fe_consol,
     mask=False,
     colourmap='vlag',
-    outputfile='output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
+    outputfile='output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
     title='',
     lb=0,
     ub=0.6,
     format='.2f'
 )
 telsendimg(conf=tel_config,
-           path='output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
+           path='output/params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+           cap='params_table_fe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix)
 
 round = 1
 for outcome in tqdm(list_outcome_choices):
@@ -182,15 +191,15 @@ heatmap_params_table_timefe_consol = heatmap(
     input=params_table_timefe_consol,
     mask=False,
     colourmap='vlag',
-    outputfile='output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
+    outputfile='output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
     title='',
     lb=0,
     ub=0.6,
     format='.2f'
 )
 telsendimg(conf=tel_config,
-           path='output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
+           path='output/params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+           cap='params_table_timefe_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix)
 
 round = 1
 for outcome in tqdm(list_outcome_choices):
@@ -223,15 +232,15 @@ heatmap_params_table_re_consol = heatmap(
     input=params_table_re_consol,
     mask=False,
     colourmap='vlag',
-    outputfile='output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
+    outputfile='output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
     title='',
     lb=0,
     ub=0.6,
     format='.2f'
 )
 telsendimg(conf=tel_config,
-           path='output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
+           path='output/params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+           cap='params_table_re_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix)
 
 round = 1
 for outcome in tqdm(list_outcome_choices):
@@ -266,15 +275,15 @@ heatmap_params_table_ind_ols_consol = heatmap(
     input=params_table_ind_ols_consol,
     mask=False,
     colourmap='vlag',
-    outputfile='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
+    outputfile='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
     title='',
     lb=0,
     ub=0.6,
     format='.2f'
 )
 telsendimg(conf=tel_config,
-           path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + '.png',
-           cap='params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix)
+           path='output/params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+           cap='params_table_ind_ols_consol_strat_cons' + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix)
 
 
 # III.B --- Estimation: stratify by income groups (individual levels; no FD option)
@@ -326,10 +335,10 @@ if not show_ci:
     for col in ['LowerCI', 'UpperCI']:
         del params_table_ind_ols_consol[col]
 dfi.export(params_table_ind_ols_consol,
-           'output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '.png')
+           'output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + hhbasis_suffix + '.png')
 telsendimg(conf=tel_config,
-           path='output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + '.png',
-           cap='params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice)
+           path='output/params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + hhbasis_suffix + '.png',
+           cap='params_table_ind_ols_consol_strat_incomeq' + '_' + outcome_choice + '_' + income_choice + hhbasis_suffix)
 
 # X --- Notify
 telsendmsg(conf=tel_config,
