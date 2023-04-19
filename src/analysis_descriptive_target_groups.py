@@ -20,10 +20,24 @@ load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/hies_consol/'
 path_2019 = './data/hies_2019/'
+hhbasis_descriptive = ast.literal_eval(os.getenv('HHBASIS_DESCRIPTIVE'))
+equivalised_descriptive = ast.literal_eval(os.getenv('EQUIVALISED_DESCRIPTIVE'))
+if hhbasis_descriptive:
+    input_suffix = '_hhbasis'
+    output_suffix = '_hhbasis'
+    chart_suffix = ' (Total HH)'
+if equivalised_descriptive:
+    input_suffix = '_equivalised'
+    output_suffix = '_equivalised'
+    chart_suffix = ' (Equivalised)'
+if not hhbasis_descriptive and not equivalised_descriptive:
+    input_suffix = ''
+    output_suffix = '_capita'
+    chart_suffix = ' (Per Capita)'
 
 # I --- Load data
 df = pd.read_parquet(
-    path_2019 + 'hies_2019_consol_hhbasis.parquet')  # CHECK: include / exclude outliers and on hhbasis
+    path_2019 + 'hies_2019_consol' + input_suffix + '.parquet')  # CHECK: include / exclude outliers and on hhbasis
 
 # II --- Pre-analysis prep
 # Malaysian only
@@ -50,7 +64,8 @@ list_groups = \
         'occupation'
     ]
 # Define categorical outcome variables to be sliced and spliced only by income groups
-list_cat_outcomes = ['hh_size'] + list_groups
+if hhbasis_descriptive:
+    list_cat_outcomes = ['hh_size'] + list_groups  # only available for total household basis
 # Define continuous outcome variables
 list_outcomes = ['gross_income'] + \
                 ['gross_transfers'] + \

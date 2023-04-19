@@ -22,14 +22,20 @@ if process_raw_hhbasis:
     import src.process_raw_2016_hhbasis
     import src.process_raw_2019_hhbasis
 
+process_raw_equivalised = False
+if process_raw_equivalised:
+    import src.process_raw_2014_equivalised
+    import src.process_raw_2016_equivalised
+    import src.process_raw_2019_equivalised
+
 # Pre-analysis processing
-process_pre_analysis = True
+process_pre_analysis = False
 if process_pre_analysis:
     import src.process_outliers
     import src.process_consol_group
 
 # Analyse (uses trimmed-outliers per-capita data frames)
-generate_adj_analysis = True
+generate_adj_analysis = False
 if generate_adj_analysis:
     import src.analysis_reg_overall
     import src.analysis_reg_overall_quantile
@@ -40,16 +46,17 @@ if generate_adj_analysis:
     time.sleep(30)
     import src.analysis_reg_strat_subgroups
 
-# Descriptive stats (uses full total-hh-basis data frame)
-generate_descriptive = False
+# Descriptive stats
+generate_descriptive = True
 if generate_descriptive:
     import src.analysis_descriptive
-    import src.analysis_descriptive_target_groups
 
 # Specific analysis
 generate_specific = False
 if generate_specific:
+    import src.analysis_descriptive_inc_allbasis_fixedincgroups
     import src.analysis_inc_growth_change
+    import src.analysis_descriptive_target_groups
 
 # Notify
 telsendmsg(

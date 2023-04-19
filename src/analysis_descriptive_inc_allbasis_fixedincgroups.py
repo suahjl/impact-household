@@ -1,3 +1,5 @@
+# Select descriptive stats (only income) across total HH, equivalised, and per capita basis using HH income groups
+
 import pandas as pd
 import numpy as np
 from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap, pil_img2pdf, boxplot_time
@@ -16,24 +18,11 @@ time_start = time.time()
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/hies_consol/'
-hhbasis_descriptive = ast.literal_eval(os.getenv('HHBASIS_DESCRIPTIVE'))
-equivalised_descriptive = ast.literal_eval(os.getenv('EQUIVALISED_DESCRIPTIVE'))
-if hhbasis_descriptive:
-    input_suffix = '_hhbasis'
-    output_suffix = '_hhbasis'
-    chart_suffix = ' (Total HH)'
-if equivalised_descriptive:
-    input_suffix = '_equivalised'
-    output_suffix = '_equivalised'
-    chart_suffix = ' (Equivalised)'
-if not hhbasis_descriptive and not equivalised_descriptive:
-    input_suffix = ''
-    output_suffix = '_capita'
-    chart_suffix = ' (Per Capita)'
+use_spending_income_ratio = ast.literal_eval(os.getenv('USE_SPENDING_INCOME_RATIO'))
 
 # I --- Load data
 df = pd.read_parquet(
-    path_data + 'hies_consol_ind_full' + output_suffix + '.parquet'
+    path_data + 'hies_consol_ind_full' + '_hhbasis' + '.parquet'
 )  # CHECK: include / exclude outliers and on hhbasis
 
 # II --- Pre-analysis prep
@@ -63,7 +52,7 @@ list_groups = \
         'occupation'
     ]
 # Define categorical outcome variables to be sliced and spliced only by income groups
-list_cat_outcomes = ['hh_size_group'] + list_groups
+list_cat_outcomes = ['hh_size_group'] + list_groups  # only available for total household basis
 # Define continuous outcome variables
 list_outcomes = ['gross_income'] + \
                 ['gross_transfers'] + \
@@ -72,22 +61,33 @@ list_outcomes = ['gross_income'] + \
                 ['cons_0722_fuel', 'cons_07_ex_bigticket']
 # F&B, util, healthcare, transport & fuels, education
 # ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
-# Define list of quantiles
-list_quantiles = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
-                  0.95]
-list_quantiles_nice = ['5p', '10p', '15p', '20p', '25p', '30p', '35p', '40p', '45p', '50p', '55p', '60p', '65p', '70p',
-                       '75p', '80p', '85p', '90p', '95p']
-# Create new columns for consumption category as % of income
+
+# Convert consumption into % of income
 list_all_cons = ['cons_01_13', 'cons_01_12'] + \
                 ['cons_0' + str(i) for i in range(1, 10)] + \
                 ['cons_1' + str(i) for i in range(0, 4)] + \
                 ['cons_0722_fuel', 'cons_07_ex_bigticket']
-list_all_cons_incshare = [i + '_incshare' for i in list_all_cons]
-for i, j in zip(list_all_cons, list_all_cons_incshare):
-    df[j] = 100 * df[i] / df['gross_income']
+if use_spending_income_ratio:
+    for cons in list_all_cons:
+        df[cons] = 100 * df[cons] / df['gross_income']
 
 
-# Generate income groups
+# III.0 --- Define function
+
+
+def capybara_tiny(data, y_col, x_col):
+    # Prelims
+    d = data.copy()
+    # Compute median and means for y (y must be continuous, and x must be categorical)
+    tab_median = pd.DataFrame(d.groupby(x_col)[y_col].quantile(q=0.5))
+    tab_mean = pd.DataFrame(d.groupby(x_col)[y_col].mean())
+    # Harmonise format
+    tab_median = tab_median.astype('float')
+    tab_mean = tab_mean.astype('float')
+    # Output
+    return tab_median, tab_mean
+
+
 def gen_gross_income_group(data, aggregation):
     if aggregation == 1:
         for t in tqdm(list(data['year'].unique())):
@@ -195,102 +195,102 @@ def gen_gross_income_group(data, aggregation):
             ] = '0_b40'
 
 
-gen_gross_income_group(data=df, aggregation=1)
-
-
-# Generate household size groups
 def gen_hh_size_group(data):
     data['hh_size_group'] = data['hh_size'].copy()
     data.loc[data['hh_size'] >= 8, 'hh_size_group'] = '8+'
 
 
+def gen_income_allbasis(data):
+    for col in ['gross_income', 'gross_transfers']:
+        data[col + '_equivalised'] = data[col] / (data['hh_size'] ** (1/2))
+        data[col + '_capita'] = data[col] / data['hh_size']
+
+
+# III.0 --- Generate income groups
+# Define income group buckets
+gen_gross_income_group(data=df, aggregation=1)
+
+# III.0 --- Generate income per capita and equivalised income
+gen_income_allbasis(data=df)
+
+# III.0 --- Generate HH size buckets
+# Define hh size group buckets
 gen_hh_size_group(data=df)
 
-
-# III --- The analysis
-# Functions
-def capybara(data, y_col, x_col, t_col, y_quantiles):
-    # prelims
-    d = data.copy()
-    # compute quantiles by time (t), and by group (x)
-    round = 1
-    for quantile in y_quantiles:
-        tab = d.groupby([x_col, t_col])[y_col].quantile(q=quantile).reset_index()
-        tab['quantile'] = quantile
-        if round == 1:
-            tab_consol = tab.copy()
-        elif round > 1:
-            tab_consol = pd.concat([tab_consol, tab], axis=0)
-        round += 1
-    # compute growth
-    tab_consol_growth = tab_consol.copy()
-    tab_consol_growth = tab_consol_growth.sort_values(by=['quantile', x_col, t_col], ascending=[True, True, True])
-    tab_consol_growth[y_col] = 100 * (
-            (tab_consol_growth[y_col] / tab_consol_growth.groupby(['quantile', x_col])[y_col].shift(1)) - 1
-    )
-    tab_consol_growth = tab_consol_growth.dropna(axis=0)
-    # compute change
-    tab_consol_change = tab_consol.copy()
-    tab_consol_change = tab_consol_change.sort_values(by=['quantile', x_col, t_col], ascending=[True, True, True])
-    tab_consol_change[y_col] = tab_consol_change[y_col] - tab_consol_change.groupby(['quantile', x_col])[y_col].shift(1)
-    tab_consol_change = tab_consol_change.dropna(axis=0)
-    # output
-    return tab_consol, tab_consol_growth, tab_consol_change
-
-
-# Generate level, change, and growth by income quantiles
-tab_consol, tab_consol_growth, tab_consol_change = capybara(
-    data=df,
-    y_col='gross_income',
-    x_col='gross_income_group',
-    t_col='year',
-    y_quantiles=list_quantiles
-)
-# Convert values into 2dp max
-tab_consol['gross_income'] = tab_consol['gross_income'].round(2)
-tab_consol_growth['gross_income'] = tab_consol_growth['gross_income'].round(2)
-tab_consol_change['gross_income'] = tab_consol_change['gross_income'].round(2)
-# Combine tables for growth and change
-tab_consol_change = tab_consol_change.rename(columns={'gross_income': 'change'})
-tab_consol_growth = tab_consol_growth.rename(columns={'gross_income': 'growth'})
-tab_consol_growth_change = tab_consol_growth.merge(
-    tab_consol_change,
-    how='left',
-    on=['gross_income_group', 'year', 'quantile']
-)
-tab_consol_growth_change = tab_consol_growth_change[['gross_income_group', 'year', 'quantile', 'growth', 'change']]
-list_years = [2016, 2019]
-list_years_nice = ['2014-16', '2016-19']
-list_files_tab = []
-for year, year_nice in zip(list_years, list_years_nice):
-    for quantile, quantile_nice in tqdm(zip(list_quantiles, list_quantiles_nice)):
-        # restrict year and quantile
-        d = tab_consol_growth_change[((tab_consol_growth_change['quantile'] == quantile) &
-                                      (tab_consol_growth_change['year'] == year))].copy()
-        # nice year values
-        d['year'] = year_nice
-        # set index
-        d = d.set_index('gross_income_group')
-        # generate tables
-        dfi.export(d,
-                   './output/tab_inc_growth_change_' + 'gross_income' + '_' + str(year) + '_' + quantile_nice + output_suffix + '.png')
-        list_files_tab = list_files_tab + \
-                         ['./output/tab_inc_growth_change_' + 'gross_income' + '_' + str(year) + '_' + quantile_nice + output_suffix]
-# Save as single pdf
+# III.A --- Stratify income (of all 3 basis) by the same def of HH income group
+base_outcomes = ['gross_income', 'gross_transfers']
+list_heattables_median_names = []
+list_heattables_mean_names = []
+for outcome in tqdm(base_outcomes):
+    for t in [2019, 2016, 2014]:
+        d = df.copy()  # deep copy
+        d = d[d['year'] == t]
+        heattable_median_name = 'output/tab_median_' + outcome + '_allbasis_fixedincgroups_' + str(t)
+        heattable_mean_name = 'output/tab_mean_' + outcome + '_allbasis_fixedincgroups_' + str(t)
+        list_heattables_median_names = list_heattables_median_names + [heattable_median_name]  # separate file
+        list_heattables_mean_names = list_heattables_mean_names + [heattable_mean_name]  # separate file
+        round = 1
+        for basis, basis_nice in zip(['', '_equivalised', '_capita'], ['Total HH', 'Equivalised', 'Per Capita']):
+            tab_median, tab_mean = capybara_tiny(
+                data=d,  # uses year-specific data frame
+                x_col='gross_income_group',  # this is defined on total hh basis
+                y_col=outcome + basis,
+            )
+            tab_median = tab_median.rename(columns={outcome + basis: basis_nice})
+            tab_mean = tab_mean.rename(columns={outcome + basis: basis_nice})
+            if round == 1:
+                tab_median_consol = tab_median.copy()
+                tab_mean_consol = tab_mean.copy()
+            elif round > 1:
+                tab_median_consol = pd.concat([tab_median_consol, tab_median], axis=1)  # left-right
+                tab_mean_consol = pd.concat([tab_mean_consol, tab_mean], axis=1)  # left-right
+            round += 1
+        tab_median_consol = tab_median_consol.transpose()
+        tab_mean_consol = tab_mean_consol.transpose()
+        fig_tab_median_consol = heatmap(
+            input=tab_median_consol,
+            mask=False,
+            colourmap='vlag',
+            outputfile=heattable_median_name + '.png',
+            title='Medians of HH, Equivalised, and Per Capita ' + outcome + ' for year ' + str(t),
+            lb=tab_median_consol.min().max(),
+            ub=tab_median_consol.max().max(),
+            format='.0f'
+        )
+        fig_tab_mean_consol = heatmap(
+            input=tab_mean_consol,
+            mask=False,
+            colourmap='vlag',
+            outputfile=heattable_mean_name + '.png',
+            title='Means of HH, Equivalised, and Per Capita ' + outcome + ' for year ' + str(t),
+            lb=tab_mean_consol.min().max(),
+            ub=tab_mean_consol.max().max(),
+            format='.0f'
+        )
 pil_img2pdf(
-    list_images=list_files_tab,
+    list_images=list_heattables_median_names,
     extension='png',
-    pdf_name='./output/tab_inc_growth_change_' + 'gross_income' + '_' + 'year_quantile' + output_suffix
+    pdf_name='output/tab_median_inc_allbasis_fixedincgroups_years'
 )
 telsendfiles(
     conf=tel_config,
-    path='./output/tab_inc_growth_change_' + 'gross_income' + '_' + 'year_quantile' + output_suffix + '.pdf',
-    cap='tab_inc_growth_change_' + 'gross_income' + '_' + 'year_quantile' + output_suffix
+    path='output/tab_median_inc_allbasis_fixedincgroups_years.pdf',
+    cap='tab_median_inc_allbasis_fixedincgroups_years'
+)
+pil_img2pdf(
+    list_images=list_heattables_mean_names,
+    extension='png',
+    pdf_name='output/tab_mean_inc_allbasis_fixedincgroups_years'
+)
+telsendfiles(
+    conf=tel_config,
+    path='output/tab_mean_inc_allbasis_fixedincgroups_years.pdf',
+    cap='tab_mean_inc_allbasis_fixedincgroups_years'
 )
 
 # X --- Notify
 telsendmsg(conf=tel_config,
-           msg='impact-household --- analysis_inc_growth_change: COMPLETED')
+           msg='impact-household --- analysis_descriptive_fixedincgroups: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

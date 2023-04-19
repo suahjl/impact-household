@@ -29,6 +29,17 @@ if use_first_diff:
 elif not use_first_diff:
     fd_suffix = 'level'
 show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
+hhbasis_adj_analysis = ast.literal_eval(os.getenv('HHBASIS_ADJ_ANALYSIS'))
+equivalised_adj_analysis = ast.literal_eval(os.getenv('EQUIVALISED_ADJ_ANALYSIS'))
+if hhbasis_adj_analysis:
+    hhbasis_suffix = '_hhbasis'
+    hhbasis_chart_title = ' (Total HH)'
+if equivalised_adj_analysis:
+    hhbasis_suffix = '_equivalised'
+    hhbasis_chart_title = ' (Equivalised)'
+elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
+    hhbasis_suffix = ''
+    hhbasis_chart_title = ''
 
 # I --- Define exhaustive list of cohorts
 col_groups = \
@@ -66,7 +77,7 @@ if example_run:
 
 def load_clean_estimate(cohort):
 
-    # ------------ Preliminaries necessary for 'spawn'
+    # ------------ Preliminaries necessary for 'spawn' (unnecessary if running on Unix)
 
     # Essential packages
     import pandas as pd
@@ -83,6 +94,22 @@ def load_clean_estimate(cohort):
     income_choice = os.getenv('INCOME_CHOICE')
     outcome_choice = os.getenv('OUTCOME_CHOICE')
     use_first_diff = ast.literal_eval(os.getenv('USE_FIRST_DIFF'))
+    if use_first_diff:
+        fd_suffix = 'fd'
+    elif not use_first_diff:
+        fd_suffix = 'level'
+    show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
+    hhbasis_adj_analysis = ast.literal_eval(os.getenv('HHBASIS_ADJ_ANALYSIS'))
+    equivalised_adj_analysis = ast.literal_eval(os.getenv('EQUIVALISED_ADJ_ANALYSIS'))
+    if hhbasis_adj_analysis:
+        hhbasis_suffix = '_hhbasis'
+    hhbasis_chart_title = ' (Total HH)'
+    if equivalised_adj_analysis:
+        hhbasis_suffix = '_equivalised'
+        hhbasis_chart_title = ' (Equivalised)'
+    elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
+        hhbasis_suffix = ''
+        hhbasis_chart_title = ''
 
     # Load raw data
     df_14_withbase = pd.read_parquet(path_2014 + 'hies_2014_consol_trimmedoutliers_groupandbase.parquet')

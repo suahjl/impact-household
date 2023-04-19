@@ -33,6 +33,9 @@ df_14_hhbasis = pd.read_parquet(path_2014 + 'hies_2014_consol_hhbasis.parquet')
 df_16_hhbasis = pd.read_parquet(path_2016 + 'hies_2016_consol_hhbasis.parquet')
 df_19_hhbasis = pd.read_parquet(path_2019 + 'hies_2019_consol_hhbasis.parquet')
 
+df_14_equivalised = pd.read_parquet(path_2014 + 'hies_2014_consol_equivalised.parquet')
+df_16_equivalised = pd.read_parquet(path_2016 + 'hies_2016_consol_equivalised.parquet')
+df_19_equivalised = pd.read_parquet(path_2019 + 'hies_2019_consol_equivalised.parquet')
 
 # II --- Outliers by income and spending (items 1 - 12)
 # Define functions
@@ -131,6 +134,10 @@ if use_kmeans:
     df_16_hhbasis = outlier_kmeans(data=df_16_hhbasis, cols_y_x=cols_features, threshold=0.99)
     df_14_hhbasis = outlier_kmeans(data=df_14_hhbasis, cols_y_x=cols_features, threshold=0.99)
 
+    df_19_equivalised = outlier_kmeans(data=df_19_equivalised, cols_y_x=cols_features, threshold=0.99)
+    df_16_equivalised = outlier_kmeans(data=df_16_equivalised, cols_y_x=cols_features, threshold=0.99)
+    df_14_equivalised = outlier_kmeans(data=df_14_equivalised, cols_y_x=cols_features, threshold=0.99)
+
 # X --- Output
 df_19.to_parquet(path_2019 + 'hies_2019_consol_trimmedoutliers.parquet')
 df_16.to_parquet(path_2016 + 'hies_2016_consol_trimmedoutliers.parquet')
@@ -140,6 +147,10 @@ df_09.to_parquet(path_2009 + 'hies_2009_consol_trimmedoutliers.parquet')
 df_19_hhbasis.to_parquet(path_2019 + 'hies_2019_consol_hhbasis_trimmedoutliers.parquet')
 df_16_hhbasis.to_parquet(path_2016 + 'hies_2016_consol_hhbasis_trimmedoutliers.parquet')
 df_14_hhbasis.to_parquet(path_2014 + 'hies_2014_consol_hhbasis_trimmedoutliers.parquet')
+
+df_19_equivalised.to_parquet(path_2019 + 'hies_2019_consol_equivalised_trimmedoutliers.parquet')
+df_16_equivalised.to_parquet(path_2016 + 'hies_2016_consol_equivalised_trimmedoutliers.parquet')
+df_14_equivalised.to_parquet(path_2014 + 'hies_2014_consol_equivalised_trimmedoutliers.parquet')
 
 # X --- Notify
 telsendmsg(conf=tel_config,

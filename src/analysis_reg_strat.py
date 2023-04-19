@@ -26,9 +26,12 @@ elif not use_first_diff:
     fd_suffix = 'level'
 show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 hhbasis_adj_analysis = ast.literal_eval(os.getenv('HHBASIS_ADJ_ANALYSIS'))
+equivalised_adj_analysis = ast.literal_eval(os.getenv('EQUIVALISED_ADJ_ANALYSIS'))
 if hhbasis_adj_analysis:
     hhbasis_suffix = '_hhbasis'
-elif not hhbasis_adj_analysis:
+if equivalised_adj_analysis:
+    hhbasis_suffix = '_equivalised'
+elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
     hhbasis_suffix = ''
 show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
