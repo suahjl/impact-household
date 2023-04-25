@@ -3,14 +3,24 @@ import telegram_send
 from linearmodels import PanelOLS, RandomEffects
 import plotly.graph_objects as go
 import statsmodels.formula.api as smf
+import statsmodels.tsa.api as smt
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.graph_objects as go
 from datetime import date
 from PIL import Image
+from ceic_api_client.pyceic import Ceic
+import re
+import os
+import requests
+import json
+from dotenv import load_dotenv
 
+load_dotenv()
 plt.switch_backend('agg')
 
+
+# --- Notifications
 
 def telsendimg(conf='', path='', cap=''):
     with open(path, 'rb') as f:
@@ -30,6 +40,92 @@ def telsendmsg(conf='', msg=''):
     telegram_send.send(conf=conf,
                        messages=[msg])
 
+
+# --- Data
+def get_data_from_api_ceic(
+        series_ids: list[float], series_names: list[str], start_date: date, historical_extension: bool = False
+) -> pd.DataFrame:
+    """
+    Get CEIC data.
+    Receive a list of series IDs (e.g., [408955597] for CPI inflation YoY) from CEIC
+    and output a pandas data frame (for single entity time series).
+
+    :series_ids `list[float]`: a list of CEIC Series IDs\n
+    :start_date `date`: a date() object of the start date e.g. date(1991, 1, 1)\n
+    "continuous `Optional[boolean]`: When set to true, series will include extended historical timepoints\n
+    :return `pd.DataFrame`: A DataFrame instance of the data
+    """
+    df = pd.DataFrame()
+    series_list = ",".join(map(str, series_ids))
+
+    if historical_extension == False:
+        PATH = f"https://api.ceicdata.com/v2//series/{series_list}/data?format=json&start_date={start_date}"
+        response = requests.get(f"{PATH}&token={os.getenv('CEIC_API_KEY')}")
+        content = json.loads(response.text)["data"]
+    else:
+        content = []
+        for series in series_ids:
+            PATH = f"https://api.ceicdata.com/v2//series/{series}/data?format=json&start_date={start_date}"
+            response = requests.get(
+                f"{PATH}&with_historical_extension=True&token={os.getenv('CEIC_API_KEY')}"
+            )
+            content = content + json.loads(response.text)["data"]
+    for i, j in zip(range(len(series_ids)), series_names):  # series names not in API json
+        data = pd.DataFrame(content[i]["timePoints"])[["date", "value"]]
+        # name = content[i]["layout"][0]["table"]["name"]
+        name = "_".join(j.split(": ")[1:])  # name --> j
+        data["name"] = re.sub("[^A-Za-z0-9]+", "_", name).lower()
+        country = content[i]["layout"][0]["topic"]["name"]  # section --> topic
+        data["country"] = re.sub("[^A-Za-z0-9]+", "_", country).lower()
+        df = pd.concat([df, data])
+
+    df = df.sort_values(["country", "date"]).reset_index(drop=True)
+
+    return df
+
+
+def get_data_from_ceic(
+        series_ids: list[float], start_date: date, historical_extension: bool = False
+) -> pd.DataFrame:
+    """
+    Get CEIC data.
+    Receive a list of series IDs (e.g., [408955597] for CPI inflation YoY) from CEIC
+    and output a pandas data frame (for single entity time series).
+
+    :series_ids `list[float]`: a list of CEIC Series IDs\n
+    :start_date `date`: a date() object of the start date e.g. date(1991, 1, 1)\n
+    :return `pd.DataFrame`: A DataFrame instance of the data
+    """
+    Ceic.login(username=os.getenv("CEIC_USERNAME"), password=os.getenv("CEIC_PASSWORD"))
+
+    df = pd.DataFrame()
+    content = []
+    if historical_extension == False:
+        content = Ceic.series(series_id=series_ids, start_date=start_date).data
+    else:
+        for series in series_ids:
+            content += Ceic.series(
+                series_id=series,
+                start_date=start_date,
+                with_historical_extension=True,
+            ).data
+
+    for i in range(len(series_ids)):  # for i in range(len(content))
+        data = pd.DataFrame(
+            [(tp._date, tp.value) for tp in content[i].time_points],
+            columns=["date", "value"],
+        )
+        data["name"] = re.sub("[^A-Za-z0-9]+", "_", content[i].metadata.name).lower()
+        data["country"] = re.sub(
+            "[^A-Za-z0-9]+", "_", content[i].metadata.country.name
+        ).lower()
+        df = pd.concat([df, data])
+    df = df.sort_values(["country", "date"]).reset_index(drop=True)
+
+    return df
+
+
+# --- Linear regressions
 
 def reg_ols(
         df: pd.DataFrame,
@@ -178,6 +274,26 @@ def re_reg(
     return mod, res, params_table, joint_teststats, reg_det
 
 
+# --- TIME SERIES MODELS
+
+
+def est_varx(df, cols_endog, run_varx, cols_exog, choice_ic, choice_trend, choice_horizon, choice_maxlags):
+    # Work on copy
+    d = df.copy()
+
+    # Estimate model
+    if run_varx:
+        mod = smt.VAR(endog=d[cols_endog], exog=d[cols_exog])
+    if not run_varx:
+        mod = smt.VAR(endog=d[cols_endog])
+    res = mod.fit(ic=choice_ic, trend=choice_trend, maxlags=choice_maxlags)
+    irf = res.irf(periods=choice_horizon)
+
+    # Output
+    return res, irf
+
+# --- CHARTS
+
 def heatmap(input: pd.DataFrame, mask: bool, colourmap: str, outputfile: str, title: str, lb: float, ub: float,
             format: str):
     fig = plt.figure()
@@ -306,6 +422,7 @@ def boxplot_time(
     fig.update_xaxes(categoryorder='category ascending')
     # output
     return fig
+
 
 def barchart(
         data: pd.DataFrame,

@@ -398,7 +398,7 @@ for i in ['gross_income']:  # and this is monthly
 for i in ['cons_01_12', 'cons_01_13'] + \
          ['cons_0' + str(i) for i in range(1, 10)] + \
          ['cons_' + str(i) for i in range(11, 14)] + \
-         ['cons_0722_fuel', 'cons_07_ex_bigticket']:
+         ['cons_0722_fuel', 'cons_07_ex_bigticket']:  # likewise this
     df[i] = df[i] / (df['hh_size'])
 for i in ['gross_margin']:
     df[i] = df[i] / df['hh_size']

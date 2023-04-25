@@ -22,7 +22,7 @@ use_spending_income_ratio = ast.literal_eval(os.getenv('USE_SPENDING_INCOME_RATI
 hhbasis_descriptive = ast.literal_eval(os.getenv('HHBASIS_DESCRIPTIVE'))
 equivalised_descriptive = ast.literal_eval(os.getenv('EQUIVALISED_DESCRIPTIVE'))
 if hhbasis_descriptive:
-    input_suffix = '_equivalised'
+    input_suffix = '_hhbasis'
     output_suffix = '_hhbasis'
     chart_suffix = ' (Total HH)'
 if equivalised_descriptive:
@@ -37,7 +37,7 @@ if not hhbasis_descriptive and not equivalised_descriptive:
 # I --- Load data
 df = pd.read_parquet(
     path_data + 'hies_consol_ind_full' + input_suffix + '.parquet'
-)  # CHECK: include / exclude outliers and on hhbasis
+)  # CHECK: include / exclude outliers and on total hh / equivalised / per capita basis
 
 # II --- Pre-analysis prep
 # Malaysian only
@@ -68,6 +68,8 @@ list_groups = \
 # Define categorical outcome variables to be sliced and spliced only by income groups
 if hhbasis_descriptive:
     list_cat_outcomes = ['hh_size_group'] + list_groups  # only available for total household basis
+elif not hhbasis_descriptive:
+    list_cat_outcomes = list_groups.copy()
 # Define continuous outcome variables
 list_outcomes = ['gross_income'] + \
                 ['gross_transfers'] + \
@@ -161,6 +163,86 @@ def capybara_chonky(data, y_col, x_col):
 
 
 def gen_gross_income_group(data, aggregation):
+    if aggregation == 0:
+        for t in tqdm(list(data['year'].unique())):
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.99)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '5_t1'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.8)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.99)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '4_t19'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.6)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.8)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '3_m20+'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.4)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.6)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '2_m20-'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.2)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.4)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '1_b20+'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.2)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '0_b20-'
     if aggregation == 1:
         for t in tqdm(list(data['year'].unique())):
             data.loc[
@@ -274,9 +356,10 @@ def gen_hh_size_group(data):
 
 # III.0 --- Generate income groups
 # Define income group buckets
-gen_gross_income_group(data=df, aggregation=1)
+gen_gross_income_group(data=df, aggregation=0)  # 0 = T1 and 20% groups, 1 = 20% groups, 2 = Classic 40% groups
 # Define hh size group buckets
-gen_hh_size_group(data=df)
+if hhbasis_descriptive:
+    gen_hh_size_group(data=df)
 
 # III.A --- Stratify selected categorical outcomes by income group and by time (only heat tables)
 
@@ -404,7 +487,7 @@ telsendfiles(
 )
 
 # III.C --- Stratify quantiles of consumption type and income type, by observables and by time
-skip_inc_cons_by_obs = False
+skip_inc_cons_by_obs = True
 if not skip_inc_cons_by_obs:
     # Generate heat tables (y by categorical observables)
     for x in tqdm(list_groups):
@@ -427,7 +510,7 @@ if not skip_inc_cons_by_obs:
             latest_median_marginsinccons_obs = df[df['year'] == 2019].groupby(x)[y].median().reset_index()
             latest_median_name = 'output/latest_median_' + y + '_' + x + '_years' + output_suffix
             list_latest_median_names = list_latest_median_names + [latest_median_name]
-            dfi.export(latest_median_marginsinccons_obs, latest_median_name + output_suffix + '.png',
+            dfi.export(latest_median_marginsinccons_obs, latest_median_name + '.png',
                        fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)
             # Heatmaps
             for t in df['year'].unique():
