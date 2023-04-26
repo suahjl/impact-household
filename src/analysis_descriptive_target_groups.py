@@ -169,45 +169,86 @@ def gen_gross_income_group(data, aggregation):
 gen_gross_income_group(data=df, aggregation=1)
 
 
-# Generate household size groups
+# Generate new variables
 def gen_hh_size_group(data):
     data['hh_size_group'] = data['hh_size'].copy()
-    data.loc[data['hh_size'] >= 10, 'hh_size_group'] = '10+'
+    data.loc[data['hh_size'] >= 8, 'hh_size_group'] = '8+'
+
+
+def gen_kids(data):
+    data['kid'] = df['child'] + df['adolescent']
 
 
 gen_hh_size_group(data=df)
+gen_kids(data=df)
 
 # III --- The analysis
 # Restrict to 2019
 # Total HH
 n_total = len(df)
 # Share of B40 households with at least 1 kid
-n_b40_at_least_one_kid = df[
-    (
-            (
-                    (df['child'] >= 1) | (df['adolescent'] >= 1)
-             ) &
-            (
-                    (df['gross_income_group'] == '0_b20-') | (df['gross_income_group'] == '1_b20+')
-            )
-    )
-].count().reset_index(drop=True)[0]
-perc_b40_at_least_one_kid = 100 * n_b40_at_least_one_kid / n_total
+# n_b40_at_least_one_kid = df[
+#     (
+#             (
+#                     (df['child'] >= 1) | (df['adolescent'] >= 1)
+#             ) &
+#             (
+#                     (df['gross_income_group'] == '0_b20-') | (df['gross_income_group'] == '1_b20+')
+#             )
+#     )
+# ].count().reset_index(drop=True)[0]
+# perc_b40_at_least_one_kid = 100 * n_b40_at_least_one_kid / n_total
 # Share of B40 households with 0 kids
-n_b40_zero_kid = df[
-    (
-            (
-                    (df['child'] == 0) | (df['adolescent'] == 0)
-             ) &
-            (
-                    (df['gross_income_group'] == '0_b20-') | (df['gross_income_group'] == '1_b20+')
-            )
+# n_b40_zero_kid = df[
+#     (
+#             (
+#                     (df['child'] == 0) | (df['adolescent'] == 0)
+#             ) &
+#             (
+#                     (df['gross_income_group'] == '0_b20-') | (df['gross_income_group'] == '1_b20+')
+#             )
+#     )
+# ].count().reset_index(drop=True)[0]
+# perc_b40_zero_kid = 100 * n_b40_zero_kid / n_total
+
+# Share of households with 0 to Nmax kids
+tab_kids = tabulate(
+    tabular_data=pd.DataFrame(df['kid'].value_counts()).sort_index(),
+    showindex=True,
+    headers='keys',
+    tablefmt="pretty"
+)
+print(tab_kids)
+
+n_0_kids = len(df[df['kid'] == 0])
+n_1_kids = len(df[df['kid'] == 1])
+n_2_kids = len(df[df['kid'] == 2])
+n_3_kids = len(df[df['kid'] == 3])
+n_4_kids = len(df[df['kid'] == 4])
+n_5_kids = len(df[df['kid'] == 5])
+n_6_kids = len(df[df['kid'] == 6])
+n_7plus_kids = len(df[df['kid'] >= 7])
+
+dict_tabperc_kids = {
+    '0 Kid': 100 * n_0_kids / n_total,
+    '1 Kid': 100 * n_1_kids / n_total,
+    '2 Kids': 100 * n_2_kids / n_total,
+    '3 Kids': 100 * n_3_kids / n_total,
+    '4 Kids': 100 * n_4_kids / n_total,
+    '5 Kids': 100 * n_5_kids / n_total,
+    '6 Kids': 100 * n_6_kids / n_total,
+    '7+ Kids': 100 * n_7plus_kids / n_total
+}
+
+tabperc_kids = pd.DataFrame(dict_tabperc_kids.items(), columns=['group', 'share'])
+print(
+    tabulate(
+        tabular_data=tabperc_kids,
+        showindex=False,
+        headers='keys',
+        tablefmt="pretty"
     )
-].count().reset_index(drop=True)[0]
-perc_b40_zero_kid = 100 * n_b40_zero_kid / n_total
-# Output
-print('B40 with at least 1 kid: ' + str(perc_b40_at_least_one_kid) + '%' + '\n' +
-      'B40 with 0 kid: ' + str(perc_b40_zero_kid) + '%')
+)
 
 # X --- Notify
 telsendmsg(conf=tel_config,

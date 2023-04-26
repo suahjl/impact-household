@@ -39,6 +39,7 @@ elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
 show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
+
 # --------- Analysis Starts (only cohort pseudo-panel data regressions) ---------
 
 def load_clean_estimate(
@@ -433,7 +434,6 @@ for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
     params_table_fe_cons = params_table_fe_consol[params_table_fe_consol['outcome_variable'] == outcome_nice].copy()
     for col in ['outcome_variable', 'method']:
         del params_table_fe_cons[col]
-    # params_table_fe_cons = params_table_fe_cons.sort_values(by='subgroup', ascending=True)
     params_table_fe_cons = params_table_fe_cons.set_index('subgroup')
     heatmap_params_table_fe_cons = heatmap(
         input=params_table_fe_cons,

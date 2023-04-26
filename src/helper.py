@@ -277,7 +277,16 @@ def re_reg(
 # --- TIME SERIES MODELS
 
 
-def est_varx(df, cols_endog, run_varx, cols_exog, choice_ic, choice_trend, choice_horizon, choice_maxlags):
+def est_varx(
+        df: pd.DataFrame,
+        cols_endog: list,
+        run_varx: bool,
+        cols_exog: list,
+        choice_ic: str,
+        choice_trend: str,
+        choice_horizon: int,
+        choice_maxlags: int
+):
     # Work on copy
     d = df.copy()
 

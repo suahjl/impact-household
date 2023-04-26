@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from src.helper import \
     telsendmsg, telsendimg, telsendfiles, \
     get_data_from_api_ceic, get_data_from_ceic
@@ -17,12 +18,13 @@ time_start = time.time()
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/macro/'
+# path_cpb = 'https://www.cpb.nl/sites/default/files/omnidownload/CPB-World-Trade-Monitor-February-2023.xlsx'
 
-# I --- Load data
+# I.A --- Load CEIC data
 # List of ceic series ids and names
 seriesids = pd.read_csv(path_data + 'ceic_macro.csv')
 # Split into GDP (with historical extension) and others (without historical extension)
-seriesids_gdp = seriesids[0:6]
+seriesids_gdp = seriesids[0:6]  # first 6
 seriesids_others = seriesids[6:]
 # Extract only series ID
 seriesids_gdp = [re.sub("[^0-9]+", "", i) for i in list(seriesids_gdp['series_id'])]  # keep only numbers
@@ -72,9 +74,29 @@ dict_nice_col_names = {
     'forex_month_average_malaysian_ringgit_to_us_dollar': 'myrusd',
     'government_securities_yield_10_years': 'mgs10y',
     'nominal_effective_exchange_rate_index_bis_2020_100_broad': 'neer',
-    'short_term_interest_rate_month_end_klibor_3_months': 'klibor3m'
+    'real_effective_exchange_rate_index_bis_2020_100_broad': 'reer',
+    'short_term_interest_rate_month_end_klibor_3_months': 'klibor3m',
+    'interbank_offered_rate_fixing_1_month': 'klibor1m'
 }
 df = df.rename(columns=dict_nice_col_names)
+
+# I.B --- Load CPB data
+df_cpb = pd.read_excel(path_data + 'CPB-World-Trade-Monitor-February-2023.xlsx', sheet_name='inpro_out')
+df_cpb = df_cpb.iloc[[6, 24]]  # world row
+df_cpb = df_cpb.loc[:, 'Unnamed: 5':]
+list_months = list(pd.date_range(start=date(2000, 1, 1), periods=len(df_cpb.columns), freq='m'))
+list_months = [i.date() for i in list_months]
+df_cpb.columns = list_months
+df_cpb = df_cpb.transpose()
+cols_cpb = ['importworldipi', 'prodworldipi']
+df_cpb.columns = cols_cpb
+df_cpb[cols_cpb] = df_cpb[cols_cpb].astype('float')
+df_cpb = df_cpb.reset_index().rename(columns={'index': 'date'})
+df_cpb['quarter'] = pd.to_datetime(df_cpb['date']).dt.to_period('q')
+df_cpb = df_cpb.groupby('quarter')[cols_cpb].mean(numeric_only=True)
+
+# I.C --- Merge base data frames
+df = df.merge(df_cpb, how='left', right_index=True, left_index=True)
 
 # II --- Cleaning
 # Create max-uncertainty column
@@ -93,8 +115,10 @@ for i in ['_zero', '_x', '_z'] + col_x_cands:
 # Extract cleaned column names
 cols_nice = list(df.columns)
 # Split into level and rate columns
-cols_levels = ['gdp', 'pc', 'gc', 'gfcf', 'ex', 'im', 'cpi', 'brent', 'neer', 'myrusd']
-cols_rates = ['mgs10y', 'klibor3m', 'gepu']  # Apply difference, not growth transformation to GEPU
+cols_levels = ['gdp', 'pc', 'gc', 'gfcf', 'ex', 'im',
+               'cpi', 'brent', 'neer', 'reer', 'myrusd',
+               'importworldipi', 'prodworldipi', 'gepu']
+cols_rates = ['mgs10y', 'klibor3m', 'klibor1m']  # Apply difference, not growth transformation to GEPU
 cols_nochange = ['maxgepu']
 # QoQ
 df_qoq = df.copy()
@@ -102,35 +126,54 @@ for i in cols_levels:
     df_qoq[i] = 100 * ((df_qoq[i] / df_qoq[i].shift(1)) - 1)
 for i in cols_rates:
     df_qoq[i] = df_qoq[i] - df_qoq[i].shift(1)
-for i in cols_nochange:
-    pass
 # YoY
 df_yoy = df.copy()
 for i in cols_levels:
     df_yoy[i] = 100 * ((df_yoy[i] / df_yoy[i].shift(4)) - 1)
 for i in cols_rates:
     df_yoy[i] = df_yoy[i] - df_yoy[i].shift(4)
-for i in cols_nochange:
-    pass
+# Log-levels
+df_ln = df.copy()
+for i in cols_levels:
+    df_ln[i] = np.log(df[i])
+# ln QoQ
+df_ln_qoq = df_ln.copy()
+for i in cols_levels + cols_rates:
+    df_ln_qoq[i] = df_ln_qoq[i] - df_ln_qoq[i].shift(1)
+# ln YoY
+df_ln_yoy = df_ln.copy()
+for i in cols_levels + cols_rates:
+    df_ln_yoy[i] = df_ln_yoy[i] - df_ln_yoy[i].shift(4)
 
 # IV --- Pre-export
 # Reset index
 df = df.reset_index()
 df_qoq = df_qoq.reset_index()
 df_yoy = df_yoy.reset_index()
+df_ln = df_ln.reset_index()
+df_ln_qoq = df_ln_qoq.reset_index()
+df_ln_yoy = df_ln_yoy.reset_index()
 # Convert dates into str
 df['quarter'] = df['quarter'].astype('str')
 df_qoq['quarter'] = df_qoq['quarter'].astype('str')
 df_yoy['quarter'] = df_yoy['quarter'].astype('str')
+df_ln['quarter'] = df_ln['quarter'].astype('str')
+df_ln_qoq['quarter'] = df_ln_qoq['quarter'].astype('str')
+df_ln_yoy['quarter'] = df_ln_yoy['quarter'].astype('str')
 # Trim rows with NAs
 df = df.dropna(axis=0)
 df_qoq = df_qoq.dropna(axis=0)
 df_yoy = df_yoy.dropna(axis=0)
-
+df_ln = df_ln.dropna(axis=0)
+df_ln_qoq = df_ln_qoq.dropna(axis=0)
+df_ln_yoy = df_ln_yoy.dropna(axis=0)
 # V --- Output
 df.to_parquet(path_data + 'macro_data_levels.parquet')
 df_qoq.to_parquet(path_data + 'macro_data_qoq.parquet')
 df_yoy.to_parquet(path_data + 'macro_data_yoy.parquet')
+df_ln.to_parquet(path_data + 'macro_data_ln_levels.parquet')
+df_ln_qoq.to_parquet(path_data + 'macro_data_ln_qoq.parquet')
+df_ln_yoy.to_parquet(path_data + 'macro_data_ln_yoy.parquet')
 
 # X --- Notify
 telsendmsg(conf=tel_config,

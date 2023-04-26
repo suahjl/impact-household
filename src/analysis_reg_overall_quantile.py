@@ -36,6 +36,7 @@ elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
 show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
+
 # --------- Analysis Starts ---------
 
 
@@ -205,7 +206,11 @@ params_table_consol = pd.concat(
 )
 # Order columns
 params_table_consol = params_table_consol[['outcome_variable', 'method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']]
-# Export
+# Export as csv and image
+params_table_consol.to_parquet('output/params_table_overall_quantile' + '_' +
+                               outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.parquet')
+params_table_consol.to_csv('output/params_table_overall_quantile' + '_' +
+                           outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.csv')
 dfi.export(params_table_consol,
            'output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
            fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)  # to overcome mar2023 error
