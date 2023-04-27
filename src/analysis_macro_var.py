@@ -109,29 +109,7 @@ for shock in tqdm(cols_order):
         round_response += 1
     round_shock += 1
 tab_irf = tab_irf.reset_index(drop=True)
-# Nice names
-dict_cols_nice = {
-    'ex': 'Exports',
-    'gc': 'Public Consumption',
-    'pc': 'Private Consumption',
-    'gfcf': 'Investment',
-    'im': 'Imports',
-    'gdp': 'GDP',
-    'brent': 'Brent',
-    'cpi': 'CPI',
-    'gepu': 'Uncertainty',
-    'myrusd': 'MYR/USD',
-    'mgs10y': 'MGS 10-Year Yields',
-    'klibor1m': 'KLIBOR 1-Month',
-    'neer': 'NEER',
-    'reer': 'REER',
-    'klibor3m': 'KLIBOR 3-Month',
-    'importworldipi': 'Import-Weighted World IPI',
-    'prodworldipi': 'Production-Weighted World IPI',
-    'maxgepu': 'Uncertainty Shocks'
-}
-for i in ['shock', 'response']:
-    tab_irf[i] = tab_irf[i].replace(dict_cols_nice)
+
 # Output all IRFs as table
 tab_irf.to_parquet(path_output + 'macro_var_irf_all_' + input_suffix + '.parquet')
 tab_irf.to_csv(path_output + 'macro_var_irf_all_' + input_suffix + '.csv', index=False)

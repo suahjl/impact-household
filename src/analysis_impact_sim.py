@@ -65,10 +65,33 @@ hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_H
 # Which parameters
 choice_macro_shock = 'Private Consumption'
 choice_micro_outcome = 'Consumption'
-choices_macro_response = ['GDP', 'Private Consumption', 'CPI']
+choices_macro_response = ['GDP', 'Private Consumption', 'CPI', 'NEER', 'MGS10Y']
 
 # I --- Load parameter estimates
-irf = pd.read_parquet(path_output + 'macro_var_irf_all_' + macro_suffix + '.parquet')
+irf = pd.read_parquet(path_output + 'macro_var_irf_all_varyx_narrative_avg_' + macro_suffix + '.parquet')
+# Nice names
+dict_cols_nice = {
+    'ex': 'Exports',
+    'gc': 'Public Consumption',
+    'pc': 'Private Consumption',
+    'gfcf': 'Investment',
+    'im': 'Imports',
+    'gdp': 'GDP',
+    'brent': 'Brent',
+    'cpi': 'CPI',
+    'gepu': 'Uncertainty',
+    'myrusd': 'MYR/USD',
+    'mgs10y': 'MGS 10-Year Yields',
+    'klibor1m': 'KLIBOR 1-Month',
+    'neer': 'NEER',
+    'reer': 'REER',
+    'klibor3m': 'KLIBOR 3-Month',
+    'importworldipi': 'Import-Weighted World IPI',
+    'prodworldipi': 'Production-Weighted World IPI',
+    'maxgepu': 'Uncertainty Shocks'
+}
+for i in ['shock', 'response']:
+    irf[i] = irf[i].replace(dict_cols_nice)
 mpc = pd.read_parquet(path_output +
                       'params_table_fe_consol_strat_cons_' +
                       income_choice + '_' + fd_suffix + '_subgroups' + hhbasis_suffix + '.parquet').reset_index()

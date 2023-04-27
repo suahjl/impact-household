@@ -2,6 +2,7 @@ import pandas as pd
 import telegram_send
 from linearmodels import PanelOLS, RandomEffects
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import statsmodels.formula.api as smf
 import statsmodels.tsa.api as smt
 import matplotlib.pyplot as plt
@@ -461,5 +462,77 @@ def barchart(
         width=1366,
     )
     fig.update_traces(textfont_size=28)
+    # output
+    return fig
+
+
+def manual_irf_subplots(
+        data,
+        endog,
+        shock_col,
+        response_col,
+        irf_col,
+        horizon_col,
+        main_title,
+        maxrows,
+        maxcols,
+        line_colour,
+        annot_size,
+        font_size
+):
+    # Create titles first
+    titles = []
+    for response in endog:
+        for shock in endog:
+            titles = titles + [shock + ' -> ' + response]
+    maxr = maxrows
+    maxc = maxcols
+    fig = make_subplots(rows=maxr, cols=maxc, subplot_titles=titles)
+    nr = 1
+    nc = 1
+    # columns: shocks, rows: responses; move columns, then rows
+    for response in endog:
+        for shock in endog:
+            # Data copy
+            d = data[(data[shock_col] == shock) & (data[response_col] == response)].copy()
+            # Add selected series
+            fig.add_trace(
+                go.Scatter(
+                    x=d[horizon_col].astype('str'),
+                    y=d[irf_col],
+                    mode='lines',
+                    line=dict(width=3, color=line_colour)
+                ),
+                row=nr,
+                col=nc
+            )
+            # Add zero line
+            fig.add_hline(
+                y=0,
+                line_width=1,
+                line_dash='solid',
+                line_color='grey',
+                row=nr,
+                col=nc
+            )
+            # Move to next subplot
+            nc += 1
+            if nr > maxr:
+                raise NotImplementedError('More subplots than allowed by dimension of main plot!')
+            if nc > maxc:
+                nr += 1  # next row
+                nc = 1  # reset column
+    for annot in fig['layout']['annotations']:
+        annot['font'] = dict(size=annot_size, color='black')  # subplot title font size
+    fig.update_layout(
+        title=main_title,
+        # yaxis_title=y_title,
+        plot_bgcolor='white',
+        hovermode='x',
+        font=dict(color='black', size=font_size),
+        showlegend=False,
+        height=768,
+        width=1366
+    )
     # output
     return fig
