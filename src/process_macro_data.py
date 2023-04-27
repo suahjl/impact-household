@@ -70,6 +70,7 @@ dict_nice_col_names = {
     'gross_domesticproduct_gdp_2015p_sa': 'gdp',
     'commodity_price_nominal_energy_crude_oil_brent': 'brent',
     'consumer_price_index_cpi_': 'cpi',
+    'cpi_transport_tp_': 'cpitransport',
     'economic_policy_uncertainty_index_global_ppp_adjusted_gdp': 'gepu',
     'forex_month_average_malaysian_ringgit_to_us_dollar': 'myrusd',
     'government_securities_yield_10_years': 'mgs10y',
@@ -116,7 +117,7 @@ for i in ['_zero', '_x', '_z'] + col_x_cands:
 cols_nice = list(df.columns)
 # Split into level and rate columns
 cols_levels = ['gdp', 'pc', 'gc', 'gfcf', 'ex', 'im',
-               'cpi', 'brent', 'neer', 'reer', 'myrusd',
+               'cpi', 'cpitransport', 'brent', 'neer', 'reer', 'myrusd',
                'importworldipi', 'prodworldipi', 'gepu']
 cols_rates = ['mgs10y', 'klibor3m', 'klibor1m']  # Apply difference, not growth transformation to GEPU
 cols_nochange = ['maxgepu']
