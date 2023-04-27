@@ -325,14 +325,14 @@ dynamic = compute_var_dynamic_impact(
 dynamic = dynamic[dynamic['horizon_year'] < 4]  # ignore final quarter
 dynamic = dynamic.rename(columns={'irf': 'dynamic_impact'})
 dynamic_rounded = dynamic.copy()
-dynamic_rounded['dynamic_impact'] = dynamic_rounded['dynamic_impact'].round(2) 
+dynamic_rounded['dynamic_impact'] = dynamic_rounded['dynamic_impact'].round(2)
 # Output
 dynamic_rounded.to_parquet(path_output + 'dynamic_impact_sim_' +
-                   income_choice + '_' + outcome_choice + '_' +
-                   fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.parquet')
+                           income_choice + '_' + outcome_choice + '_' +
+                           fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.parquet')
 dynamic_rounded.to_csv(path_output + 'dynamic_impact_sim_' +
-               income_choice + '_' + outcome_choice + '_' +
-               fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.csv')
+                       income_choice + '_' + outcome_choice + '_' +
+                       fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.csv')
 dfi.export(dynamic_rounded,
            path_output + 'dynamic_impact_sim_' +
            income_choice + '_' + outcome_choice + '_' +
@@ -374,11 +374,11 @@ aggregate_rounded[['landing_impact', 'dynamic_impact', 'total_impact']] = \
     aggregate_rounded[['landing_impact', 'dynamic_impact', 'total_impact']].round(2)
 # Output
 aggregate_rounded.to_parquet(path_output + 'aggregate_impact_sim_' +
-                   income_choice + '_' + outcome_choice + '_' +
-                   fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.parquet')
+                             income_choice + '_' + outcome_choice + '_' +
+                             fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.parquet')
 aggregate_rounded.to_csv(path_output + 'aggregate_impact_sim_' +
-               income_choice + '_' + outcome_choice + '_' +
-               fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.csv')
+                         income_choice + '_' + outcome_choice + '_' +
+                         fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.csv')
 dfi.export(aggregate_rounded,
            path_output + 'aggregate_impact_sim_' +
            income_choice + '_' + outcome_choice + '_' +
