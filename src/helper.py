@@ -302,9 +302,16 @@ def est_varx(
     # Output
     return res, irf
 
+
 # --- CHARTS
 
-def heatmap(input: pd.DataFrame, mask: bool, colourmap: str, outputfile: str, title: str, lb: float, ub: float,
+def heatmap(input: pd.DataFrame,
+            mask: bool,
+            colourmap: str,
+            outputfile: str,
+            title: str,
+            lb: float,
+            ub: float,
             format: str):
     fig = plt.figure()
     sns.heatmap(input,

@@ -4131,7 +4131,7 @@ df_agg_mean_adults_equivalised, df_agg_balanced_mean_adults_equivalised = gen_ps
     file_suffix='mean_adults_equivalised'
 )
 
-# All elderly
+# All households whose head is an elderly
 df_14_elderly = df_14_withbase[df_14_withbase['age'] >= 60].copy()
 df_16_elderly = df_16_withbase[df_16_withbase['age'] >= 60].copy()
 df_19_elderly = df_19_withbase[df_19_withbase['age'] >= 60].copy()

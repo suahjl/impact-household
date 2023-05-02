@@ -1,4 +1,4 @@
-# Select descriptive stats (only income) across total HH, equivalised, and per capita basis using HH income groups
+# Select descriptive stats (only income and consumption) across total HH, equivalised, and per capita basis using HH income groups
 
 import pandas as pd
 import numpy as np
@@ -89,6 +89,86 @@ def capybara_tiny(data, y_col, x_col):
 
 
 def gen_gross_income_group(data, aggregation):
+    if aggregation == 0:
+        for t in tqdm(list(data['year'].unique())):
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.99)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '5_t1'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.8)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.99)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '4_t19'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.6)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.8)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '3_m20+'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.4)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.6)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '2_m20-'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.2)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.4)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '1_b20+'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.2)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '0_b20-'
     if aggregation == 1:
         for t in tqdm(list(data['year'].unique())):
             data.loc[
@@ -208,7 +288,7 @@ def gen_income_allbasis(data):
 
 # III.0 --- Generate income groups
 # Define income group buckets
-gen_gross_income_group(data=df, aggregation=1)
+gen_gross_income_group(data=df, aggregation=0)
 
 # III.0 --- Generate income per capita and equivalised income
 gen_income_allbasis(data=df)

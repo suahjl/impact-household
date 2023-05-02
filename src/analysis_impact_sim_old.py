@@ -1,5 +1,3 @@
-# WIP --- 3 May 2023
-
 import pandas as pd
 import numpy as np
 from tabulate import tabulate

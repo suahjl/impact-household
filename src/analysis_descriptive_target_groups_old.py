@@ -252,7 +252,7 @@ print(
 
 # X --- Notify
 telsendmsg(conf=tel_config,
-           msg='impact-household --- analysis_descriptive_target_groups: COMPLETED')
+           msg='impact-household --- analysis_descriptive_target_groups_tiered: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

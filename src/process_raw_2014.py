@@ -203,9 +203,11 @@ b2_kids = df_b2[['ID', 'Umur']].copy()
 b2_kids.loc[b2_kids['Umur'] <= 12, 'child'] = 1
 b2_kids.loc[(b2_kids['Umur'] > 12) & (b2_kids['Umur'] <= 17), 'adolescent'] = 1
 b2_kids.loc[b2_kids['Umur'] >= 60, 'elderly'] = 1
-for i in ['child', 'adolescent', 'elderly']:
+b2_kids.loc[(b2_kids['Umur'] >= 18) & (b2_kids['Umur'] <= 64), 'working_age2'] = 1
+b2_kids.loc[b2_kids['Umur'] >= 65, 'elderly2'] = 1
+for i in ['child', 'adolescent', 'elderly', 'working_age2', 'elderly2']:
     b2_kids.loc[b2_kids[i].isna(), i] = 0
-b2_kids = b2_kids.groupby('ID')[['child', 'adolescent', 'elderly']].sum().reset_index()
+b2_kids = b2_kids.groupby('ID')[['child', 'adolescent', 'elderly', 'working_age2', 'elderly2']].sum().reset_index()
 
 # b2: Keep only head of households
 print(tabulate(pd.crosstab(df_b2['Penerima_Pendapatan'], df_b2['Perhubungan_KIR']), showindex=True, headers='keys',
@@ -366,6 +368,8 @@ dict_rename = \
         # 'child': '',
         # 'adolescent': '',
         # 'elderly': '',
+        # 'working_age2': '',
+        # 'elderly2': '',
         # 'cons_01': '',
         # 'cons_02': '',
         # 'cons_03': '',
@@ -438,6 +442,8 @@ dict_dtypes_14 = \
         'child': 'int',
         'adolescent': 'int',
         'elderly': 'int',
+        'working_age2': 'int',
+        'elderly2': 'int',
         'cons_01': 'float',
         'cons_02': 'float',
         'cons_03': 'float',
