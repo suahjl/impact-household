@@ -242,14 +242,17 @@ b2_working_women = b2_working_women.groupby('id')['Inc_recipient'] \
 # b2: Separate column for <= 12 year-olds, <= 17 year-olds, and elderly (>= 60 year olds)
 b2_kids = df_b2[['id', 'Age']].copy()
 b2_kids['Age'] = b2_kids['Age'].astype('int')
+b2_kids.loc[b2_kids['Age'] <= 17, 'kid'] = 1
 b2_kids.loc[b2_kids['Age'] <= 12, 'child'] = 1
 b2_kids.loc[(b2_kids['Age'] > 12) & (b2_kids['Age'] <= 17), 'adolescent'] = 1
 b2_kids.loc[b2_kids['Age'] >= 60, 'elderly'] = 1
 b2_kids.loc[(b2_kids['Age'] >= 18) & (b2_kids['Age'] <= 64), 'working_age2'] = 1
 b2_kids.loc[b2_kids['Age'] >= 65, 'elderly2'] = 1
-for i in ['child', 'adolescent', 'elderly', 'working_age2', 'elderly2']:
+b2_kids.loc[(b2_kids['Age'] >= 18) & (b2_kids['Age'] <= 59), 'working_age'] = 1
+for i in ['kid', 'child', 'adolescent', 'elderly', 'working_age2', 'elderly2', 'working_age']:
     b2_kids.loc[b2_kids[i].isna(), i] = 0
-b2_kids = b2_kids.groupby('id')[['child', 'adolescent', 'elderly', 'working_age2', 'elderly2']].sum().reset_index()
+b2_kids = b2_kids.groupby('id')[
+    ['kid', 'child', 'adolescent', 'elderly', 'working_age2', 'elderly2', 'working_age']].sum().reset_index()
 
 # b2: Keep only head of households
 print(tabulate(pd.crosstab(df_b2['Inc_recipient'], df_b2['Relationship']), showindex=True, headers='keys',
@@ -392,10 +395,12 @@ dict_rename = \
         'Occupation': 'occupation',
         'Industry': 'industry',
         'Citizenship': 'malaysian',
+        # 'kid': '',
         # 'child': '',
         # 'adolescent': '',
         # 'elderly': '',
         # 'working_age2': '',
+        # 'working_age': '',
         # 'elderly2': '',
         # 'cons_01': '',
         # 'cons_02': '',
@@ -471,10 +476,12 @@ dict_dtypes_16 = \
         'income_gen_members': 'int',
         'working_adult_females': 'int',
         'non_working_adult_females': 'int',
+        'kid': 'int',
         'child': 'int',
         'adolescent': 'int',
         'elderly': 'int',
         'working_age2': 'int',
+        'working_age': 'int',
         'elderly2': 'int',
         'cons_01': 'float',
         'cons_02': 'float',

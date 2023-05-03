@@ -52,6 +52,7 @@ col_groups = \
         'income_gen_members_group',
         'working_adult_females_group',
         'non_working_adult_females_group',
+        'working_age_group',
         'adolescent_group',
         'child_group',
         'elderly_group',

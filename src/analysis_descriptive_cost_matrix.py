@@ -331,6 +331,8 @@ for benefit_target, benefit_amount, x_max_choice \
             in \
             zip(list_incgroups, list_amount_multiplier):
         # Compute
+        if (benefit_target == 'kid') | (benefit_target == 'elderly2'):  # which groups to apply flat rate
+            amount_multiplier = 1
         tabperc_tiered, tabperc_tiered_flattened = tabperc_xy_cost(
             data=df,
             x_col=benefit_target,
@@ -445,7 +447,7 @@ fig_costmat_level = heatmap(
     title='Annual Cost Matrix (RM bil)',
     lb=0,
     ub=costmat_level.max().max(),
-    format='.1f'
+    format='.2f'
 )
 telsendimg(
     conf=tel_config,
@@ -461,7 +463,7 @@ fig_costmat_percgdp = heatmap(
     title='Annual Cost Matrix (% of 2022 GDP)',
     lb=0,
     ub=costmat_percgdp.max().max(),
-    format='.1f'
+    format='.2f'
 )
 telsendimg(
     conf=tel_config,

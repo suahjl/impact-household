@@ -32,7 +32,7 @@ if process_raw_equivalised:
 process_pre_analysis = False
 if process_pre_analysis:
     import src.process_outliers
-    import src.process_consol_group
+    import src.process_consol_group_old
 
 # Analyse (uses trimmed-outliers per-capita data frames)
 generate_adj_analysis = False

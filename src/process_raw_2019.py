@@ -207,7 +207,8 @@ b2_income_gen = df_b2.groupby('HID')['PP'].sum().reset_index().rename(columns={'
 
 # b2: non-income-generating adult females (18-59)
 b2_idle_women = df_b2[(((df_b2['U'] >= 18) & (df_b2['U'] < 60)) &
-                       (df_b2['PP'] == 0) & (df_b2['J'] == 0))].copy()  # keep only rows corresponding to adult females not working
+                       (df_b2['PP'] == 0) & (df_b2[
+                                                 'J'] == 0))].copy()  # keep only rows corresponding to adult females not working
 b2_idle_women = b2_idle_women.groupby('HID')['PP'] \
     .count() \
     .reset_index() \
@@ -215,7 +216,8 @@ b2_idle_women = b2_idle_women.groupby('HID')['PP'] \
 
 # b2: Income-generating adult females (18-59)
 b2_working_women = df_b2[(((df_b2['U'] >= 18) & (df_b2['U'] < 60)) &
-                          (df_b2['PP'] == 1) & (df_b2['J'] == 0))].copy()  # keep only rows corresponding to working adult females
+                          (df_b2['PP'] == 1) & (
+                                      df_b2['J'] == 0))].copy()  # keep only rows corresponding to working adult females
 b2_working_women = b2_working_women.groupby('HID')['PP'] \
     .count() \
     .reset_index() \
@@ -223,14 +225,17 @@ b2_working_women = b2_working_women.groupby('HID')['PP'] \
 
 # b2: Separate column for <= 12 year-olds, <= 17 year-olds, and elderly (>= 60 year olds)
 b2_kids = df_b2[['HID', 'U']].copy()
+b2_kids.loc[b2_kids['U'] <= 17, 'kid'] = 1
 b2_kids.loc[b2_kids['U'] <= 12, 'child'] = 1
 b2_kids.loc[(b2_kids['U'] > 12) & (b2_kids['U'] <= 17), 'adolescent'] = 1
 b2_kids.loc[b2_kids['U'] >= 60, 'elderly'] = 1
 b2_kids.loc[(b2_kids['U'] >= 18) & (b2_kids['U'] <= 64), 'working_age2'] = 1
 b2_kids.loc[b2_kids['U'] >= 65, 'elderly2'] = 1
-for i in ['child', 'adolescent', 'elderly', 'working_age2', 'elderly2']:
+b2_kids.loc[(b2_kids['U'] >= 18) & (b2_kids['U'] <= 59), 'working_age'] = 1
+for i in ['kid', 'child', 'adolescent', 'elderly', 'working_age2', 'elderly2', 'working_age']:
     b2_kids.loc[b2_kids[i].isna(), i] = 0
-b2_kids = b2_kids.groupby('HID')[['child', 'adolescent', 'elderly', 'working_age2', 'elderly2']].sum().reset_index()
+b2_kids = b2_kids.groupby('HID')[
+    ['kid', 'child', 'adolescent', 'elderly', 'working_age2', 'elderly2', 'working_age']].sum().reset_index()
 
 # b2: Keep only head of households
 print(tabulate(pd.crosstab(df_b2['PP'], df_b2['PKIR']), showindex=True, headers='keys', tablefmt="pretty"))
@@ -372,10 +377,12 @@ dict_rename = \
         'IND': 'industry',
         'PK': 'occupation',
         'SJ': 'education',
+        # 'kid': '',
         # 'child': '',
         # 'adolescent': '',
         # 'elderly': '',
         # 'working_age2': '',
+        # 'working_age': '',
         # 'elderly2': '',
         # 'cons_01': '',
         # 'cons_02': '',
@@ -429,10 +436,12 @@ dict_dtypes_19 = \
         'income_gen_members': 'int',
         'working_adult_females': 'int',
         'non_working_adult_females': 'int',
+        'kid': 'int',
         'adolescent': 'int',
         'child': 'int',
         'elderly': 'int',
         'working_age2': 'int',
+        'working_age': 'int',
         'elderly2': 'int',
         'male': 'int',
         'marriage': 'str',

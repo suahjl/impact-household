@@ -16,6 +16,7 @@ time_start = time.time()
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 path_data = './data/hies_consol/'
+path_subgroup = path_data + 'subgroup/'
 path_2009 = './data/hies_2009/'
 path_2014 = './data/hies_2014/'
 path_2016 = './data/hies_2016/'
@@ -135,6 +136,40 @@ gen_igm_group(data=df_19_full_hhbasis)
 gen_igm_group(data=df_14_full_equivalised)
 gen_igm_group(data=df_16_full_equivalised)
 gen_igm_group(data=df_19_full_equivalised)
+
+
+# working age (0, 1, 2, 3+) --- vanilla, not extended definition
+def gen_wa_group(data):
+    data.loc[data['working_age'] == 0, 'working_age_group'] = '0'
+    data.loc[data['working_age'] == 1, 'working_age_group'] = '1'
+    data.loc[data['working_age'] == 2, 'working_age_group'] = '2'
+    data.loc[data['working_age'] == 3, 'working_age_group'] = '3+'
+    # del data['working_age']
+
+
+gen_wa_group(data=df_14)
+gen_wa_group(data=df_16)
+gen_wa_group(data=df_19)
+
+gen_wa_group(data=df_14_hhbasis)
+gen_wa_group(data=df_16_hhbasis)
+gen_wa_group(data=df_19_hhbasis)
+
+gen_wa_group(data=df_14_equivalised)
+gen_wa_group(data=df_16_equivalised)
+gen_wa_group(data=df_19_equivalised)
+
+gen_wa_group(data=df_14_full)
+gen_wa_group(data=df_16_full)
+gen_wa_group(data=df_19_full)
+
+gen_wa_group(data=df_14_full_hhbasis)
+gen_wa_group(data=df_16_full_hhbasis)
+gen_wa_group(data=df_19_full_hhbasis)
+
+gen_wa_group(data=df_14_full_equivalised)
+gen_wa_group(data=df_16_full_equivalised)
+gen_wa_group(data=df_19_full_equivalised)
 
 
 # non-working adult females (0, 1, 2, 3+)
@@ -271,6 +306,40 @@ gen_adolescent_group(data=df_19_full_hhbasis)
 gen_adolescent_group(data=df_14_full_equivalised)
 gen_adolescent_group(data=df_16_full_equivalised)
 gen_adolescent_group(data=df_19_full_equivalised)
+
+
+# kids (1, 2, 3, 4, 6+)
+def gen_kid_group(data):
+    data.loc[data['kid'] == 0, 'kid_group'] = '0'
+    data.loc[data['kid'] == 1, 'kid_group'] = '1'
+    data.loc[data['kid'] == 2, 'kid_group'] = '2'
+    data.loc[data['kid'] >= 3, 'kid_group'] = '3+'
+    # del data['kid']
+
+
+gen_kid_group(data=df_14)
+gen_kid_group(data=df_16)
+gen_kid_group(data=df_19)
+
+gen_kid_group(data=df_14_hhbasis)
+gen_kid_group(data=df_16_hhbasis)
+gen_kid_group(data=df_19_hhbasis)
+
+gen_kid_group(data=df_14_equivalised)
+gen_kid_group(data=df_16_equivalised)
+gen_kid_group(data=df_19_equivalised)
+
+gen_kid_group(data=df_14_full)
+gen_kid_group(data=df_16_full)
+gen_kid_group(data=df_19_full)
+
+gen_kid_group(data=df_14_full_hhbasis)
+gen_kid_group(data=df_16_full_hhbasis)
+gen_kid_group(data=df_19_full_hhbasis)
+
+gen_kid_group(data=df_14_full_equivalised)
+gen_kid_group(data=df_16_full_equivalised)
+gen_kid_group(data=df_19_full_equivalised)
 
 
 # elderly group (1, 2, 3+)
@@ -502,6 +571,107 @@ gen_hh_size_group(data=df_14_full_hhbasis)
 gen_hh_size_group(data=df_16_full_hhbasis)
 gen_hh_size_group(data=df_19_full_hhbasis)
 
+
+# Generate income groups
+def gen_gross_income_group(data, aggregation):
+    if aggregation == 1:
+        data.loc[
+            (
+                    data['gross_income'] >= data['gross_income'].quantile(q=0.8)
+            ),
+            'gross_income_group'
+        ] = '4_t20'
+        data.loc[
+            (
+                    (
+                            data['gross_income'] >= data['gross_income'].quantile(q=0.6)
+                    ) &
+                    (
+                            data['gross_income'] < data['gross_income'].quantile(q=0.8)
+                    )
+            ),
+            'gross_income_group'
+        ] = '3_m20+'
+        data.loc[
+            (
+                    (
+                            data['gross_income'] >= data['gross_income'].quantile(q=0.4)
+                    ) &
+                    (
+                            data['gross_income'] < data['gross_income'].quantile(q=0.6)
+                    )
+            ),
+            'gross_income_group'
+        ] = '2_m20-'
+        data.loc[
+            (
+                    (
+                            data['gross_income'] >= data['gross_income'].quantile(q=0.2)
+                    ) &
+                    (
+                            data['gross_income'] < data['gross_income'].quantile(q=0.4)
+                    )
+            ),
+            'gross_income_group'
+        ] = '1_b20+'
+        data.loc[
+            (
+                    data['gross_income'] < data['gross_income'].quantile(q=0.2)
+            ),
+            'gross_income_group'
+        ] = '0_b20-'
+    elif aggregation == 2:
+        data.loc[
+            (
+                    data['gross_income'] >= data['gross_income'].quantile(q=0.8)
+            )
+            ,
+            'gross_income_group'
+        ] = '2_t20'
+        data.loc[
+            (
+                    (
+                            data['gross_income'] >= data['gross_income'].quantile(q=0.4)
+                    ) &
+                    (
+                            data['gross_income'] < data['gross_income'].quantile(q=0.8)
+                    )
+            ),
+            'gross_income_group'
+        ] = '1_m40'
+        data.loc[
+            (
+                    data['gross_income'] < data['gross_income'].quantile(q=0.4)
+            )
+            ,
+            'gross_income_group'
+        ] = '0_b40'
+
+
+gen_gross_income_group(data=df_14, aggregation=2)
+gen_gross_income_group(data=df_16, aggregation=2)
+gen_gross_income_group(data=df_19, aggregation=2)
+
+gen_gross_income_group(data=df_14_hhbasis, aggregation=2)
+gen_gross_income_group(data=df_16_hhbasis, aggregation=2)
+gen_gross_income_group(data=df_19_hhbasis, aggregation=2)
+
+gen_gross_income_group(data=df_14_equivalised, aggregation=2)
+gen_gross_income_group(data=df_16_equivalised, aggregation=2)
+gen_gross_income_group(data=df_19_equivalised, aggregation=2)
+
+gen_gross_income_group(data=df_14_full, aggregation=2)
+gen_gross_income_group(data=df_16_full, aggregation=2)
+gen_gross_income_group(data=df_19_full, aggregation=2)
+
+gen_gross_income_group(data=df_14_full_hhbasis, aggregation=2)
+gen_gross_income_group(data=df_16_full_hhbasis, aggregation=2)
+gen_gross_income_group(data=df_19_full_hhbasis, aggregation=2)
+
+gen_gross_income_group(data=df_14_full_equivalised, aggregation=2)
+gen_gross_income_group(data=df_16_full_equivalised, aggregation=2)
+gen_gross_income_group(data=df_19_full_equivalised, aggregation=2)
+
 # Delete redundant columns; keep hh_size for hhbasis dataset
 for i in ['hh_size']:
     del df_14[i]
@@ -596,6 +766,8 @@ cols_base_group_transformed = \
         'income_gen_members',
         'non_working_adult_females',
         'working_adult_females',
+        'working_age',
+        'kid',
         'child',
         'adolescent',
         'elderly',
@@ -627,7 +799,16 @@ for i in cols_base_group_transformed_with_hhsize:
     del df_19_full_equivalised[i]
 
 # IV.A --- Merger (group-level; 2014 - 2019)
-# Observables to be grouped on
+# Outcome variables to be collapsed
+col_cons = ['cons_01', 'cons_02', 'cons_03', 'cons_04',
+            'cons_05', 'cons_06', 'cons_07', 'cons_08',
+            'cons_09', 'cons_10', 'cons_11', 'cons_12',
+            'cons_13',
+            'cons_01_12', 'cons_01_13',
+            'cons_0722_fuel', 'cons_07_ex_bigticket']
+col_inc = ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
+col_outcomes = col_cons + col_inc
+# Observables to be grouped on (exclude some overlapping variables like kid, working_age2, elderly2)
 col_groups = \
     [
         'state',
@@ -638,6 +819,7 @@ col_groups = \
         'income_gen_members_group',
         'non_working_adult_females_group',
         'working_adult_females_group',
+        'working_age_group',
         'adolescent_group',
         'child_group',
         'elderly_group',
@@ -655,16 +837,28 @@ elif not hhbasis_cohorts_with_hhsize:  # whether per capita or equivalised
 
 
 # Functions
-def gen_pseudopanel(data1, data2, data3, list_cols_cohort, use_mean, use_quantile, quantile_choice, file_suffix):
+def gen_pseudopanel(
+        data1,
+        data2,
+        data3,
+        list_cols_cohort,
+        list_cols_outcomes,
+        use_mean,
+        use_quantile,
+        quantile_choice,
+        file_suffix):
     # Groupby operation
     if use_mean and not use_quantile:
-        df1_agg = data1.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
-        df2_agg = data2.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
-        df3_agg = data3.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+        df1_agg = data1.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
+        df2_agg = data2.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
+        df3_agg = data3.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
     elif use_quantile and not use_mean:
-        df1_agg = data1.groupby(list_cols_cohort).quantile(numeric_only=True, q=quantile_choice).reset_index()
-        df2_agg = data2.groupby(list_cols_cohort).quantile(numeric_only=True, q=quantile_choice).reset_index()
-        df3_agg = data3.groupby(list_cols_cohort).quantile(numeric_only=True, q=quantile_choice).reset_index()
+        df1_agg = data1.groupby(list_cols_cohort)[list_cols_outcomes].quantile(numeric_only=True,
+                                                                               q=quantile_choice).reset_index()
+        df2_agg = data2.groupby(list_cols_cohort)[list_cols_outcomes].quantile(numeric_only=True,
+                                                                               q=quantile_choice).reset_index()
+        df3_agg = data3.groupby(list_cols_cohort)[list_cols_outcomes].quantile(numeric_only=True,
+                                                                               q=quantile_choice).reset_index()
     elif use_mean and use_quantile:
         raise NotImplementedError('Use either mean or quantiles')
     elif not use_mean and not use_quantile:
@@ -697,6 +891,7 @@ def gen_pseudopanel_quantile_fixed_axis(
         data2,
         data3,
         list_cols_cohort,
+        list_cols_outcomes,
         fixed_axis,
         quantile_choice,
         file_suffix
@@ -724,9 +919,9 @@ def gen_pseudopanel_quantile_fixed_axis(
     df2 = df2[df2[fixed_axis] == df2['_fixed_axis']]
     df3 = df3[df3[fixed_axis] == df3['_fixed_axis']]
     # Collapse
-    df1_agg = df1.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
-    df2_agg = df2.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
-    df3_agg = df3.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    df1_agg = df1.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
+    df2_agg = df2.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
+    df3_agg = df3.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
     # Generate time identifiers
     df1_agg['_time'] = 1
     df2_agg['_time'] = 2
@@ -743,9 +938,6 @@ def gen_pseudopanel_quantile_fixed_axis(
     df_agg_balanced = df_agg_balanced[df_agg_balanced['balanced'] == 1]
     del df_agg_balanced['balanced']
     df_agg_balanced = df_agg_balanced.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
-    # Delete fixed axes
-    del df_agg['_fixed_axis']
-    del df_agg_balanced['_fixed_axis']
     # Save to local
     df_agg.to_parquet(path_data + 'hies_consol_agg_' + file_suffix + '.parquet')
     df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
@@ -758,6 +950,7 @@ def gen_pseudopanel_distgroup_fixed_axis(
         data2,
         data3,
         list_cols_cohort,
+        list_cols_outcomes,
         fixed_axis,
         distbounds,
         file_suffix
@@ -799,9 +992,9 @@ def gen_pseudopanel_distgroup_fixed_axis(
     df2 = df2[(df2[fixed_axis] >= df2['_lb_fixed_axis']) & (df2[fixed_axis] <= df2['_ub_fixed_axis'])]
     df3 = df3[(df3[fixed_axis] >= df3['_lb_fixed_axis']) & (df3[fixed_axis] <= df3['_ub_fixed_axis'])]
     # Collapse
-    df1_agg = df1.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
-    df2_agg = df2.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
-    df3_agg = df3.groupby(list_cols_cohort).mean(numeric_only=True).reset_index()
+    df1_agg = df1.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
+    df2_agg = df2.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
+    df3_agg = df3.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
     # Generate time identifiers
     df1_agg['_time'] = 1
     df2_agg['_time'] = 2
@@ -818,11 +1011,6 @@ def gen_pseudopanel_distgroup_fixed_axis(
     df_agg_balanced = df_agg_balanced[df_agg_balanced['balanced'] == 1]
     del df_agg_balanced['balanced']
     df_agg_balanced = df_agg_balanced.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
-    # Delete fixed axes
-    del df_agg['_lb_fixed_axis']
-    del df_agg['_ub_fixed_axis']
-    del df_agg_balanced['_lb_fixed_axis']
-    del df_agg_balanced['_ub_fixed_axis']
     # Save to local
     df_agg.to_parquet(path_data + 'hies_consol_agg_' + file_suffix + '.parquet')
     df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
@@ -836,6 +1024,7 @@ df_agg_mean, df_agg_balanced_mean = gen_pseudopanel(
     data2=df_16,
     data3=df_19,
     list_cols_cohort=col_groups,
+    list_cols_outcomes=col_outcomes,
     use_mean=True,
     use_quantile=False,
     quantile_choice=0.5,
@@ -847,6 +1036,7 @@ df_agg_mean_hhbasis, df_agg_balanced_mean_hhbasis = gen_pseudopanel(
     data2=df_16_hhbasis,
     data3=df_19_hhbasis,
     list_cols_cohort=col_groups_with_hhsize,
+    list_cols_outcomes=col_outcomes,
     use_mean=True,
     use_quantile=False,
     quantile_choice=0.5,
@@ -858,6 +1048,7 @@ df_agg_mean_equivalised, df_agg_balanced_mean_equivalised = gen_pseudopanel(
     data2=df_16_equivalised,
     data3=df_19_equivalised,
     list_cols_cohort=col_groups,
+    list_cols_outcomes=col_outcomes,
     use_mean=True,
     use_quantile=False,
     quantile_choice=0.5,
@@ -881,6 +1072,7 @@ for distbound, suffix in tqdm(zip(list_distbounds, list_suffixes)):
         data3=df_19,
         fixed_axis='gross_income',
         list_cols_cohort=col_groups,
+        list_cols_outcomes=col_outcomes,
         distbounds=distbound,
         file_suffix=suffix
     )
@@ -890,6 +1082,7 @@ for distbound, suffix in tqdm(zip(list_distbounds, list_suffixes)):
         data3=df_19_hhbasis,
         fixed_axis='gross_income',
         list_cols_cohort=col_groups_with_hhsize,
+        list_cols_outcomes=col_outcomes,
         distbounds=distbound,
         file_suffix=suffix + '_hhbasis'
     )
@@ -899,6 +1092,7 @@ for distbound, suffix in tqdm(zip(list_distbounds, list_suffixes)):
         data3=df_19_equivalised,
         fixed_axis='gross_income',
         list_cols_cohort=col_groups_with_hhsize,
+        list_cols_outcomes=col_outcomes,
         distbounds=distbound,
         file_suffix=suffix + '_equivalised'
     )
@@ -958,3252 +1152,190 @@ del df_14['year']
 del df_16['year']
 del df_19['year']
 
-# B40
-df_14_b40 = df_14_withbase[df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)].copy()
-df_16_b40 = df_16_withbase[df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)].copy()
-df_19_b40 = df_19_withbase[df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)].copy()
+# Create subgroups by benefit objective B (kid, working_age2, and elderly2), and income groups Y
+list_incgroups = ['0_b20-', '1_b20+', '2_m20-', '3_m20+', '4_t20']
+list_incgroups_suffix = ['b20m', 'b20p', 'm20m', 'm20p', 't20']
+list_benefit_objectives = ['kid', 'working_age2', 'elderly2']
+list_truncate_thresholds = [4, 3, 3]
+for incgroup, incgroup_suffix in tqdm(zip(list_incgroups, list_incgroups_suffix)):
+    for benefit_objective, truncate_threshold in zip(list_benefit_objectives, list_truncate_thresholds):
+        for n_obj in range(1, truncate_threshold + 1):
 
-df_14_b40_hhbasis = \
-    df_14_hhbasis_withbase[
-        df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.4)
-        ].copy()
-df_16_b40_hhbasis = \
-    df_16_hhbasis_withbase[
-        df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.4)
-        ].copy()
-df_19_b40_hhbasis = \
-    df_19_hhbasis_withbase[
-        df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.4)
-        ].copy()
+            if n_obj < truncate_threshold:
+                # for file suffix
+                n_obj_nice = str(n_obj)
 
-df_14_b40_equivalised = \
-    df_14_equivalised_withbase[
-        df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.4)
-        ].copy()
-df_16_b40_equivalised = \
-    df_16_equivalised_withbase[
-        df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.4)
-        ].copy()
-df_19_b40_equivalised = \
-    df_19_equivalised_withbase[
-        df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.4)
-        ].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b40[i]
-    del df_16_b40[i]
-    del df_19_b40[i]
-    del df_14_b40_equivalised[i]
-    del df_16_b40_equivalised[i]
-    del df_19_b40_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b40_hhbasis[i]
-    del df_16_b40_hhbasis[i]
-    del df_19_b40_hhbasis[i]
-
-df_agg_mean_b40, df_agg_balanced_mean_b40 = gen_pseudopanel(
-    data1=df_14_b40,
-    data2=df_16_b40,
-    data3=df_19_b40,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40'
-)
-df_agg_mean_b40_hhbasis, df_agg_balanced_mean_b40_hhbasis = gen_pseudopanel(
-    data1=df_14_b40_hhbasis,
-    data2=df_16_b40_hhbasis,
-    data3=df_19_b40_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_hhbasis'
-)
-df_agg_mean_b40_equivalised, df_agg_balanced_mean_b40_equivalised = gen_pseudopanel(
-    data1=df_14_b40_equivalised,
-    data2=df_16_b40_equivalised,
-    data3=df_19_b40_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_equivalised'
-)
-
-# B60
-df_14_b60 = df_14_withbase[df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.6)].copy()
-df_16_b60 = df_16_withbase[df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.6)].copy()
-df_19_b60 = df_19_withbase[df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.6)].copy()
-
-df_14_b60_hhbasis = \
-    df_14_hhbasis_withbase[
-        df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.6)
-        ].copy()
-df_16_b60_hhbasis = \
-    df_16_hhbasis_withbase[
-        df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.6)
-        ].copy()
-df_19_b60_hhbasis = \
-    df_19_hhbasis_withbase[
-        df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.6)
-        ].copy()
-
-df_14_b60_equivalised = \
-    df_14_equivalised_withbase[
-        df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.6)
-        ].copy()
-df_16_b60_equivalised = \
-    df_16_equivalised_withbase[
-        df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.6)
-        ].copy()
-df_19_b60_equivalised = \
-    df_19_equivalised_withbase[
-        df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.6)
-        ].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b60[i]
-    del df_16_b60[i]
-    del df_19_b60[i]
-    del df_14_b60_equivalised[i]
-    del df_16_b60_equivalised[i]
-    del df_19_b60_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b60_hhbasis[i]
-    del df_16_b60_hhbasis[i]
-    del df_19_b60_hhbasis[i]
-
-df_agg_mean_b60, df_agg_balanced_mean_b60 = gen_pseudopanel(
-    data1=df_14_b60,
-    data2=df_16_b60,
-    data3=df_19_b60,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b60'
-)
-df_agg_mean_b60_hhbasis, df_agg_balanced_mean_b60_hhbasis = gen_pseudopanel(
-    data1=df_14_b60_hhbasis,
-    data2=df_16_b60_hhbasis,
-    data3=df_19_b60_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b60_hhbasis'
-)
-df_agg_mean_b60_equivalised, df_agg_balanced_mean_b60_equivalised = gen_pseudopanel(
-    data1=df_14_b60_equivalised,
-    data2=df_16_b60_equivalised,
-    data3=df_19_b60_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b60_equivalised'
-)
-
-# B80
-df_14_b80 = df_14_withbase[df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.8)].copy()
-df_16_b80 = df_16_withbase[df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.8)].copy()
-df_19_b80 = df_19_withbase[df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.8)].copy()
-
-df_14_b80_hhbasis = \
-    df_14_hhbasis_withbase[
-        df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.8)
-        ].copy()
-df_16_b80_hhbasis = \
-    df_16_hhbasis_withbase[
-        df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.8)
-        ].copy()
-df_19_b80_hhbasis = \
-    df_19_hhbasis_withbase[
-        df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.8)
-        ].copy()
-
-df_14_b80_equivalised = \
-    df_14_equivalised_withbase[
-        df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.8)
-        ].copy()
-df_16_b80_equivalised = \
-    df_16_equivalised_withbase[
-        df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.8)
-        ].copy()
-df_19_b80_equivalised = \
-    df_19_equivalised_withbase[
-        df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.8)
-        ].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b80[i]
-    del df_16_b80[i]
-    del df_19_b80[i]
-    del df_14_b80_equivalised[i]
-    del df_16_b80_equivalised[i]
-    del df_19_b80_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b80_hhbasis[i]
-    del df_16_b80_hhbasis[i]
-    del df_19_b80_hhbasis[i]
-
-df_agg_mean_b80, df_agg_balanced_mean_b80 = gen_pseudopanel(
-    data1=df_14_b80,
-    data2=df_16_b80,
-    data3=df_19_b80,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b80'
-)
-
-df_agg_mean_b80_hhbasis, df_agg_balanced_mean_b80_hhbasis = gen_pseudopanel(
-    data1=df_14_b80_hhbasis,
-    data2=df_16_b80_hhbasis,
-    data3=df_19_b80_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b80_hhbasis'
-)
-
-df_agg_mean_b80_equivalised, df_agg_balanced_mean_b80_equivalised = gen_pseudopanel(
-    data1=df_14_b80_equivalised,
-    data2=df_16_b80_equivalised,
-    data3=df_19_b80_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b80_equivalised'
-)
-
-# B40 with no children
-df_14_b40_0c = df_14_withbase[
-    (
-            (
-                    df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-df_16_b40_0c = df_16_withbase[
-    (
-            (
-                    df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-df_19_b40_0c = df_19_withbase[
-    (
-            (
-                    df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-
-df_14_b40_0c_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-df_16_b40_0c_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-df_19_b40_0c_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-
-df_14_b40_0c_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-df_16_b40_0c_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-df_19_b40_0c_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.4)
-            ) &
-            (
-                    (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 0)
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b40_0c[i]
-    del df_16_b40_0c[i]
-    del df_19_b40_0c[i]
-    del df_14_b40_0c_equivalised[i]
-    del df_16_b40_0c_equivalised[i]
-    del df_19_b40_0c_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b40_0c_hhbasis[i]
-    del df_16_b40_0c_hhbasis[i]
-    del df_19_b40_0c_hhbasis[i]
-
-df_agg_mean_b40_0c, df_agg_balanced_mean_b40_0c = gen_pseudopanel(
-    data1=df_14_b40_0c,
-    data2=df_16_b40_0c,
-    data3=df_19_b40_0c,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_0c'
-)
-df_agg_mean_b40_0c_hhbasis, df_agg_balanced_mean_b40_0c_hhbasis = gen_pseudopanel(
-    data1=df_14_b40_0c_hhbasis,
-    data2=df_16_b40_0c_hhbasis,
-    data3=df_19_b40_0c_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_0c_hhbasis'
-)
-df_agg_mean_b40_0c_equivalised, df_agg_balanced_mean_b40_0c_equivalised = gen_pseudopanel(
-    data1=df_14_b40_0c_equivalised,
-    data2=df_16_b40_0c_equivalised,
-    data3=df_19_b40_0c_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_0c_equivalised'
-)
-
-# B40 with only one child / adolescents
-df_14_b40_1c = df_14_withbase[
-    (
-            (
-                    df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_withbase['child'] == 1) & (df_14_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_1c = df_16_withbase[
-    (
-            (
-                    df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_withbase['child'] == 1) & (df_16_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_19_b40_1c = df_19_withbase[
-    (
-            (
-                    df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_withbase['child'] == 1) & (df_19_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-
-df_14_b40_1c_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_hhbasis_withbase['child'] == 1) & (df_14_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_1c_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_hhbasis_withbase['child'] == 1) & (df_16_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_19_b40_1c_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_hhbasis_withbase['child'] == 1) & (df_19_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-
-df_14_b40_1c_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_equivalised_withbase['child'] == 1) & (df_14_equivalised_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_1c_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_equivalised_withbase['child'] == 1) & (df_16_equivalised_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_19_b40_1c_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_equivalised_withbase['child'] == 1) & (df_19_equivalised_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b40_1c[i]
-    del df_16_b40_1c[i]
-    del df_19_b40_1c[i]
-    del df_14_b40_1c_equivalised[i]
-    del df_16_b40_1c_equivalised[i]
-    del df_19_b40_1c_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b40_1c_hhbasis[i]
-    del df_16_b40_1c_hhbasis[i]
-    del df_19_b40_1c_hhbasis[i]
-
-df_agg_mean_b40_1c, df_agg_balanced_mean_b40_1c = gen_pseudopanel(
-    data1=df_14_b40_1c_hhbasis,
-    data2=df_16_b40_1c,
-    data3=df_19_b40_1c,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_1c'
-)
-df_agg_mean_b40_1c_hhbasis, df_agg_balanced_mean_b40_1c_hhbasis = gen_pseudopanel(
-    data1=df_14_b40_1c_hhbasis,
-    data2=df_16_b40_1c_hhbasis,
-    data3=df_19_b40_1c_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_1c_hhbasis'
-)
-df_agg_mean_b40_1c_equivalised, df_agg_balanced_mean_b40_1c_equivalised = gen_pseudopanel(
-    data1=df_14_b40_1c_equivalised,
-    data2=df_16_b40_1c_equivalised,
-    data3=df_19_b40_1c_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_1c_equivalised'
-)
-
-# B40 with at least one child / adolescents
-df_14_b40_1cplus = df_14_withbase[
-    (
-            (
-                    df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_withbase['child'] >= 1) & (df_14_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] >= 0) & (df_14_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_1cplus = df_16_withbase[
-    (
-            (
-                    df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_withbase['child'] >= 1) & (df_16_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] >= 0) & (df_16_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_19_b40_1cplus = df_19_withbase[
-    (
-            (
-                    df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_withbase['child'] >= 1) & (df_19_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] >= 0) & (df_19_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-
-df_14_b40_1cplus_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 1) & (df_14_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 0) & (df_14_hhbasis_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_1cplus_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 1) & (df_16_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 0) & (df_16_hhbasis_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_19_b40_1cplus_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_hhbasis_withbase['child'] >= 1) & (df_19_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] >= 0) & (df_19_hhbasis_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-
-df_14_b40_1cplus_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_equivalised_withbase['child'] >= 1) & (df_14_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] >= 0) & (df_14_equivalised_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_1cplus_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_equivalised_withbase['child'] >= 1) & (df_16_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] >= 0) & (df_16_equivalised_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_19_b40_1cplus_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_equivalised_withbase['child'] >= 1) & (df_19_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] >= 0) & (df_19_equivalised_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b40_1cplus[i]
-    del df_16_b40_1cplus[i]
-    del df_19_b40_1cplus[i]
-    del df_14_b40_1cplus_equivalised[i]
-    del df_16_b40_1cplus_equivalised[i]
-    del df_19_b40_1cplus_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b40_1cplus_hhbasis[i]
-    del df_16_b40_1cplus_hhbasis[i]
-    del df_19_b40_1cplus_hhbasis[i]
-
-df_agg_mean_b40_1cplus, df_agg_balanced_mean_b40_1cplus = gen_pseudopanel(
-    data1=df_14_b40_1cplus_hhbasis,
-    data2=df_16_b40_1cplus,
-    data3=df_19_b40_1cplus,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_1cplus'
-)
-df_agg_mean_b40_1cplus_hhbasis, df_agg_balanced_mean_b40_1cplus_hhbasis = gen_pseudopanel(
-    data1=df_14_b40_1cplus_hhbasis,
-    data2=df_16_b40_1cplus_hhbasis,
-    data3=df_19_b40_1cplus_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_1cplus_hhbasis'
-)
-df_agg_mean_b40_1cplus_equivalised, df_agg_balanced_mean_b40_1cplus_equivalised = gen_pseudopanel(
-    data1=df_14_b40_1cplus_equivalised,
-    data2=df_16_b40_1cplus_equivalised,
-    data3=df_19_b40_1cplus_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_1cplus_equivalised'
-)
-
-# B40 with only two child / adolescents
-df_14_b40_2c = df_14_withbase[
-    (
-            (
-                    df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_withbase['child'] == 2) & (df_14_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 2)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] == 1) & (df_14_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_2c = df_16_withbase[
-    (
-            (
-                    df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_withbase['child'] == 2) & (df_16_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 2)
-                    )
-                    |
+                # hh basis
+                df_14_sub_hhbasis = df_14_hhbasis_withbase[
                     (
-                            (df_16_withbase['child'] == 1) & (df_16_withbase['adolescent'] == 1)
+                            (df_14_hhbasis_withbase['gross_income_group'] == incgroup) &
+                            (df_14_hhbasis_withbase[benefit_objective] == n_obj)
                     )
-            )
-    )
-].copy()
-df_19_b40_2c = df_19_withbase[
-    (
-            (
-                    df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_withbase['child'] == 2) & (df_19_withbase['adolescent'] == 0)
-                    )
-                    |
+                ].copy()
+                df_16_sub_hhbasis = df_16_hhbasis_withbase[
                     (
-                            (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 2)
+                            (df_16_hhbasis_withbase['gross_income_group'] == incgroup) &
+                            (df_16_hhbasis_withbase[benefit_objective] == n_obj)
                     )
-                    |
+                ].copy()
+                df_19_sub_hhbasis = df_19_hhbasis_withbase[
                     (
-                            (df_19_withbase['child'] == 1) & (df_19_withbase['adolescent'] == 1)
+                            (df_19_hhbasis_withbase['gross_income_group'] == incgroup) &
+                            (df_19_hhbasis_withbase[benefit_objective] == n_obj)
                     )
-            )
-    )
-].copy()
+                ].copy()
 
-df_14_b40_2c_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_hhbasis_withbase['child'] == 2) & (df_14_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 2)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] == 1) & (df_14_hhbasis_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_2c_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_hhbasis_withbase['child'] == 2) & (df_16_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
+                # equivalised
+                df_14_sub_equivalised = df_14_equivalised_withbase[
                     (
-                            (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 2)
+                            (df_14_equivalised_withbase['gross_income_group'] == incgroup) &
+                            (df_14_equivalised_withbase[benefit_objective] == n_obj)
                     )
-                    |
+                ].copy()
+                df_16_sub_equivalised = df_16_equivalised_withbase[
                     (
-                            (df_16_hhbasis_withbase['child'] == 1) & (df_16_hhbasis_withbase['adolescent'] == 1)
+                            (df_16_equivalised_withbase['gross_income_group'] == incgroup) &
+                            (df_16_equivalised_withbase[benefit_objective] == n_obj)
                     )
-            )
-    )
-].copy()
-df_19_b40_2c_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_hhbasis_withbase['child'] == 2) & (df_19_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
+                ].copy()
+                df_19_sub_equivalised = df_19_equivalised_withbase[
                     (
-                            (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 2)
+                            (df_19_equivalised_withbase['gross_income_group'] == incgroup) &
+                            (df_19_equivalised_withbase[benefit_objective] == n_obj)
                     )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] == 1) & (df_19_hhbasis_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
+                ].copy()
 
-df_14_b40_2c_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_equivalised_withbase['child'] == 2) & (df_14_equivalised_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 2)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] == 1) & (df_14_equivalised_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_2c_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
+                # per capita
+                df_14_sub = df_14_withbase[
                     (
-                            (df_16_equivalised_withbase['child'] == 2) & (df_16_equivalised_withbase['adolescent'] == 0)
+                            (df_14_withbase['gross_income_group'] == incgroup) &
+                            (df_14_withbase[benefit_objective] == n_obj)
                     )
-                    |
+                ].copy()
+                df_16_sub = df_16_withbase[
                     (
-                            (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 2)
+                            (df_16_withbase['gross_income_group'] == incgroup) &
+                            (df_16_withbase[benefit_objective] == n_obj)
                     )
-                    |
+                ].copy()
+                df_19_sub = df_19_withbase[
                     (
-                            (df_16_equivalised_withbase['child'] == 1) & (df_16_equivalised_withbase['adolescent'] == 1)
+                            (df_19_withbase['gross_income_group'] == incgroup) &
+                            (df_19_withbase[benefit_objective] == n_obj)
                     )
-            )
-    )
-].copy()
-df_19_b40_2c_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_equivalised_withbase['child'] == 2) & (df_19_equivalised_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 2)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] == 1) & (df_19_equivalised_withbase['adolescent'] == 1)
-                    )
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b40_2c[i]
-    del df_16_b40_2c[i]
-    del df_19_b40_2c[i]
-    del df_14_b40_2c_equivalised[i]
-    del df_16_b40_2c_equivalised[i]
-    del df_19_b40_2c_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b40_2c_hhbasis[i]
-    del df_16_b40_2c_hhbasis[i]
-    del df_19_b40_2c_hhbasis[i]
+                ].copy()
 
-df_agg_mean_b40_2c, df_agg_balanced_mean_b40_2c = gen_pseudopanel(
-    data1=df_14_b40_2c,
-    data2=df_16_b40_2c,
-    data3=df_19_b40_2c,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_2c'
-)
-df_agg_mean_b40_2c_hhbasis, df_agg_balanced_mean_b40_2c_hhbasis = gen_pseudopanel(
-    data1=df_14_b40_2c_hhbasis,
-    data2=df_16_b40_2c_hhbasis,
-    data3=df_19_b40_2c_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_2c_hhbasis'
-)
-df_agg_mean_b40_2c_equivalised, df_agg_balanced_mean_b40_2c_equivalised = gen_pseudopanel(
-    data1=df_14_b40_2c_equivalised,
-    data2=df_16_b40_2c_equivalised,
-    data3=df_19_b40_2c_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_2c_equivalised'
-)
-
-# B40 with at least two child / adolescents
-df_14_b40_2cplus = df_14_withbase[
-    (
-            (
-                    df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_withbase['child'] >= 2) & (df_14_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] >= 0) & (df_14_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] >= 1) & (df_14_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_2cplus = df_16_withbase[
-    (
-            (
-                    df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_withbase['child'] >= 2) & (df_16_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] >= 0) & (df_16_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] >= 1) & (df_16_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_19_b40_2cplus = df_19_withbase[
-    (
-            (
-                    df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_withbase['child'] >= 2) & (df_19_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] >= 0) & (df_19_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] >= 1) & (df_19_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
+            if n_obj == truncate_threshold:
+                # for file suffix
+                n_obj_nice = str(n_obj) + 'plus'
 
-df_14_b40_2cplus_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 2) & (df_14_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 0) & (df_14_hhbasis_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 1) & (df_14_hhbasis_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_2cplus_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 2) & (df_16_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 0) & (df_16_hhbasis_withbase['adolescent'] >= 2)
-                    )
-                    |
+                # hh basis
+                df_14_sub_hhbasis = df_14_hhbasis_withbase[
                     (
-                            (df_16_hhbasis_withbase['child'] >= 1) & (df_16_hhbasis_withbase['adolescent'] >= 1)
+                            (df_14_hhbasis_withbase['gross_income_group'] == incgroup) &
+                            (df_14_hhbasis_withbase[benefit_objective] >= n_obj)
                     )
-            )
-    )
-].copy()
-df_19_b40_2cplus_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_hhbasis_withbase['child'] >= 2) & (df_19_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
+                ].copy()
+                df_16_sub_hhbasis = df_16_hhbasis_withbase[
                     (
-                            (df_19_hhbasis_withbase['child'] >= 0) & (df_19_hhbasis_withbase['adolescent'] >= 2)
+                            (df_16_hhbasis_withbase['gross_income_group'] == incgroup) &
+                            (df_16_hhbasis_withbase[benefit_objective] >= n_obj)
                     )
-                    |
+                ].copy()
+                df_19_sub_hhbasis = df_19_hhbasis_withbase[
                     (
-                            (df_19_hhbasis_withbase['child'] >= 1) & (df_19_hhbasis_withbase['adolescent'] >= 1)
+                            (df_19_hhbasis_withbase['gross_income_group'] == incgroup) &
+                            (df_19_hhbasis_withbase[benefit_objective] >= n_obj)
                     )
-            )
-    )
-].copy()
+                ].copy()
 
-df_14_b40_2cplus_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_equivalised_withbase['child'] >= 2) & (df_14_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
+                # equivalised
+                df_14_sub_equivalised = df_14_equivalised_withbase[
                     (
-                            (df_14_equivalised_withbase['child'] >= 0) & (df_14_equivalised_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] >= 1) & (df_14_equivalised_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_16_b40_2cplus_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.4)
+                            (df_14_equivalised_withbase['gross_income_group'] == incgroup) &
+                            (df_14_equivalised_withbase[benefit_objective] >= n_obj)
+                    )
+                ].copy()
+                df_16_sub_equivalised = df_16_equivalised_withbase[
+                    (
+                            (df_16_equivalised_withbase['gross_income_group'] == incgroup) &
+                            (df_16_equivalised_withbase[benefit_objective] >= n_obj)
+                    )
+                ].copy()
+                df_19_sub_equivalised = df_19_equivalised_withbase[
+                    (
+                            (df_19_equivalised_withbase['gross_income_group'] == incgroup) &
+                            (df_19_equivalised_withbase[benefit_objective] >= n_obj)
+                    )
+                ].copy()
+
+                # per capita
+                df_14_sub = df_14_withbase[
+                    (
+                            (df_14_withbase['gross_income_group'] == incgroup) &
+                            (df_14_withbase[benefit_objective] >= n_obj)
+                    )
+                ].copy()
+                df_16_sub = df_16_withbase[
+                    (
+                            (df_16_withbase['gross_income_group'] == incgroup) &
+                            (df_16_withbase[benefit_objective] >= n_obj)
+                    )
+                ].copy()
+                df_19_sub = df_19_withbase[
+                    (
+                            (df_19_withbase['gross_income_group'] == incgroup) &
+                            (df_19_withbase[benefit_objective] >= n_obj)
+                    )
+                ].copy()
+
+            # Delete variables that already have base variables created
+            for i in cols_base_group_transformed:
+                del df_14_sub[i]
+                del df_16_sub[i]
+                del df_19_sub[i]
+                del df_14_sub_equivalised[i]
+                del df_16_sub_equivalised[i]
+                del df_19_sub_equivalised[i]
+            for i in cols_base_group_transformed_with_hhsize:
+                del df_14_sub_hhbasis[i]
+                del df_16_sub_hhbasis[i]
+                del df_19_sub_hhbasis[i]
+
+            # Compile pseudo panel data
+            df_agg_mean_sub, df_agg_balanced_mean_sub = gen_pseudopanel(
+                data1=df_14_sub,
+                data2=df_16_sub,
+                data3=df_19_sub,
+                list_cols_cohort=col_groups,
+                list_cols_outcomes=col_outcomes,
+                use_mean=True,
+                use_quantile=False,
+                quantile_choice=0.5,
+                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice
+            )
+            df_agg_mean_sub_hhbasis, df_agg_balanced_mean_sub_hhbasis = gen_pseudopanel(
+                data1=df_14_sub_hhbasis,
+                data2=df_16_sub_hhbasis,
+                data3=df_19_sub_hhbasis,
+                list_cols_cohort=col_groups_with_hhsize,
+                list_cols_outcomes=col_outcomes,
+                use_mean=True,
+                use_quantile=False,
+                quantile_choice=0.5,
+                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice + '_hhbasis'
+            )
+            df_agg_mean_sub_equivalised, df_agg_balanced_mean_sub_equivalised = gen_pseudopanel(
+                data1=df_14_sub_equivalised,
+                data2=df_16_sub_equivalised,
+                data3=df_19_sub_equivalised,
+                list_cols_cohort=col_groups,
+                list_cols_outcomes=col_outcomes,
+                use_mean=True,
+                use_quantile=False,
+                quantile_choice=0.5,
+                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice + '_equivalised'
             )
-            &
-            (
-                    (
-                            (df_16_equivalised_withbase['child'] >= 2) & (df_16_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] >= 0) & (df_16_equivalised_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] >= 1) & (df_16_equivalised_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-df_19_b40_2cplus_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_equivalised_withbase['child'] >= 2) & (df_19_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] >= 0) & (df_19_equivalised_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] >= 1) & (df_19_equivalised_withbase['adolescent'] >= 1)
-                    )
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b40_2cplus[i]
-    del df_16_b40_2cplus[i]
-    del df_19_b40_2cplus[i]
-    del df_14_b40_2cplus_equivalised[i]
-    del df_16_b40_2cplus_equivalised[i]
-    del df_19_b40_2cplus_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b40_2cplus_hhbasis[i]
-    del df_16_b40_2cplus_hhbasis[i]
-    del df_19_b40_2cplus_hhbasis[i]
-
-df_agg_mean_b40_2cplus, df_agg_balanced_mean_b40_2cplus = gen_pseudopanel(
-    data1=df_14_b40_2cplus,
-    data2=df_16_b40_2cplus,
-    data3=df_19_b40_2cplus,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_2cplus'
-)
-df_agg_mean_b40_2cplus_hhbasis, df_agg_balanced_mean_b40_2cplus_hhbasis = gen_pseudopanel(
-    data1=df_14_b40_2cplus_hhbasis,
-    data2=df_16_b40_2cplus_hhbasis,
-    data3=df_19_b40_2cplus_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_2cplus_hhbasis'
-)
-df_agg_mean_b40_2cplus_equivalised, df_agg_balanced_mean_b40_2cplus_equivalised = gen_pseudopanel(
-    data1=df_14_b40_2cplus_equivalised,
-    data2=df_16_b40_2cplus_equivalised,
-    data3=df_19_b40_2cplus_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_2cplus_equivalised'
-)
-
-# B40 with only three child / adolescents
-df_14_b40_3c = df_14_withbase[
-    (
-            (
-                    df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_withbase['child'] == 3) & (df_14_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] == 2) & (df_14_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] == 1) & (df_14_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-df_16_b40_3c = df_16_withbase[
-    (
-            (
-                    df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_withbase['child'] == 3) & (df_16_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] == 2) & (df_16_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] == 1) & (df_16_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-df_19_b40_3c = df_19_withbase[
-    (
-            (
-                    df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_withbase['child'] == 3) & (df_19_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] == 2) & (df_19_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] == 1) & (df_19_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-
-df_14_b40_3c_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_hhbasis_withbase['child'] == 3) & (df_14_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] == 2) & (df_14_hhbasis_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] == 1) & (df_14_hhbasis_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-df_16_b40_3c_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_hhbasis_withbase['child'] == 3) & (df_16_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] == 2) & (df_16_hhbasis_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] == 1) & (df_16_hhbasis_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-df_19_b40_3c_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_hhbasis_withbase['child'] == 3) & (df_19_hhbasis_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] == 2) & (df_19_hhbasis_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] == 1) & (df_19_hhbasis_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-
-df_14_b40_3c_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_equivalised_withbase['child'] == 3) & (df_14_equivalised_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] == 2) & (df_14_equivalised_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] == 1) & (df_14_equivalised_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-df_16_b40_3c_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_equivalised_withbase['child'] == 3) & (df_16_equivalised_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] == 2) & (df_16_equivalised_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] == 1) & (df_16_equivalised_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-df_19_b40_3c_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_equivalised_withbase['child'] == 3) & (df_19_equivalised_withbase['adolescent'] == 0)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 3)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] == 2) & (df_19_equivalised_withbase['adolescent'] == 1)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] == 1) & (df_19_equivalised_withbase['adolescent'] == 2)
-                    )
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b40_3c[i]
-    del df_16_b40_3c[i]
-    del df_19_b40_3c[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b40_3c_hhbasis[i]
-    del df_16_b40_3c_hhbasis[i]
-    del df_19_b40_3c_hhbasis[i]
-
-df_agg_mean_b40_3c, df_agg_balanced_mean_b40_3c = gen_pseudopanel(
-    data1=df_14_b40_3c,
-    data2=df_16_b40_3c,
-    data3=df_19_b40_3c,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_3c'
-)
-df_agg_mean_b40_3c_hhbasis, df_agg_balanced_mean_b40_3c_hhbasis = gen_pseudopanel(
-    data1=df_14_b40_3c_hhbasis,
-    data2=df_16_b40_3c_hhbasis,
-    data3=df_19_b40_3c_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_3c_hhbasis'
-)
-df_agg_mean_b40_3c_equivalised, df_agg_balanced_mean_b40_3c_equivalised = gen_pseudopanel(
-    data1=df_14_b40_3c_equivalised,
-    data2=df_16_b40_3c_equivalised,
-    data3=df_19_b40_3c_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_3c_equivalised'
-)
-
-# B40 with more than three child / adolescents
-df_14_b40_4cplus = df_14_withbase[
-    (
-            (
-                    df_14_withbase['gross_income'] <= df_14_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_withbase['child'] >= 4) & (df_14_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] >= 3) & (df_14_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] >= 1) & (df_14_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] >= 2) & (df_14_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_14_withbase['child'] >= 2) & (df_14_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-df_16_b40_4cplus = df_16_withbase[
-    (
-            (
-                    df_16_withbase['gross_income'] <= df_16_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_withbase['child'] >= 4) & (df_16_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] >= 3) & (df_16_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] >= 1) & (df_16_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] >= 2) & (df_16_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_16_withbase['child'] >= 2) & (df_16_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-df_19_b40_4cplus = df_19_withbase[
-    (
-            (
-                    df_19_withbase['gross_income'] <= df_19_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_withbase['child'] >= 4) & (df_19_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] >= 3) & (df_19_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] >= 1) & (df_19_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] >= 2) & (df_19_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_19_withbase['child'] >= 2) & (df_19_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-
-df_14_b40_4cplus_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    df_14_hhbasis_withbase['gross_income'] <= df_14_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 4) & (df_14_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 3) & (df_14_hhbasis_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 1) & (df_14_hhbasis_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 2) & (df_14_hhbasis_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_14_hhbasis_withbase['child'] >= 2) & (df_14_hhbasis_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-df_16_b40_4cplus_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    df_16_hhbasis_withbase['gross_income'] <= df_16_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 4) & (df_16_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 3) & (df_16_hhbasis_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 1) & (df_16_hhbasis_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 2) & (df_16_hhbasis_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_16_hhbasis_withbase['child'] >= 2) & (df_16_hhbasis_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-df_19_b40_4cplus_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    df_19_hhbasis_withbase['gross_income'] <= df_19_hhbasis_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_hhbasis_withbase['child'] >= 4) & (df_19_hhbasis_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] >= 3) & (df_19_hhbasis_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] >= 1) & (df_19_hhbasis_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] >= 2) & (df_19_hhbasis_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_19_hhbasis_withbase['child'] >= 2) & (df_19_hhbasis_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-
-df_14_b40_4cplus_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    df_14_equivalised_withbase['gross_income'] <= df_14_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_14_equivalised_withbase['child'] >= 4) & (df_14_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] >= 3) & (df_14_equivalised_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] >= 1) & (df_14_equivalised_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] >= 2) & (df_14_equivalised_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_14_equivalised_withbase['child'] >= 2) & (df_14_equivalised_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-df_16_b40_4cplus_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    df_16_equivalised_withbase['gross_income'] <= df_16_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_16_equivalised_withbase['child'] >= 4) & (df_16_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] >= 3) & (df_16_equivalised_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] >= 1) & (df_16_equivalised_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] >= 2) & (df_16_equivalised_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_16_equivalised_withbase['child'] >= 2) & (df_16_equivalised_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-df_19_b40_4cplus_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    df_19_equivalised_withbase['gross_income'] <= df_19_equivalised_withbase['gross_income'].quantile(q=0.4)
-            )
-            &
-            (
-                    (
-                            (df_19_equivalised_withbase['child'] >= 4) & (df_19_equivalised_withbase['adolescent'] >= 0)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 4)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] >= 3) & (df_19_equivalised_withbase['adolescent'] >= 1)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] >= 1) & (df_19_equivalised_withbase['adolescent'] >= 3)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] >= 2) & (df_19_equivalised_withbase['adolescent'] >= 2)
-                    )
-                    |
-                    (
-                            (df_19_equivalised_withbase['child'] >= 2) & (df_19_equivalised_withbase['adolescent'] >= 2)
-                    )
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_b40_4cplus[i]
-    del df_16_b40_4cplus[i]
-    del df_19_b40_4cplus[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_b40_4cplus_hhbasis[i]
-    del df_16_b40_4cplus_hhbasis[i]
-    del df_19_b40_4cplus_hhbasis[i]
-
-df_agg_mean_b40_4cplus, df_agg_balanced_mean_b40_4cplus = gen_pseudopanel(
-    data1=df_14_b40_4cplus,
-    data2=df_16_b40_4cplus,
-    data3=df_19_b40_4cplus,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_4cplus'
-)
-df_agg_mean_b40_4cplus_hhbasis, df_agg_balanced_mean_b40_4cplus_hhbasis = gen_pseudopanel(
-    data1=df_14_b40_4cplus_hhbasis,
-    data2=df_16_b40_4cplus_hhbasis,
-    data3=df_19_b40_4cplus_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_4cplus_hhbasis'
-)
-df_agg_mean_b40_4cplus_equivalised, df_agg_balanced_mean_b40_4cplus_equivalised = gen_pseudopanel(
-    data1=df_14_b40_4cplus_equivalised,
-    data2=df_16_b40_4cplus_equivalised,
-    data3=df_19_b40_4cplus_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_b40_4cplus_equivalised'
-)
-
-# No children
-df_14_0c = df_14_withbase[
-    (
-            (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 0)
-    )
-].copy()
-df_16_0c = df_16_withbase[
-    (
-            (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 0)
-    )
-].copy()
-df_19_0c = df_19_withbase[
-    (
-            (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 0)
-    )
-].copy()
-
-df_14_0c_hhbasis = df_14_hhbasis_withbase[
-    (
-            (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 0)
-    )
-].copy()
-df_16_0c_hhbasis = df_16_hhbasis_withbase[
-    (
-            (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 0)
-    )
-].copy()
-df_19_0c_hhbasis = df_19_hhbasis_withbase[
-    (
-            (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 0)
-    )
-].copy()
-
-df_14_0c_equivalised = df_14_equivalised_withbase[
-    (
-            (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 0)
-    )
-].copy()
-df_16_0c_equivalised = df_16_equivalised_withbase[
-    (
-            (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 0)
-    )
-].copy()
-df_19_0c_equivalised = df_19_equivalised_withbase[
-    (
-            (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 0)
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_0c[i]
-    del df_16_0c[i]
-    del df_19_0c[i]
-    del df_14_0c_equivalised[i]
-    del df_16_0c_equivalised[i]
-    del df_19_0c_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_0c_hhbasis[i]
-    del df_16_0c_hhbasis[i]
-    del df_19_0c_hhbasis[i]
-
-df_agg_mean_0c, df_agg_balanced_mean_0c = gen_pseudopanel(
-    data1=df_14_0c,
-    data2=df_16_0c,
-    data3=df_19_0c,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_0c'
-)
-df_agg_mean_0c_hhbasis, df_agg_balanced_mean_0c_hhbasis = gen_pseudopanel(
-    data1=df_14_0c_hhbasis,
-    data2=df_16_0c_hhbasis,
-    data3=df_19_0c_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_0c_hhbasis'
-)
-df_agg_mean_0c_equivalised, df_agg_balanced_mean_0c_equivalised = gen_pseudopanel(
-    data1=df_14_0c_equivalised,
-    data2=df_16_0c_equivalised,
-    data3=df_19_0c_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_0c_equivalised'
-)
-
-# Only one child / adolescents
-df_14_1c = df_14_withbase[
-    (
-            (
-                    (df_14_withbase['child'] == 1) & (df_14_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_16_1c = df_16_withbase[
-    (
-            (
-                    (df_16_withbase['child'] == 1) & (df_16_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_19_1c = df_19_withbase[
-    (
-            (
-                    (df_19_withbase['child'] == 1) & (df_19_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-
-df_14_1c_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    (df_14_hhbasis_withbase['child'] == 1) & (df_14_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_16_1c_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    (df_16_hhbasis_withbase['child'] == 1) & (df_16_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_19_1c_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    (df_19_hhbasis_withbase['child'] == 1) & (df_19_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-
-df_14_1c_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    (df_14_equivalised_withbase['child'] == 1) & (df_14_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_16_1c_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    (df_16_equivalised_withbase['child'] == 1) & (df_16_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_19_1c_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    (df_19_equivalised_withbase['child'] == 1) & (df_19_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_1c[i]
-    del df_16_1c[i]
-    del df_19_1c[i]
-    del df_14_1c_equivalised[i]
-    del df_16_1c_equivalised[i]
-    del df_19_1c_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_1c_hhbasis[i]
-    del df_16_1c_hhbasis[i]
-    del df_19_1c_hhbasis[i]
-
-df_agg_mean_1c, df_agg_balanced_mean_1c = gen_pseudopanel(
-    data1=df_14_1c,
-    data2=df_16_1c,
-    data3=df_19_1c,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_1c'
-)
-df_agg_mean_1c_hhbasis, df_agg_balanced_mean_1c_hhbasis = gen_pseudopanel(
-    data1=df_14_1c_hhbasis,
-    data2=df_16_1c_hhbasis,
-    data3=df_19_1c_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_1c_hhbasis'
-)
-df_agg_mean_1c_equivalised, df_agg_balanced_mean_1c_equivalised = gen_pseudopanel(
-    data1=df_14_1c_equivalised,
-    data2=df_16_1c_equivalised,
-    data3=df_19_1c_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_1c_equivalised'
-)
-
-# At least one child / adolescents
-df_14_1cplus = df_14_withbase[
-    (
-            (
-                    (df_14_withbase['child'] >= 1) & (df_14_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_withbase['child'] >= 0) & (df_14_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_16_1cplus = df_16_withbase[
-    (
-            (
-                    (df_16_withbase['child'] >= 1) & (df_16_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_withbase['child'] >= 0) & (df_16_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_19_1cplus = df_19_withbase[
-    (
-            (
-                    (df_19_withbase['child'] >= 1) & (df_19_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_withbase['child'] >= 0) & (df_19_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-
-df_14_1cplus_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    (df_14_hhbasis_withbase['child'] >= 1) & (df_14_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] >= 0) & (df_14_hhbasis_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_16_1cplus_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    (df_16_hhbasis_withbase['child'] >= 1) & (df_16_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] >= 0) & (df_16_hhbasis_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_19_1cplus_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    (df_19_hhbasis_withbase['child'] >= 1) & (df_19_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] >= 0) & (df_19_hhbasis_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-
-df_14_1cplus_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    (df_14_equivalised_withbase['child'] >= 1) & (df_14_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] >= 0) & (df_14_equivalised_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_16_1cplus_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    (df_16_equivalised_withbase['child'] >= 1) & (df_16_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] >= 0) & (df_16_equivalised_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_19_1cplus_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    (df_19_equivalised_withbase['child'] >= 1) & (df_19_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] >= 0) & (df_19_equivalised_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_1cplus[i]
-    del df_16_1cplus[i]
-    del df_19_1cplus[i]
-    del df_14_1cplus_equivalised[i]
-    del df_16_1cplus_equivalised[i]
-    del df_19_1cplus_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_1cplus_hhbasis[i]
-    del df_16_1cplus_hhbasis[i]
-    del df_19_1cplus_hhbasis[i]
-
-df_agg_mean_1cplus, df_agg_balanced_mean_1cplus = gen_pseudopanel(
-    data1=df_14_1cplus,
-    data2=df_16_1cplus,
-    data3=df_19_1cplus,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_1cplus'
-)
-df_agg_mean_1cplus_hhbasis, df_agg_balanced_mean_1cplus_hhbasis = gen_pseudopanel(
-    data1=df_14_1cplus_hhbasis,
-    data2=df_16_1cplus_hhbasis,
-    data3=df_19_1cplus_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_1cplus_hhbasis'
-)
-df_agg_mean_1cplus_equivalised, df_agg_balanced_mean_1cplus_equivalised = gen_pseudopanel(
-    data1=df_14_1cplus_equivalised,
-    data2=df_16_1cplus_equivalised,
-    data3=df_19_1cplus_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_1cplus_equivalised'
-)
-
-# Only two child / adolescents
-df_14_2c = df_14_withbase[
-    (
-            (
-                    (df_14_withbase['child'] == 2) & (df_14_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_14_withbase['child'] == 1) & (df_14_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_16_2c = df_16_withbase[
-    (
-            (
-                    (df_16_withbase['child'] == 2) & (df_16_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_16_withbase['child'] == 1) & (df_16_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_19_2c = df_19_withbase[
-    (
-            (
-                    (df_19_withbase['child'] == 2) & (df_19_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_19_withbase['child'] == 1) & (df_19_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-
-df_14_2c_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    (df_14_hhbasis_withbase['child'] == 2) & (df_14_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] == 1) & (df_14_hhbasis_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_16_2c_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    (df_16_hhbasis_withbase['child'] == 2) & (df_16_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] == 1) & (df_16_hhbasis_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_19_2c_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    (df_19_hhbasis_withbase['child'] == 2) & (df_19_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] == 1) & (df_19_hhbasis_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-
-df_14_2c_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    (df_14_equivalised_withbase['child'] == 2) & (df_14_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] == 1) & (df_14_equivalised_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_16_2c_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    (df_16_equivalised_withbase['child'] == 2) & (df_16_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] == 1) & (df_16_equivalised_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-df_19_2c_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    (df_19_equivalised_withbase['child'] == 2) & (df_19_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 2)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] == 1) & (df_19_equivalised_withbase['adolescent'] == 1)
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_2c[i]
-    del df_16_2c[i]
-    del df_19_2c[i]
-    del df_14_2c_equivalised[i]
-    del df_16_2c_equivalised[i]
-    del df_19_2c_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_2c_hhbasis[i]
-    del df_16_2c_hhbasis[i]
-    del df_19_2c_hhbasis[i]
-
-df_agg_mean_2c, df_agg_balanced_mean_2c = gen_pseudopanel(
-    data1=df_14_2c,
-    data2=df_16_2c,
-    data3=df_19_2c,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_2c'
-)
-df_agg_mean_2c_hhbasis, df_agg_balanced_mean_2c_hhbasis = gen_pseudopanel(
-    data1=df_14_2c_hhbasis,
-    data2=df_16_2c_hhbasis,
-    data3=df_19_2c_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_2c_hhbasis'
-)
-df_agg_mean_2c_equivalised, df_agg_balanced_mean_2c_equivalised = gen_pseudopanel(
-    data1=df_14_2c_equivalised,
-    data2=df_16_2c_equivalised,
-    data3=df_19_2c_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_2c_equivalised'
-)
-
-# At least two child / adolescents
-df_14_2cplus = df_14_withbase[
-    (
-            (
-                    (df_14_withbase['child'] >= 2) & (df_14_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_withbase['child'] >= 0) & (df_14_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_14_withbase['child'] >= 1) & (df_14_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_16_2cplus = df_16_withbase[
-    (
-            (
-                    (df_16_withbase['child'] >= 2) & (df_16_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_withbase['child'] >= 0) & (df_16_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_16_withbase['child'] >= 1) & (df_16_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_19_2cplus = df_19_withbase[
-    (
-            (
-                    (df_19_withbase['child'] >= 2) & (df_19_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_withbase['child'] >= 0) & (df_19_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_19_withbase['child'] >= 1) & (df_19_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-
-df_14_2cplus_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    (df_14_hhbasis_withbase['child'] >= 2) & (df_14_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] >= 0) & (df_14_hhbasis_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] >= 1) & (df_14_hhbasis_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_16_2cplus_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    (df_16_hhbasis_withbase['child'] >= 2) & (df_16_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] >= 0) & (df_16_hhbasis_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] >= 1) & (df_16_hhbasis_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_19_2cplus_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    (df_19_hhbasis_withbase['child'] >= 2) & (df_19_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] >= 0) & (df_19_hhbasis_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] >= 1) & (df_19_hhbasis_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-
-df_14_2cplus_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    (df_14_equivalised_withbase['child'] >= 2) & (df_14_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] >= 0) & (df_14_equivalised_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] >= 1) & (df_14_equivalised_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_16_2cplus_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    (df_16_equivalised_withbase['child'] >= 2) & (df_16_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] >= 0) & (df_16_equivalised_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] >= 1) & (df_16_equivalised_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-df_19_2cplus_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    (df_19_equivalised_withbase['child'] >= 2) & (df_19_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] >= 0) & (df_19_equivalised_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] >= 1) & (df_19_equivalised_withbase['adolescent'] >= 1)
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_2cplus[i]
-    del df_16_2cplus[i]
-    del df_19_2cplus[i]
-    del df_14_2cplus_equivalised[i]
-    del df_16_2cplus_equivalised[i]
-    del df_19_2cplus_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_2cplus_hhbasis[i]
-    del df_16_2cplus_hhbasis[i]
-    del df_19_2cplus_hhbasis[i]
-
-df_agg_mean_2cplus, df_agg_balanced_mean_2cplus = gen_pseudopanel(
-    data1=df_14_2cplus,
-    data2=df_16_2cplus,
-    data3=df_19_2cplus,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_2cplus'
-)
-df_agg_mean_2cplus_hhbasis, df_agg_balanced_mean_2cplus_hhbasis = gen_pseudopanel(
-    data1=df_14_2cplus_hhbasis,
-    data2=df_16_2cplus_hhbasis,
-    data3=df_19_2cplus_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_2cplus_hhbasis'
-)
-df_agg_mean_2cplus_equivalised, df_agg_balanced_mean_2cplus_equivalised = gen_pseudopanel(
-    data1=df_14_2cplus_equivalised,
-    data2=df_16_2cplus_equivalised,
-    data3=df_19_2cplus_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_2cplus_equivalised'
-)
-
-# Only three child / adolescents
-df_14_3c = df_14_withbase[
-    (
-            (
-                    (df_14_withbase['child'] == 3) & (df_14_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_14_withbase['child'] == 2) & (df_14_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_14_withbase['child'] == 1) & (df_14_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-df_16_3c = df_16_withbase[
-    (
-            (
-                    (df_16_withbase['child'] == 3) & (df_16_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_16_withbase['child'] == 2) & (df_16_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_16_withbase['child'] == 1) & (df_16_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-df_19_3c = df_19_withbase[
-    (
-            (
-                    (df_19_withbase['child'] == 3) & (df_19_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_19_withbase['child'] == 2) & (df_19_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_19_withbase['child'] == 1) & (df_19_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-
-df_14_3c_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    (df_14_hhbasis_withbase['child'] == 3) & (df_14_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] == 2) & (df_14_hhbasis_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] == 1) & (df_14_hhbasis_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-df_16_3c_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    (df_16_hhbasis_withbase['child'] == 3) & (df_16_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] == 2) & (df_16_hhbasis_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] == 1) & (df_16_hhbasis_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-df_19_3c_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    (df_19_hhbasis_withbase['child'] == 3) & (df_19_hhbasis_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] == 2) & (df_19_hhbasis_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] == 1) & (df_19_hhbasis_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-
-df_14_3c_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    (df_14_equivalised_withbase['child'] == 3) & (df_14_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] == 2) & (df_14_equivalised_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] == 1) & (df_14_equivalised_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-df_16_3c_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    (df_16_equivalised_withbase['child'] == 3) & (df_16_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] == 2) & (df_16_equivalised_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] == 1) & (df_16_equivalised_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-df_19_3c_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    (df_19_equivalised_withbase['child'] == 3) & (df_19_equivalised_withbase['adolescent'] == 0)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 3)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] == 2) & (df_19_equivalised_withbase['adolescent'] == 1)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] == 1) & (df_19_equivalised_withbase['adolescent'] == 2)
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_3c[i]
-    del df_16_3c[i]
-    del df_19_3c[i]
-    del df_14_3c_equivalised[i]
-    del df_16_3c_equivalised[i]
-    del df_19_3c_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_3c_hhbasis[i]
-    del df_16_3c_hhbasis[i]
-    del df_19_3c_hhbasis[i]
-
-df_agg_mean_3c, df_agg_balanced_mean_3c = gen_pseudopanel(
-    data1=df_14_3c,
-    data2=df_16_3c,
-    data3=df_19_3c,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_3c'
-)
-df_agg_mean_3c_hhbasis, df_agg_balanced_mean_3c_hhbasis = gen_pseudopanel(
-    data1=df_14_3c_hhbasis,
-    data2=df_16_3c_hhbasis,
-    data3=df_19_3c_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_3c_hhbasis'
-)
-df_agg_mean_3c_equivalised, df_agg_balanced_mean_3c_equivalised = gen_pseudopanel(
-    data1=df_14_3c_equivalised,
-    data2=df_16_3c_equivalised,
-    data3=df_19_3c_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_3c_equivalised'
-)
-
-# More than three child / adolescents
-df_14_4cplus = df_14_withbase[
-    (
-            (
-                    (df_14_withbase['child'] >= 4) & (df_14_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_withbase['child'] == 0) & (df_14_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_14_withbase['child'] >= 3) & (df_14_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_14_withbase['child'] >= 1) & (df_14_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_14_withbase['child'] >= 2) & (df_14_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_14_withbase['child'] >= 2) & (df_14_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-df_16_4cplus = df_16_withbase[
-    (
-            (
-                    (df_16_withbase['child'] >= 4) & (df_16_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_withbase['child'] == 0) & (df_16_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_16_withbase['child'] >= 3) & (df_16_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_16_withbase['child'] >= 1) & (df_16_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_16_withbase['child'] >= 2) & (df_16_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_16_withbase['child'] >= 2) & (df_16_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-df_19_4cplus = df_19_withbase[
-    (
-            (
-                    (df_19_withbase['child'] >= 4) & (df_19_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_withbase['child'] == 0) & (df_19_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_19_withbase['child'] >= 3) & (df_19_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_19_withbase['child'] >= 1) & (df_19_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_19_withbase['child'] >= 2) & (df_19_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_19_withbase['child'] >= 2) & (df_19_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-
-df_14_4cplus_hhbasis = df_14_hhbasis_withbase[
-    (
-            (
-                    (df_14_hhbasis_withbase['child'] >= 4) & (df_14_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] == 0) & (df_14_hhbasis_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] >= 3) & (df_14_hhbasis_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] >= 1) & (df_14_hhbasis_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] >= 2) & (df_14_hhbasis_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_14_hhbasis_withbase['child'] >= 2) & (df_14_hhbasis_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-df_16_4cplus_hhbasis = df_16_hhbasis_withbase[
-    (
-            (
-                    (df_16_hhbasis_withbase['child'] >= 4) & (df_16_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] == 0) & (df_16_hhbasis_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] >= 3) & (df_16_hhbasis_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] >= 1) & (df_16_hhbasis_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] >= 2) & (df_16_hhbasis_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_16_hhbasis_withbase['child'] >= 2) & (df_16_hhbasis_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-df_19_4cplus_hhbasis = df_19_hhbasis_withbase[
-    (
-            (
-                    (df_19_hhbasis_withbase['child'] >= 4) & (df_19_hhbasis_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] == 0) & (df_19_hhbasis_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] >= 3) & (df_19_hhbasis_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] >= 1) & (df_19_hhbasis_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] >= 2) & (df_19_hhbasis_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_19_hhbasis_withbase['child'] >= 2) & (df_19_hhbasis_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-
-df_14_4cplus_equivalised = df_14_equivalised_withbase[
-    (
-            (
-                    (df_14_equivalised_withbase['child'] >= 4) & (df_14_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] == 0) & (df_14_equivalised_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] >= 3) & (df_14_equivalised_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] >= 1) & (df_14_equivalised_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] >= 2) & (df_14_equivalised_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_14_equivalised_withbase['child'] >= 2) & (df_14_equivalised_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-df_16_4cplus_equivalised = df_16_equivalised_withbase[
-    (
-            (
-                    (df_16_equivalised_withbase['child'] >= 4) & (df_16_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] == 0) & (df_16_equivalised_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] >= 3) & (df_16_equivalised_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] >= 1) & (df_16_equivalised_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] >= 2) & (df_16_equivalised_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_16_equivalised_withbase['child'] >= 2) & (df_16_equivalised_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-df_19_4cplus_equivalised = df_19_equivalised_withbase[
-    (
-            (
-                    (df_19_equivalised_withbase['child'] >= 4) & (df_19_equivalised_withbase['adolescent'] >= 0)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] == 0) & (df_19_equivalised_withbase['adolescent'] == 4)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] >= 3) & (df_19_equivalised_withbase['adolescent'] >= 1)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] >= 1) & (df_19_equivalised_withbase['adolescent'] >= 3)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] >= 2) & (df_19_equivalised_withbase['adolescent'] >= 2)
-            )
-            |
-            (
-                    (df_19_equivalised_withbase['child'] >= 2) & (df_19_equivalised_withbase['adolescent'] >= 2)
-            )
-    )
-].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_4cplus[i]
-    del df_16_4cplus[i]
-    del df_19_4cplus[i]
-    del df_14_4cplus_equivalised[i]
-    del df_16_4cplus_equivalised[i]
-    del df_19_4cplus_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_4cplus_hhbasis[i]
-    del df_16_4cplus_hhbasis[i]
-    del df_19_4cplus_hhbasis[i]
-
-df_agg_mean_4cplus, df_agg_balanced_mean_4cplus = gen_pseudopanel(
-    data1=df_14_4cplus,
-    data2=df_16_4cplus,
-    data3=df_19_4cplus,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_4cplus'
-)
-df_agg_mean_4cplus_hhbasis, df_agg_balanced_mean_4cplus_hhbasis = gen_pseudopanel(
-    data1=df_14_4cplus_hhbasis,
-    data2=df_16_4cplus_hhbasis,
-    data3=df_19_4cplus_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_4cplus_hhbasis'
-)
-df_agg_mean_4cplus_equivalised, df_agg_balanced_mean_4cplus_equivalised = gen_pseudopanel(
-    data1=df_14_4cplus_equivalised,
-    data2=df_16_4cplus_equivalised,
-    data3=df_19_4cplus_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_4cplus_equivalised'
-)
-
-# All households whose head is a working-age adult
-df_14_adults = df_14_withbase[(df_14_withbase['age'] >= 18) & (df_14_withbase['age'] < 60)].copy()
-df_16_adults = df_16_withbase[(df_16_withbase['age'] >= 18) & (df_16_withbase['age'] < 60)].copy()
-df_19_adults = df_19_withbase[(df_19_withbase['age'] >= 18) & (df_19_withbase['age'] < 60)].copy()
-
-df_14_adults_hhbasis = \
-    df_14_hhbasis_withbase[
-        (df_14_hhbasis_withbase['age'] >= 18) & (df_14_hhbasis_withbase['age'] < 60)
-        ].copy()
-df_16_adults_hhbasis = \
-    df_16_hhbasis_withbase[
-        (df_16_hhbasis_withbase['age'] >= 18) & (df_16_hhbasis_withbase['age'] < 60)
-        ].copy()
-df_19_adults_hhbasis = \
-    df_19_hhbasis_withbase[
-        (df_19_hhbasis_withbase['age'] >= 18) & (df_19_hhbasis_withbase['age'] < 60)
-        ].copy()
-
-df_14_adults_equivalised = \
-    df_14_equivalised_withbase[
-        (df_14_equivalised_withbase['age'] >= 18) & (df_14_equivalised_withbase['age'] < 60)
-        ].copy()
-df_16_adults_equivalised = \
-    df_16_equivalised_withbase[
-        (df_16_equivalised_withbase['age'] >= 18) & (df_16_equivalised_withbase['age'] < 60)
-        ].copy()
-df_19_adults_equivalised = \
-    df_19_equivalised_withbase[
-        (df_19_equivalised_withbase['age'] >= 18) & (df_19_equivalised_withbase['age'] < 60)
-        ].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_adults[i]
-    del df_16_adults[i]
-    del df_19_adults[i]
-    del df_14_adults_equivalised[i]
-    del df_16_adults_equivalised[i]
-    del df_19_adults_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_adults_hhbasis[i]
-    del df_16_adults_hhbasis[i]
-    del df_19_adults_hhbasis[i]
-
-df_agg_mean_adults, df_agg_balanced_mean_adults = gen_pseudopanel(
-    data1=df_14_adults,
-    data2=df_16_adults,
-    data3=df_19_adults,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_adults'
-)
-df_agg_mean_adults_hhbasis, df_agg_balanced_mean_adults_hhbasis = gen_pseudopanel(
-    data1=df_14_adults_hhbasis,
-    data2=df_16_adults_hhbasis,
-    data3=df_19_adults_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_adults_hhbasis'
-)
-df_agg_mean_adults_equivalised, df_agg_balanced_mean_adults_equivalised = gen_pseudopanel(
-    data1=df_14_adults_equivalised,
-    data2=df_16_adults_equivalised,
-    data3=df_19_adults_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_adults_equivalised'
-)
-
-# All households whose head is an elderly
-df_14_elderly = df_14_withbase[df_14_withbase['age'] >= 60].copy()
-df_16_elderly = df_16_withbase[df_16_withbase['age'] >= 60].copy()
-df_19_elderly = df_19_withbase[df_19_withbase['age'] >= 60].copy()
-
-df_14_elderly_hhbasis = \
-    df_14_hhbasis_withbase[
-        df_14_hhbasis_withbase['age'] >= 60
-        ].copy()
-df_16_elderly_hhbasis = \
-    df_16_hhbasis_withbase[
-        df_16_hhbasis_withbase['age'] >= 60
-        ].copy()
-df_19_elderly_hhbasis = \
-    df_19_hhbasis_withbase[
-        df_19_hhbasis_withbase['age'] >= 60
-        ].copy()
-
-df_14_elderly_equivalised = \
-    df_14_equivalised_withbase[
-        df_14_equivalised_withbase['age'] >= 60
-        ].copy()
-df_16_elderly_equivalised = \
-    df_16_equivalised_withbase[
-        df_16_equivalised_withbase['age'] >= 60
-        ].copy()
-df_19_elderly_equivalised = \
-    df_19_equivalised_withbase[
-        df_19_equivalised_withbase['age'] >= 60
-        ].copy()
-
-for i in cols_base_group_transformed:
-    del df_14_elderly[i]
-    del df_16_elderly[i]
-    del df_19_elderly[i]
-    del df_14_elderly_equivalised[i]
-    del df_16_elderly_equivalised[i]
-    del df_19_elderly_equivalised[i]
-for i in cols_base_group_transformed_with_hhsize:
-    del df_14_elderly_hhbasis[i]
-    del df_16_elderly_hhbasis[i]
-    del df_19_elderly_hhbasis[i]
-
-df_agg_mean_elderly, df_agg_balanced_mean_elderly = gen_pseudopanel(
-    data1=df_14_elderly,
-    data2=df_16_elderly,
-    data3=df_19_elderly,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_elderly'
-)
-df_agg_mean_elderly_hhbasis, df_agg_balanced_mean_elderly_hhbasis = gen_pseudopanel(
-    data1=df_14_elderly_hhbasis,
-    data2=df_16_elderly_hhbasis,
-    data3=df_19_elderly_hhbasis,
-    list_cols_cohort=col_groups_with_hhsize,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_elderly_hhbasis'
-)
-df_agg_mean_elderly_equivalised, df_agg_balanced_mean_elderly_equivalised = gen_pseudopanel(
-    data1=df_14_elderly_equivalised,
-    data2=df_16_elderly_equivalised,
-    data3=df_19_elderly_equivalised,
-    list_cols_cohort=col_groups,
-    use_mean=True,
-    use_quantile=False,
-    quantile_choice=0.5,
-    file_suffix='mean_elderly_equivalised'
-)
 
 # X --- Notify
 telsendmsg(conf=tel_config,

@@ -201,15 +201,17 @@ b2_working_women = b2_working_women.groupby('ID')['Penerima_Pendapatan'] \
 
 # b2: Separate column for <= 12 year-olds, <= 17 year-olds, and elderly (>= 60 year olds)
 b2_kids = df_b2[['ID', 'Umur']].copy()
+b2_kids.loc[b2_kids['Umur'] <= 17, 'kid'] = 1
 b2_kids.loc[b2_kids['Umur'] <= 12, 'child'] = 1
 b2_kids.loc[(b2_kids['Umur'] > 12) & (b2_kids['Umur'] <= 17), 'adolescent'] = 1
 b2_kids.loc[b2_kids['Umur'] >= 60, 'elderly'] = 1
 b2_kids.loc[(b2_kids['Umur'] >= 18) & (b2_kids['Umur'] <= 64), 'working_age2'] = 1
 b2_kids.loc[b2_kids['Umur'] >= 65, 'elderly2'] = 1
-for i in ['child', 'adolescent', 'elderly', 'working_age2', 'elderly2']:
+b2_kids.loc[(b2_kids['Umur'] >= 18) & (b2_kids['Umur'] <= 59), 'working_age'] = 1
+for i in ['kid', 'child', 'adolescent', 'elderly', 'working_age2', 'elderly2', 'working_age']:
     b2_kids.loc[b2_kids[i].isna(), i] = 0
-b2_kids = b2_kids.groupby('ID')[['child', 'adolescent', 'elderly', 'working_age2', 'elderly2']].sum().reset_index()
-
+b2_kids = b2_kids.groupby('ID')[
+    ['kid', 'child', 'adolescent', 'elderly', 'working_age2', 'elderly2', 'working_age']].sum().reset_index()
 
 # b2: Keep only head of households
 print(tabulate(pd.crosstab(df_b2['Penerima_Pendapatan'], df_b2['Perhubungan_KIR']), showindex=True, headers='keys',
@@ -367,10 +369,12 @@ dict_rename = \
         # 'income_gen_members': 'income_gen_members',
         # 'working_adult_females': '',
         # 'non_working_adult_females': '',
+        # 'kid': '',
         # 'child': '',
         # 'adolescent': '',
         # 'elderly': '',
         # 'working_age2': '',
+        # 'working_age': '',
         # 'elderly2': '',
         # 'cons_01': '',
         # 'cons_02': '',
@@ -399,14 +403,14 @@ df = df.reset_index(drop=True)
 for i in ['salaried_wages', 'other_wages', 'asset_income',
           'gross_transfers']:  # somehow these are annual
     # df[i] = df[i] / 12
-    df[i] = df[i] / ((df['hh_size'] ** (1/2)) * 12)
+    df[i] = df[i] / ((df['hh_size'] ** (1 / 2)) * 12)
 for i in ['gross_income']:  # and this is monthly
-    df[i] = df[i] / (df['hh_size'] ** (1/2))
+    df[i] = df[i] / (df['hh_size'] ** (1 / 2))
 for i in ['cons_01_12', 'cons_01_13'] + \
          ['cons_0' + str(i) for i in range(1, 10)] + \
          ['cons_' + str(i) for i in range(11, 14)] + \
          ['cons_0722_fuel', 'cons_07_ex_bigticket']:  # likewise this
-    df[i] = df[i] / (df['hh_size'] ** (1/2))
+    df[i] = df[i] / (df['hh_size'] ** (1 / 2))
 
 # post-merge: birth year
 df['birth_year'] = 2014 - df['age']
@@ -440,10 +444,12 @@ dict_dtypes_14 = \
         'income_gen_members': 'int',
         'working_adult_females': 'int',
         'non_working_adult_females': 'int',
+        'kid': 'int',
         'child': 'int',
         'adolescent': 'int',
         'elderly': 'int',
         'working_age2': 'int',
+        'working_age': 'int',
         'elderly2': 'int',
         'cons_01': 'float',
         'cons_02': 'float',
