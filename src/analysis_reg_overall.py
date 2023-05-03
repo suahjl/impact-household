@@ -33,7 +33,6 @@ if equivalised_adj_analysis:
     hhbasis_suffix = '_equivalised'
 elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
     hhbasis_suffix = ''
-show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 # I --- Load data

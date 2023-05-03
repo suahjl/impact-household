@@ -36,7 +36,6 @@ if equivalised_adj_analysis:
 elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
     hhbasis_suffix = ''
     hhbasis_chart_title = ''
-show_ci = ast.literal_eval(os.getenv('SHOW_CI'))
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 

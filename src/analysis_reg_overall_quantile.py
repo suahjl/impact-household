@@ -181,23 +181,22 @@ for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
     round += 1
 
 # Set type
-if show_ci:
-    dict_dtype = {
-        'Parameter': 'float',
-        # 'SE': 'float',
-        'LowerCI': 'float',
-        'UpperCI': 'float',
-        'quantile': 'str'
-    }
-if not show_ci:
-    dict_dtype = {
-        'Parameter': 'float',
-        # 'SE': 'float',
-        'quantile': 'str'
-    }
+dict_dtype = {
+    'Parameter': 'float',
+    # 'SE': 'float',
+    'LowerCI': 'float',
+    'UpperCI': 'float',
+    'quantile': 'str'
+}
 params_table_fe_consol = params_table_fe_consol.astype(dict_dtype)
 params_table_timefe_consol = params_table_timefe_consol.astype(dict_dtype)
 params_table_re_consol = params_table_re_consol.astype(dict_dtype)
+
+if not show_ci:
+    for col in ['LowerCI', 'UpperCI']:
+        del params_table_fe_consol[col]
+        del params_table_timefe_consol[col]
+        del params_table_re_consol[col]
 
 # Mega merge
 params_table_consol = pd.concat(
@@ -205,7 +204,10 @@ params_table_consol = pd.concat(
     axis=0
 )
 # Order columns
-params_table_consol = params_table_consol[['outcome_variable', 'method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']]
+if show_ci:
+    params_table_consol = params_table_consol[['outcome_variable', 'method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']]
+if not show_ci:
+    params_table_consol = params_table_consol[['outcome_variable', 'method', 'quantile', 'Parameter']]
 # Export as csv and image
 params_table_consol.to_parquet('output/params_table_overall_quantile' + '_' +
                                outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.parquet')
@@ -221,9 +223,14 @@ telsendimg(
 )
 
 # Average all quantiles
-params_table_consol_avg = params_table_consol.groupby('method')[['Parameter', 'LowerCI', 'UpperCI']] \
-    .mean(numeric_only=True) \
-    .reset_index()
+if show_ci:
+    params_table_consol_avg = params_table_consol.groupby('method')[['Parameter', 'LowerCI', 'UpperCI']] \
+        .mean(numeric_only=True) \
+        .reset_index()
+if not show_ci:
+    params_table_consol_avg = params_table_consol.groupby('method')[['Parameter']] \
+        .mean(numeric_only=True) \
+        .reset_index()
 dfi.export(params_table_consol_avg,
            'output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png')
 telsendimg(
