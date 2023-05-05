@@ -648,29 +648,29 @@ def gen_gross_income_group(data, aggregation):
         ] = '0_b40'
 
 
-gen_gross_income_group(data=df_14, aggregation=2)
-gen_gross_income_group(data=df_16, aggregation=2)
-gen_gross_income_group(data=df_19, aggregation=2)
+gen_gross_income_group(data=df_14, aggregation=1)
+gen_gross_income_group(data=df_16, aggregation=1)
+gen_gross_income_group(data=df_19, aggregation=1)
 
-gen_gross_income_group(data=df_14_hhbasis, aggregation=2)
-gen_gross_income_group(data=df_16_hhbasis, aggregation=2)
-gen_gross_income_group(data=df_19_hhbasis, aggregation=2)
+gen_gross_income_group(data=df_14_hhbasis, aggregation=1)
+gen_gross_income_group(data=df_16_hhbasis, aggregation=1)
+gen_gross_income_group(data=df_19_hhbasis, aggregation=1)
 
-gen_gross_income_group(data=df_14_equivalised, aggregation=2)
-gen_gross_income_group(data=df_16_equivalised, aggregation=2)
-gen_gross_income_group(data=df_19_equivalised, aggregation=2)
+gen_gross_income_group(data=df_14_equivalised, aggregation=1)
+gen_gross_income_group(data=df_16_equivalised, aggregation=1)
+gen_gross_income_group(data=df_19_equivalised, aggregation=1)
 
-gen_gross_income_group(data=df_14_full, aggregation=2)
-gen_gross_income_group(data=df_16_full, aggregation=2)
-gen_gross_income_group(data=df_19_full, aggregation=2)
+gen_gross_income_group(data=df_14_full, aggregation=1)
+gen_gross_income_group(data=df_16_full, aggregation=1)
+gen_gross_income_group(data=df_19_full, aggregation=1)
 
-gen_gross_income_group(data=df_14_full_hhbasis, aggregation=2)
-gen_gross_income_group(data=df_16_full_hhbasis, aggregation=2)
-gen_gross_income_group(data=df_19_full_hhbasis, aggregation=2)
+gen_gross_income_group(data=df_14_full_hhbasis, aggregation=1)
+gen_gross_income_group(data=df_16_full_hhbasis, aggregation=1)
+gen_gross_income_group(data=df_19_full_hhbasis, aggregation=1)
 
-gen_gross_income_group(data=df_14_full_equivalised, aggregation=2)
-gen_gross_income_group(data=df_16_full_equivalised, aggregation=2)
-gen_gross_income_group(data=df_19_full_equivalised, aggregation=2)
+gen_gross_income_group(data=df_14_full_equivalised, aggregation=1)
+gen_gross_income_group(data=df_16_full_equivalised, aggregation=1)
+gen_gross_income_group(data=df_19_full_equivalised, aggregation=1)
 
 # Delete redundant columns; keep hh_size for hhbasis dataset
 for i in ['hh_size']:
@@ -846,7 +846,9 @@ def gen_pseudopanel(
         use_mean,
         use_quantile,
         quantile_choice,
-        file_suffix):
+        file_suffix,
+        base_path
+):
     # Groupby operation
     if use_mean and not use_quantile:
         df1_agg = data1.groupby(list_cols_cohort)[list_cols_outcomes].mean(numeric_only=True).reset_index()
@@ -880,8 +882,8 @@ def gen_pseudopanel(
     del df_agg_balanced['balanced']
     df_agg_balanced = df_agg_balanced.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
     # Save to local
-    df_agg.to_parquet(path_data + 'hies_consol_agg_' + file_suffix + '.parquet')
-    df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
+    df_agg.to_parquet(base_path + 'hies_consol_agg_' + file_suffix + '.parquet')
+    df_agg_balanced.to_parquet(base_path + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
     # Output
     return df_agg, df_agg_balanced
 
@@ -894,7 +896,8 @@ def gen_pseudopanel_quantile_fixed_axis(
         list_cols_outcomes,
         fixed_axis,
         quantile_choice,
-        file_suffix
+        file_suffix,
+        base_path
 ):
     # Prelims
     df1 = data1.copy()
@@ -939,8 +942,8 @@ def gen_pseudopanel_quantile_fixed_axis(
     del df_agg_balanced['balanced']
     df_agg_balanced = df_agg_balanced.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
     # Save to local
-    df_agg.to_parquet(path_data + 'hies_consol_agg_' + file_suffix + '.parquet')
-    df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
+    df_agg.to_parquet(base_path + 'hies_consol_agg_' + file_suffix + '.parquet')
+    df_agg_balanced.to_parquet(base_path + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
     # Output
     return df_agg, df_agg_balanced
 
@@ -953,7 +956,8 @@ def gen_pseudopanel_distgroup_fixed_axis(
         list_cols_outcomes,
         fixed_axis,
         distbounds,
-        file_suffix
+        file_suffix,
+        base_path
 ):
     # Prelims
     df1 = data1.copy()
@@ -1012,8 +1016,8 @@ def gen_pseudopanel_distgroup_fixed_axis(
     del df_agg_balanced['balanced']
     df_agg_balanced = df_agg_balanced.sort_values(by=list_cols_cohort + ['_time']).reset_index(drop=True)
     # Save to local
-    df_agg.to_parquet(path_data + 'hies_consol_agg_' + file_suffix + '.parquet')
-    df_agg_balanced.to_parquet(path_data + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
+    df_agg.to_parquet(base_path + 'hies_consol_agg_' + file_suffix + '.parquet')
+    df_agg_balanced.to_parquet(base_path + 'hies_consol_agg_balanced_' + file_suffix + '.parquet')
     # Output
     return df_agg, df_agg_balanced
 
@@ -1028,7 +1032,8 @@ df_agg_mean, df_agg_balanced_mean = gen_pseudopanel(
     use_mean=True,
     use_quantile=False,
     quantile_choice=0.5,
-    file_suffix='mean'
+    file_suffix='mean',
+    base_path=path_data
 )
 
 df_agg_mean_hhbasis, df_agg_balanced_mean_hhbasis = gen_pseudopanel(
@@ -1040,7 +1045,8 @@ df_agg_mean_hhbasis, df_agg_balanced_mean_hhbasis = gen_pseudopanel(
     use_mean=True,
     use_quantile=False,
     quantile_choice=0.5,
-    file_suffix='mean_hhbasis'
+    file_suffix='mean_hhbasis',
+    base_path=path_data
 )
 
 df_agg_mean_equivalised, df_agg_balanced_mean_equivalised = gen_pseudopanel(
@@ -1052,7 +1058,8 @@ df_agg_mean_equivalised, df_agg_balanced_mean_equivalised = gen_pseudopanel(
     use_mean=True,
     use_quantile=False,
     quantile_choice=0.5,
-    file_suffix='mean_equivalised'
+    file_suffix='mean_equivalised',
+    base_path=path_data
 )
 
 list_distbounds = [
@@ -1074,7 +1081,8 @@ for distbound, suffix in tqdm(zip(list_distbounds, list_suffixes)):
         list_cols_cohort=col_groups,
         list_cols_outcomes=col_outcomes,
         distbounds=distbound,
-        file_suffix=suffix
+        file_suffix=suffix,
+        base_path=path_data
     )
     df_agg_quantile_hhbasis, df_agg_balanced_quantile_hhbasis = gen_pseudopanel_distgroup_fixed_axis(
         data1=df_14_hhbasis,
@@ -1084,7 +1092,8 @@ for distbound, suffix in tqdm(zip(list_distbounds, list_suffixes)):
         list_cols_cohort=col_groups_with_hhsize,
         list_cols_outcomes=col_outcomes,
         distbounds=distbound,
-        file_suffix=suffix + '_hhbasis'
+        file_suffix=suffix + '_hhbasis',
+        base_path=path_data
     )
     df_agg_quantile_equivalised, df_agg_balanced_quantile_equivalised = gen_pseudopanel_distgroup_fixed_axis(
         data1=df_14_equivalised,
@@ -1094,7 +1103,8 @@ for distbound, suffix in tqdm(zip(list_distbounds, list_suffixes)):
         list_cols_cohort=col_groups_with_hhsize,
         list_cols_outcomes=col_outcomes,
         distbounds=distbound,
-        file_suffix=suffix + '_equivalised'
+        file_suffix=suffix + '_equivalised',
+        base_path=path_data
     )
 
 # Individual pooled data + output
@@ -1151,13 +1161,29 @@ df_ind_full_equivalised.to_parquet(path_data + 'hies_consol_ind_full_equivalised
 del df_14['year']
 del df_16['year']
 del df_19['year']
-
+# Reduced set of col_groups
+col_groups = \
+    [
+        'state',
+        'urban',
+        'education',
+        'ethnicity',
+        'malaysian',
+        'income_gen_members_group',
+        'male',
+        'birth_year_group',
+        'marriage',
+        'emp_status',
+        'industry',
+        'occupation'
+    ]
 # Create subgroups by benefit objective B (kid, working_age2, and elderly2), and income groups Y
 list_incgroups = ['0_b20-', '1_b20+', '2_m20-', '3_m20+', '4_t20']
 list_incgroups_suffix = ['b20m', 'b20p', 'm20m', 'm20p', 't20']
 list_benefit_objectives = ['kid', 'working_age2', 'elderly2']
-list_truncate_thresholds = [4, 3, 3]
-for incgroup, incgroup_suffix in tqdm(zip(list_incgroups, list_incgroups_suffix)):
+list_truncate_thresholds = [1, 1, 1]  # [2, 2, 2] [3, 2, 1] [3, 2, 2] [4, 3, 2] [2, 2, 1]
+print_balanced = True
+for incgroup, incgroup_suffix in zip(list_incgroups, list_incgroups_suffix):
     for benefit_objective, truncate_threshold in zip(list_benefit_objectives, list_truncate_thresholds):
         for n_obj in range(1, truncate_threshold + 1):
 
@@ -1312,7 +1338,8 @@ for incgroup, incgroup_suffix in tqdm(zip(list_incgroups, list_incgroups_suffix)
                 use_mean=True,
                 use_quantile=False,
                 quantile_choice=0.5,
-                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice
+                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice,
+                base_path=path_subgroup
             )
             df_agg_mean_sub_hhbasis, df_agg_balanced_mean_sub_hhbasis = gen_pseudopanel(
                 data1=df_14_sub_hhbasis,
@@ -1323,7 +1350,8 @@ for incgroup, incgroup_suffix in tqdm(zip(list_incgroups, list_incgroups_suffix)
                 use_mean=True,
                 use_quantile=False,
                 quantile_choice=0.5,
-                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice + '_hhbasis'
+                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice + '_hhbasis',
+                base_path=path_subgroup
             )
             df_agg_mean_sub_equivalised, df_agg_balanced_mean_sub_equivalised = gen_pseudopanel(
                 data1=df_14_sub_equivalised,
@@ -1334,10 +1362,35 @@ for incgroup, incgroup_suffix in tqdm(zip(list_incgroups, list_incgroups_suffix)
                 use_mean=True,
                 use_quantile=False,
                 quantile_choice=0.5,
-                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice + '_equivalised'
+                file_suffix='mean_' + incgroup_suffix + '_' + benefit_objective + '_' + n_obj_nice + '_equivalised',
+                base_path=path_subgroup
             )
 
-# X --- Notify
+            # Print out length of dataframe
+            if print_balanced:
+                print(
+                    'Number of balanced cohorts for ' +
+                    incgroup + ' with ' +
+                    n_obj_nice + ' ' +
+                    benefit_objective + ': ' +
+                    str(int(len(df_agg_balanced_mean_sub_hhbasis) / 3)) +
+                    ' (from ' +
+                    str(int(np.amin([len(df_14_sub_hhbasis), len(df_16_sub_hhbasis), len(df_19_sub_hhbasis)]))) +
+                    ' households)'
+                )
+            elif not print_balanced:
+                print(
+                    'Number of cohorts (balanced / unbalanced) for ' +
+                    incgroup + ' with ' +
+                    n_obj_nice + ' ' +
+                    benefit_objective + ': ' +
+                    str(int(len(df_agg_mean_sub_hhbasis) / 3)) +
+                    ' (from ' +
+                    str(int(np.amin([len(df_14_sub_hhbasis), len(df_16_sub_hhbasis), len(df_19_sub_hhbasis)]))) +
+                    ' households)'
+                )
+
+        # X --- Notify
 telsendmsg(conf=tel_config,
            msg='impact-household --- process_consol_group: COMPLETED')
 

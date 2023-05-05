@@ -138,7 +138,7 @@ def reg_ols(
     # Estimate model
     mod = smf.ols(formula=eqn, data=d)
     res = mod.fit(cov_type='HC3')
-    print(res.summary())
+    # print(res.summary())
 
     # Return estimated parameters
     params_table = pd.concat([res.params, res.HC3_se], axis=1)
@@ -194,7 +194,7 @@ def fe_reg(
     # Estimate model
     mod = PanelOLS.from_formula(formula=eqn, data=d)
     res = mod.fit(cov_type=cov_choice)
-    print(res.summary)
+    # print(res.summary)
 
     # Return estimated parameters
     params_table = pd.concat([res.params, res.std_errors], axis=1)
@@ -244,7 +244,7 @@ def re_reg(
     # Estimate model
     mod = RandomEffects.from_formula(formula=eqn, data=d)
     res = mod.fit(cov_type=cov_choice)
-    print(res.summary)
+    # print(res.summary)
 
     # Return estimated parameters
     params_table = pd.concat([res.params, res.std_errors], axis=1)

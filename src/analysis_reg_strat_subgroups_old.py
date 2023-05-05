@@ -64,7 +64,7 @@ def load_clean_estimate(
             'income_gen_members_group',
             'working_adult_females_group',
             'non_working_adult_females_group',
-        'working_age_group',
+            'working_age_group',
             'adolescent_group',
             'child_group',
             'elderly_group',
@@ -401,7 +401,7 @@ params_table_re_consol.to_csv('./output/params_table_re_consol_strat_cons_' +
 params_table_re_consol.to_parquet('./output/params_table_re_consol_strat_cons_' +
                                   income_choice + '_' + fd_suffix + '_subgroups' + hhbasis_suffix + '.parquet')
 
-# Generate heatmaps consumption-specific MPCs by subgroups
+# Generate heatmaps for consumption-specific MPCs by subgroups
 list_outcomes = ['cons_01_13', 'cons_01_12'] + \
                 ['cons_0' + str(i) for i in range(1, 10)] + \
                 ['cons_1' + str(i) for i in range(0, 4)] + \
