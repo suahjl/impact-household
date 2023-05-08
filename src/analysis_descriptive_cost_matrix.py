@@ -153,15 +153,19 @@ list_amount_multiplier = [1, 1, 0.8, 0.6, 0.4]
 
 # Construct costing matrices (levels and % GDP)
 costmat_level = pd.DataFrame(
-    columns=['benefit'] + list_incgroups + ['tiered_total', 'flat_rate_total']
+    columns=['benefit'] + list_incgroups + ['total']
 )
 costmat_level['benefit'] = pd.Series(['kid', 'working_age2', 'elderly2'])
-
 costmat_percgdp = pd.DataFrame(
-    columns=['benefit'] + list_incgroups + ['tiered_total', 'flat_rate_total']
+    columns=['benefit'] + list_incgroups + ['total']
 )
 costmat_percgdp['benefit'] = pd.Series(['kid', 'working_age2', 'elderly2'])
 
+costmat_partial_level = costmat_level.copy()
+costmat_partial_percgdp = costmat_percgdp.copy()
+
+costmat_flat_level = costmat_level.copy()
+costmat_flat_percgdp = costmat_percgdp.copy()
 
 # Loop to tabulate shares of households with K kids in Y income group
 def tabperc_xy_cost(data, x_col, y_col, list_y, x_max, big_n, mega_n, cost_per_x_per_t, nom_gdp, print_level):
@@ -308,31 +312,45 @@ tabperc_elderly2_incgroup, tabperc_elderly2_incgroup_flattened = tabperc_xy_cost
 tabperc_elderly2_incgroup['benefit'] = 'elderly2'
 # Group into single data frame
 tabperc_flat_rate = pd.concat([tabperc_kids_incgroup, tabperc_working_age2_incgroup, tabperc_elderly2_incgroup], axis=0)
-# Input into blank cost matrices
-for x in ['kid', 'working_age2', 'elderly2']:
-    costmat_level.loc[costmat_level['benefit'] == x, 'flat_rate_total'] = \
-        tabperc_flat_rate.loc[(
-                                      (tabperc_flat_rate['benefit'] == x) &
-                                      (tabperc_flat_rate['gross_income_group'] == 'total')
-                              ),
-                              'annual_cost'].sum()
-    costmat_percgdp.loc[costmat_percgdp['benefit'] == x, 'flat_rate_total'] = \
-        tabperc_flat_rate.loc[(
-                                      (tabperc_flat_rate['benefit'] == x) &
-                                      (tabperc_flat_rate['gross_income_group'] == 'total')
-                              ),
-                              'annual_cost_gdp'].sum()
 
-# III.B --- Tiered by Y group version
+# III.A --- Tiered by Y group version (flat rate everyone)
+for benefit_target, benefit_amount, x_max_choice \
+        in \
+        zip(['kid', 'working_age2', 'elderly2'], [child_benefit, working_age_benefit, elderly_benefit], [7, 7, 3]):
+    for incgroup, amount_multiplier \
+            in \
+            zip(list_incgroups, [1] * len(list_incgroups)):
+        tabperc_flat, tabperc_flat_flattened = tabperc_xy_cost(
+            data=df,
+            x_col=benefit_target,
+            y_col='gross_income_group',
+            list_y=[incgroup],
+            x_max=x_max_choice,
+            big_n=n_total,
+            mega_n=n_grand_total,
+            cost_per_x_per_t=benefit_amount * amount_multiplier,
+            nom_gdp=ngdp_2022,
+            print_level=1
+        )
+        # Input into cost matrix
+        costmat_flat_level.loc[costmat_flat_level['benefit'] == benefit_target, incgroup] = \
+            tabperc_flat.loc[
+                tabperc_flat['gross_income_group'] == incgroup
+                ,
+                'annual_cost'].sum()
+        costmat_flat_percgdp.loc[costmat_flat_percgdp['benefit'] == benefit_target, incgroup] = \
+            tabperc_flat.loc[
+                tabperc_flat['gross_income_group'] == incgroup
+                ,
+                'annual_cost_gdp'].sum()
+
+# III.B --- Tiered by Y group version (full tiered)
 for benefit_target, benefit_amount, x_max_choice \
         in \
         zip(['kid', 'working_age2', 'elderly2'], [child_benefit, working_age_benefit, elderly_benefit], [7, 7, 3]):
     for incgroup, amount_multiplier \
             in \
             zip(list_incgroups, list_amount_multiplier):
-        # Compute
-        if (benefit_target == 'kid') | (benefit_target == 'elderly2'):  # which groups to apply flat rate
-            amount_multiplier = 1
         tabperc_tiered, tabperc_tiered_flattened = tabperc_xy_cost(
             data=df,
             x_col=benefit_target,
@@ -357,21 +375,100 @@ for benefit_target, benefit_amount, x_max_choice \
                 ,
                 'annual_cost_gdp'].sum()
 
-# III.C --- Calculate tiered total
-# Placeholers
-costmat_percgdp['tiered_total'] = -1
-costmat_level['tiered_total'] = -1
-# Setting dtypes
-costmat_level[list_incgroups + ['tiered_total', 'flat_rate_total']] = \
-    costmat_level[list_incgroups + ['tiered_total', 'flat_rate_total']].astype('int64')
-costmat_percgdp[list_incgroups + ['tiered_total', 'flat_rate_total']] = \
-    costmat_percgdp[list_incgroups + ['tiered_total', 'flat_rate_total']].astype('float')
-# Compute
-costmat_level['tiered_total'] = costmat_level[list_incgroups].sum(axis=1)
-costmat_percgdp['tiered_total'] = costmat_percgdp[list_incgroups].sum(axis=1)
+# III.C --- Tiered by Y group version (partial-tiered)
+for benefit_target, benefit_amount, x_max_choice \
+        in \
+        zip(['kid', 'working_age2', 'elderly2'], [child_benefit, working_age_benefit, elderly_benefit], [7, 7, 3]):
+    for incgroup, amount_multiplier \
+            in \
+            zip(list_incgroups, list_amount_multiplier):
+        # Partial tiering
+        if (benefit_target == 'kid') | (benefit_target == 'elderly2'):  # which groups to apply flat rate
+            amount_multiplier = 1
+        # Compute
+        tabperc_partial, tabperc_partial_flattened = tabperc_xy_cost(
+            data=df,
+            x_col=benefit_target,
+            y_col='gross_income_group',
+            list_y=[incgroup],
+            x_max=x_max_choice,
+            big_n=n_total,
+            mega_n=n_grand_total,
+            cost_per_x_per_t=benefit_amount * amount_multiplier,
+            nom_gdp=ngdp_2022,
+            print_level=1
+        )
+        # Input into cost matrix
+        costmat_partial_level.loc[costmat_partial_level['benefit'] == benefit_target, incgroup] = \
+            tabperc_partial.loc[
+                tabperc_partial['gross_income_group'] == incgroup
+                ,
+                'annual_cost'].sum()
+        costmat_partial_percgdp.loc[costmat_partial_percgdp['benefit'] == benefit_target, incgroup] = \
+            tabperc_partial.loc[
+                tabperc_partial['gross_income_group'] == incgroup
+                ,
+                'annual_cost_gdp'].sum()
 
-# III.X --- Touching up
+# III.D --- Calculate tiered total
+# Placeholers
+costmat_flat_level['total'] = -1
+costmat_flat_percgdp['total'] = -1
+
+costmat_level['total'] = -1
+costmat_percgdp['total'] = -1
+
+costmat_partial_level['total'] = -1
+costmat_partial_percgdp['total'] = -1
+# Setting dtypes
+costmat_flat_level[list_incgroups + ['total']] = \
+    costmat_flat_level[list_incgroups + ['total']].astype('int64')
+costmat_flat_percgdp[list_incgroups + ['total']] = \
+    costmat_flat_percgdp[list_incgroups + ['total']].astype('float')
+
+costmat_level[list_incgroups + ['total']] = \
+    costmat_level[list_incgroups + ['total']].astype('int64')
+costmat_percgdp[list_incgroups + ['total']] = \
+    costmat_percgdp[list_incgroups + ['total']].astype('float')
+
+costmat_partial_level[list_incgroups + ['total']] = \
+    costmat_partial_level[list_incgroups + ['total']].astype('int64')
+costmat_partial_percgdp[list_incgroups + ['total']] = \
+    costmat_partial_percgdp[list_incgroups + ['total']].astype('float')
+
+# Compute
+costmat_flat_level['total'] = costmat_flat_level[list_incgroups].sum(axis=1)
+costmat_flat_percgdp['total'] = costmat_flat_percgdp[list_incgroups].sum(axis=1)
+
+costmat_level['total'] = costmat_level[list_incgroups].sum(axis=1)
+costmat_percgdp['total'] = costmat_percgdp[list_incgroups].sum(axis=1)
+
+costmat_partial_level['total'] = costmat_partial_level[list_incgroups].sum(axis=1)
+costmat_partial_percgdp['total'] = costmat_partial_percgdp[list_incgroups].sum(axis=1)
+
+# III.D --- Touching up
 # Nice column names
+costmat_flat_level = costmat_flat_level.rename(
+    columns={
+        '0_b20-': 'B20-',
+        '1_b20+': 'B20+',
+        '2_m20-': 'M20-',
+        '3_m20+': 'M20+',
+        '4_t20': 'T20',
+        'total': 'Flat Rate Total',
+    }
+)
+costmat_flat_percgdp = costmat_flat_percgdp.rename(
+    columns={
+        '0_b20-': 'B20-',
+        '1_b20+': 'B20+',
+        '2_m20-': 'M20-',
+        '3_m20+': 'M20+',
+        '4_t20': 'T20',
+        'total': 'Flat Rate Total',
+    }
+)
+
 costmat_level = costmat_level.rename(
     columns={
         '0_b20-': 'B20-',
@@ -379,8 +476,7 @@ costmat_level = costmat_level.rename(
         '2_m20-': 'M20-',
         '3_m20+': 'M20+',
         '4_t20': 'T20',
-        'tiered_total': 'Tiered Total',
-        'flat_rate_total': 'Flat Rate Total'
+        'total': 'Tiered Total',
     }
 )
 costmat_percgdp = costmat_percgdp.rename(
@@ -390,11 +486,47 @@ costmat_percgdp = costmat_percgdp.rename(
         '2_m20-': 'M20-',
         '3_m20+': 'M20+',
         '4_t20': 'T20',
-        'tiered_total': 'Tiered Total',
-        'flat_rate_total': 'Flat Rate Total'
+        'total': 'Tiered Total',
     }
 )
+
+costmat_partial_level = costmat_partial_level.rename(
+    columns={
+        '0_b20-': 'B20-',
+        '1_b20+': 'B20+',
+        '2_m20-': 'M20-',
+        '3_m20+': 'M20+',
+        '4_t20': 'T20',
+        'total': 'Partial Tiered Total',
+    }
+)
+costmat_partial_percgdp = costmat_partial_percgdp.rename(
+    columns={
+        '0_b20-': 'B20-',
+        '1_b20+': 'B20+',
+        '2_m20-': 'M20-',
+        '3_m20+': 'M20+',
+        '4_t20': 'T20',
+        'total': 'Partial Tiered Total',
+    }
+)
+
 # Nice benefit names
+costmat_flat_level['benefit'] = costmat_flat_level['benefit'].replace(
+    {
+        'kid': 'Child (0-17)',
+        'working_age2': 'Working Age (18-64)',
+        'elderly2': 'Elderly (65+)'
+    }
+)
+costmat_flat_percgdp['benefit'] = costmat_flat_percgdp['benefit'].replace(
+    {
+        'kid': 'Child (0-17)',
+        'working_age2': 'Working Age (18-64)',
+        'elderly2': 'Elderly (65+)'
+    }
+)
+
 costmat_level['benefit'] = costmat_level['benefit'].replace(
     {
         'kid': 'Child (0-17)',
@@ -409,42 +541,111 @@ costmat_percgdp['benefit'] = costmat_percgdp['benefit'].replace(
         'elderly2': 'Elderly (65+)'
     }
 )
+
+costmat_partial_level['benefit'] = costmat_partial_level['benefit'].replace(
+    {
+        'kid': 'Child (0-17)',
+        'working_age2': 'Working Age (18-64)',
+        'elderly2': 'Elderly (65+)'
+    }
+)
+costmat_partial_percgdp['benefit'] = costmat_partial_percgdp['benefit'].replace(
+    {
+        'kid': 'Child (0-17)',
+        'working_age2': 'Working Age (18-64)',
+        'elderly2': 'Elderly (65+)'
+    }
+)
 # Set index
+costmat_flat_level = costmat_flat_level.set_index('benefit')
+costmat_flat_percgdp = costmat_flat_percgdp.set_index('benefit')
+
 costmat_level = costmat_level.set_index('benefit')
 costmat_percgdp = costmat_percgdp.set_index('benefit')
+
+costmat_partial_level = costmat_partial_level.set_index('benefit')
+costmat_partial_percgdp = costmat_partial_percgdp.set_index('benefit')
+
 # Add column total
+costmat_flat_level.loc['All Benefits'] = costmat_flat_level.sum(axis=0)
+costmat_flat_percgdp.loc['All Benefits'] = costmat_flat_percgdp.sum(axis=0)
+
 costmat_level.loc['All Benefits'] = costmat_level.sum(axis=0)
 costmat_percgdp.loc['All Benefits'] = costmat_percgdp.sum(axis=0)
+
+costmat_partial_level.loc['All Benefits'] = costmat_partial_level.sum(axis=0)
+costmat_partial_percgdp.loc['All Benefits'] = costmat_partial_percgdp.sum(axis=0)
 # Convert to RM bil
+costmat_flat_level = costmat_flat_level / 1000000000
 costmat_level = costmat_level / 1000000000
+costmat_partial_level = costmat_partial_level / 1000000000
+
+# III.E --- Output locally (before rounding)
+costmat_flat_level.to_parquet(path_output + 'cost_matrix_flat_level.parquet')
+costmat_flat_percgdp.to_parquet(path_output + 'cost_matrix_flat_percgdp.parquet')
+costmat_flat_level.to_csv(path_output + 'cost_matrix_flat_level.csv')
+costmat_flat_percgdp.to_csv(path_output + 'cost_matrix_flat_percgdp.csv')
+
+costmat_level.to_parquet(path_output + 'cost_matrix_level.parquet')
+costmat_percgdp.to_parquet(path_output + 'cost_matrix_percgdp.parquet')
+costmat_level.to_csv(path_output + 'cost_matrix_level.csv')
+costmat_percgdp.to_csv(path_output + 'cost_matrix_percgdp.csv')
+
+costmat_partial_level.to_parquet(path_output + 'cost_matrix_partial_level.parquet')
+costmat_partial_percgdp.to_parquet(path_output + 'cost_matrix_partial_percgdp.parquet')
+costmat_partial_level.to_csv(path_output + 'cost_matrix_partial_level.csv')
+costmat_partial_percgdp.to_csv(path_output + 'cost_matrix_partial_percgdp.csv')
+
+# III.F --- Visualisation
 # Round up values
+costmat_flat_level = costmat_flat_level.round(2)
+costmat_flat_percgdp = costmat_flat_percgdp.round(2)
+
 costmat_level = costmat_level.round(2)
 costmat_percgdp = costmat_percgdp.round(2)
-# Print for inspection
-print(
-    tabulate(
-        tabular_data=costmat_level,
-        showindex=True,
-        headers='keys',
-        tablefmt="pretty"
-    )
+
+costmat_partial_level = costmat_partial_level.round(2)
+costmat_partial_percgdp = costmat_partial_percgdp.round(2)
+
+# Convert into heatmap
+fig_costmat_flat_level = heatmap(
+    input=costmat_flat_level,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'cost_matrix_flat_level.png',
+    title='Annual Cost (RM bil): Flat Rate',
+    lb=0,
+    ub=costmat_flat_level.max().max(),
+    format='.2f'
 )
-print(
-    tabulate(
-        tabular_data=costmat_percgdp,
-        showindex=True,
-        headers='keys',
-        tablefmt="pretty"
-    )
+telsendimg(
+    conf=tel_config,
+    path=path_output + 'cost_matrix_flat_level.png',
+    cap='cost_matrix_flat_level'
 )
 
-# III.X --- Convert into heatmap
+fig_costmat_flat_percgdp = heatmap(
+    input=costmat_flat_percgdp,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'cost_matrix_flat_percgdp.png',
+    title='Annual Cost (% of 2022 GDP): Flat Rate',
+    lb=0,
+    ub=costmat_flat_percgdp.max().max(),
+    format='.2f'
+)
+telsendimg(
+    conf=tel_config,
+    path=path_output + 'cost_matrix_flat_percgdp.png',
+    cap='cost_matrix_flat_percgdp'
+)
+
 fig_costmat_level = heatmap(
     input=costmat_level,
     mask=False,
     colourmap='coolwarm',
     outputfile=path_output + 'cost_matrix_level.png',
-    title='Annual Cost Matrix (RM bil)',
+    title='Annual Cost (RM bil): Full Tiering',
     lb=0,
     ub=costmat_level.max().max(),
     format='.2f'
@@ -460,7 +661,7 @@ fig_costmat_percgdp = heatmap(
     mask=False,
     colourmap='coolwarm',
     outputfile=path_output + 'cost_matrix_percgdp.png',
-    title='Annual Cost Matrix (% of 2022 GDP)',
+    title='Annual Cost (% of 2022 GDP): Full Tiering',
     lb=0,
     ub=costmat_percgdp.max().max(),
     format='.2f'
@@ -469,6 +670,38 @@ telsendimg(
     conf=tel_config,
     path=path_output + 'cost_matrix_percgdp.png',
     cap='cost_matrix_percgdp'
+)
+
+fig_costmat_partial_level = heatmap(
+    input=costmat_partial_level,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'cost_matrix_partial_level.png',
+    title='Annual Cost (RM bil): Partial Tiering',
+    lb=0,
+    ub=costmat_partial_level.max().max(),
+    format='.2f'
+)
+telsendimg(
+    conf=tel_config,
+    path=path_output + 'cost_matrix_partial_level.png',
+    cap='cost_matrix_partial_level'
+)
+
+fig_costmat_partial_percgdp = heatmap(
+    input=costmat_partial_percgdp,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'cost_matrix_partial_percgdp.png',
+    title='Annual Cost (% of 2022 GDP): Partial Tiering',
+    lb=0,
+    ub=costmat_partial_percgdp.max().max(),
+    format='.2f'
+)
+telsendimg(
+    conf=tel_config,
+    path=path_output + 'cost_matrix_partial_percgdp.png',
+    cap='cost_matrix_partial_percgdp'
 )
 
 # X --- Notify

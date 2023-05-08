@@ -1,10 +1,12 @@
-# WIP --- 3 May 2023
+# WIP --- 8 May 2023
+# Use income group-specific mpc to simulate total group impact
 
 import pandas as pd
 import numpy as np
 from tabulate import tabulate
 from src.helper import \
-    telsendmsg, telsendimg, telsendfiles
+    telsendmsg, telsendimg, telsendfiles, \
+    heatmap, pil_img2pdf
 import dataframe_image as dfi
 from datetime import timedelta, date
 from tqdm import tqdm
@@ -66,9 +68,10 @@ hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_H
 # Which parameters
 choice_macro_shock = 'Private Consumption'
 choice_micro_outcome = 'Consumption'
-choices_macro_response = ['GDP', 'Private Consumption', 'CPI', 'NEER', 'MGS10Y']
+choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NEER', 'MGS10Y']
 
-# I --- Load parameter estimates
+# I --- Load MPC, IRF, and disbursement estimates
+# IRF estimates
 irf = pd.read_parquet(path_output + 'macro_var_irf_all_varyx_narrative_avg_' + macro_suffix + '.parquet')
 # Nice names
 dict_cols_nice = {
@@ -93,21 +96,33 @@ dict_cols_nice = {
 }
 for i in ['shock', 'response']:
     irf[i] = irf[i].replace(dict_cols_nice)
-mpc = pd.read_parquet(path_output +
-                      'params_table_fe_consol_strat_cons_' +
-                      income_choice + '_' + fd_suffix + '_subgroups' + hhbasis_suffix + '.parquet').reset_index()
-
-# II --- Parse parameter estimates
+# Restrict IRFs to shock of choice
 irf = irf[irf['shock'] == choice_macro_shock]
-mpc = mpc[mpc['outcome_variable'] == choice_micro_outcome]
+# MPC estimates
+mpc = pd.read_parquet(path_output +
+                      'params_table_overall_quantile' + '_' +
+                      outcome_choice + '_' + income_choice + '_'
+                      + fd_suffix + hhbasis_suffix + '.parquet').reset_index()
+mpc = mpc[mpc['method'] == 'FE']
+mpc = mpc[['quantile', 'Parameter']]
+mpc = mpc.rename(columns={'quantile': 'gross_income_group'})
+mpc['gross_income_group'] = \
+    mpc['gross_income_group'].replace(
+        {
+            '0-20': 'B20-',
+            '20-40': 'B20+',
+            '40-60': 'M20-',
+            '60-80': 'M20+',
+            '80-100': 'T20'
+        }
+    )
+# Disbursement estimates
+disb_tiered = pd.read_parquet(path_output + 'cost_matrix_level.parquet')
+disb_partial = pd.read_parquet(path_output + 'cost_matrix_partial_level.parquet')
+disb_flat = pd.read_parquet(path_output + 'cost_matrix_flat_level.parquet')
 
-# III.0 --- Compile eligible N(HHs)
-n_pop = 32447385
-n_citizens = 29756315
-n_15_above = 24675545
-n_15_59 = 21341441
-n_60_above = 3334104
-n_hh = 8234644
+# III.0 --- Set base parameters
+list_incgroups = ['B20-', 'B20+', 'M20-', 'M20+', 'T20']
 ngdp_2022 = 1788184000000
 rgdp_2022 = 1507305000000
 npc_2022 = 1029952000000
@@ -116,182 +131,251 @@ deflator_2022 = 118.65
 deflator_2023 = 118.65
 pc_deflator_2022 = 113.48
 pc_deflator_2023 = 113.48
-dict_eligible_count = {
-    'HHs: All': n_hh,
-    'HHs: B40': 0.4 * n_hh,
-    'HHs: B40 & M20-': 0.6 * n_hh,
-    'HHs: B40 & M40': 0.8 * n_hh,
-    'HHs: 0 Kid': (44.458933515226896 / 100) * n_hh,
-    'HHs: 1 Kid': (19.829073546523293 / 100) * n_hh,
-    'HHs: 2 Kids': (17.47983790073426 / 100) * n_hh,
-    'HHs: 3 Kids': (10.825342053524857 / 100) * n_hh,
-    'HHs: 4 Kids': (4.943225133410905 / 100) * n_hh,
-    'HHs: 5 Kids': (1.6992336396099987 / 100) * n_hh,
-    'HHs: 6 Kids': (0.5416683384825262 / 100) * n_hh,
-    'HHs: 7+ Kids': (0.22268587248726077 / 100) * n_hh,
-    'Individuals: Working Age Adults (15-59)': n_15_59,
-    'Individuals: Elderly (60+)': n_60_above
-}
-eligible_count = pd.DataFrame(dict_eligible_count.items(), columns=['group', 'n_eligible'])
 
 
 # III.A --- Compute landing impact using estimated MPCs
 # Function
-
-def create_transfers_layer(
-        layer_name,
-        amount_monthly,
-        n_eligible_layer,
-        mpc_estimate
+def landing_impact_matrix(
+        mpc,
+        disb,
+        incgroups
 ):
-    # compute
-    amount_annual = amount_monthly * 12
-    total_injection = n_eligible_layer * amount_annual
-    total_injection_gdp = 100 * (total_injection / ngdp_2022)
-    total_spent = mpc_estimate * total_injection
-    gdp_impact = 100 * ((total_spent / (deflator_2023 / 100)) / rgdp_2022)
-    pc_impact = 100 * ((total_spent / (pc_deflator_2023 / 100)) / rpc_2022)
-    # piece together
-    landing_interim = pd.DataFrame(
-        {
-            'Policy Layer': [layer_name],
-            'Monthly Transfers (RM)': [amount_monthly],
-            'Annual Transfers (RM)': [amount_annual],
-            'Eligible HHs / Individuals': [n_eligible_layer],
-            'Total Injection (RM bil)': [total_injection / 1000000000],
-            'Total Injection (% of 2022 GDP)': [total_injection_gdp],
-            'MPC from Transfers': [mpc_estimate],
-            'Total Spent (RM bil)': [total_spent / 1000000000],
-            'Impact on 2023 GDP Growth (pp)': [gdp_impact],
-            'Impact on 2023 PC Growth (pp)': [pc_impact]
-        }
-    )
-    # output
-    return landing_interim
+    # Prelims
+    mpc = mpc.copy()
+    df_disb = disb.copy()
+    # Trim total column for convenience
+    df_disb = df_disb[incgroups]
+    df_landing = df_disb.copy()
+    # Compute c = g * mpc
+    for incgroup in incgroups:
+        df_landing[incgroup] = \
+            df_landing[incgroup] \
+            * mpc.loc[mpc['gross_income_group'] == incgroup, 'Parameter'].max()
+    # Output
+    return df_landing
 
 
-# Set up layers
-list_layers = [
-    'Universal',
-    'B60',
-    '1 Kid', '2 Kids', '3 Kids', '4 Kids', '5 Kids', '6 Kids', '7+ Kids',
-    'Working Age', 'Elderly'
-]
-list_amount_monthly = [
-    100,
-    100,
-    100, 200, 300, 400, 500, 600, 700,
-    50, 100
-]
-list_mpc = [
-    mpc.loc[mpc['subgroup'] == 'All HHs', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == 'B40 & M20-', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == '1 Kid or More', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == '1 Kid or More', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == '1 Kid or More', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == '1 Kid or More', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == '1 Kid or More', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == '1 Kid or More', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == '1 Kid or More', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == 'With Adult (18-59) HH Head', 'Parameter'].reset_index(drop=True)[0],
-    mpc.loc[mpc['subgroup'] == 'With Elderly (60+) HH Head', 'Parameter'].reset_index(drop=True)[0],
-]
-list_eligible = [
-    eligible_count.loc[eligible_count['group'] == 'HHs: All', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'HHs: B40 & M20-', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'HHs: 1 Kid', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'HHs: 2 Kids', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'HHs: 3 Kids', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'HHs: 4 Kids', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'HHs: 5 Kids', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'HHs: 6 Kids', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'HHs: 7+ Kids', 'n_eligible'].reset_index(drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'Individuals: Working Age Adults (15-59)', 'n_eligible'].reset_index(
-        drop=True)[0],
-    eligible_count.loc[eligible_count['group'] == 'Individuals: Elderly (60+)', 'n_eligible'].reset_index(drop=True)[0],
-]
-# Compute all layers
-landing = pd.DataFrame(
-    columns=[
-        'Policy Layer',
-        'Monthly Transfers (RM)',
-        'Annual Transfers (RM)',
-        'Eligible HHs / Individuals',
-        'Total Injection (RM bil)',
-        'Total Injection (% of 2022 GDP)',
-        'MPC from Transfers',
-        'Total Spent (RM bil)',
-        'Impact on 2023 GDP Growth (pp)',
-        'Impact on 2023 PC Growth (pp)',
-    ]
-)
-for layer, amount, eligible, mpc in tqdm(zip(list_layers, list_amount_monthly, list_eligible, list_mpc)):
-    landing_interim = create_transfers_layer(
-        layer_name=layer,
-        amount_monthly=amount,
-        n_eligible_layer=eligible,
-        mpc_estimate=mpc
-    )
-    landing = pd.concat([landing, landing_interim], axis=0)  # top down
-landing_total = pd.DataFrame(
-    {
-        'Policy Layer': ['Total'],
-        'Monthly Transfers (RM)': [-1],
-        'Annual Transfers (RM)': [-1],
-        'Eligible HHs / Individuals': [-1],
-        'Total Injection (RM bil)': [landing['Total Injection (RM bil)'].sum()],
-        'Total Injection (% of 2022 GDP)': [landing['Total Injection (% of 2022 GDP)'].sum()],
-        'MPC from Transfers': [-1],
-        'Total Spent (RM bil)': [landing['Total Spent (RM bil)'].sum()],
-        'Impact on 2023 GDP Growth (pp)': [landing['Impact on 2023 GDP Growth (pp)'].sum()],
-        'Impact on 2023 PC Growth (pp)': [landing['Impact on 2023 PC Growth (pp)'].sum()]
-    }
-)
-landing = pd.concat([landing, landing_total], axis=0)
-landing = landing.reset_index(drop=True)
-for i in ['Eligible HHs / Individuals']:
-    landing[i] = landing[i].round(0).astype('int')
-for i in ['Total Injection (RM bil)', 'Total Injection (% of 2022 GDP)',
-          'Total Spent (RM bil)', 'Impact on 2023 GDP Growth (pp)', 'Impact on 2023 PC Growth (pp)']:
-    landing[i] = landing[i].round(2)
-for i in ['MPC from Transfers']:
-    landing[i] = landing[i].round(2)
-landing = landing.replace({-1: '-'})
-print(
-    tabulate(
-        tabular_data=landing,
-        showindex=False,
-        headers='keys',
-        tablefmt="pretty"
-    )
-)
-# Export landing impact
-landing = landing.astype('str')
-landing.to_parquet(path_output + 'landing_impact_sim_' +
-                   income_choice + '_' + outcome_choice + '_' +
-                   fd_suffix + hhbasis_suffix + '.parquet')
-landing.to_csv(path_output + 'landing_impact_sim_' +
+# Compute all three impact matrices
+landing_tiered = landing_impact_matrix(mpc=mpc, disb=disb_tiered, incgroups=list_incgroups)
+landing_partial = landing_impact_matrix(mpc=mpc, disb=disb_partial, incgroups=list_incgroups)
+landing_flat = landing_impact_matrix(mpc=mpc, disb=disb_flat, incgroups=list_incgroups)
+
+# Compute benefit-specific totals (row sums)
+landing_tiered['Landing Impact'] = landing_tiered.sum(axis=1)
+landing_partial['Landing Impact'] = landing_partial.sum(axis=1)
+landing_flat['Landing Impact'] = landing_flat.sum(axis=1)
+
+# Convert into real PC growth
+landing_tiered_rpc = 100 * ((landing_tiered * 1000000000 / (pc_deflator_2023 / 100)) / rpc_2022)
+landing_partial_rpc = 100 * ((landing_partial * 1000000000 / (pc_deflator_2023 / 100)) / rpc_2022)
+landing_flat_rpc = 100 * ((landing_flat * 1000000000 / (pc_deflator_2023 / 100)) / rpc_2022)
+
+# Convert into real GDP growth
+landing_tiered_rgdp = 100 * ((landing_tiered * 1000000000 / (deflator_2023 / 100)) / rgdp_2022)
+landing_partial_rgdp = 100 * ((landing_partial * 1000000000 / (deflator_2023 / 100)) / rgdp_2022)
+landing_flat_rgdp = 100 * ((landing_flat * 1000000000 / (deflator_2023 / 100)) / rgdp_2022)
+
+# Convert landing impact into heat maps
+# Nominal
+files_landing_nominal = []
+fig_landing_tiered = heatmap(
+    input=landing_tiered,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'tiered_' +
                income_choice + '_' + outcome_choice + '_' +
-               fd_suffix + hhbasis_suffix + '.csv')
-dfi.export(landing,
-           path_output + 'landing_impact_sim_' +
-           income_choice + '_' + outcome_choice + '_' +
-           fd_suffix + hhbasis_suffix + '.png',
-           fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)
-telsendimg(
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (RM bil): Full Tiering',
+    lb=0,
+    ub=landing_tiered.max().max(),
+    format='.2f'
+)
+files_landing_nominal = files_landing_nominal + [path_output + 'landing_impact_sim_' + 'tiered_' +
+                                                 income_choice + '_' + outcome_choice + '_' +
+                                                 fd_suffix + hhbasis_suffix]
+fig_landing_partial = heatmap(
+    input=landing_partial,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'partial_' +
+               income_choice + '_' + outcome_choice + '_' +
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (RM bil): Partial Tiering',
+    lb=0,
+    ub=landing_partial.max().max(),
+    format='.2f'
+)
+files_landing_nominal = files_landing_nominal + [path_output + 'landing_impact_sim_' + 'partial_' +
+                                                 income_choice + '_' + outcome_choice + '_' +
+                                                 fd_suffix + hhbasis_suffix]
+fig_landing_flat = heatmap(
+    input=landing_flat,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'flat_' +
+               income_choice + '_' + outcome_choice + '_' +
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (RM bil): Flat Rate',
+    lb=0,
+    ub=landing_flat.max().max(),
+    format='.2f'
+)
+files_landing_nominal = files_landing_nominal + [path_output + 'landing_impact_sim_' + 'flat_' +
+                                                 income_choice + '_' + outcome_choice + '_' +
+                                                 fd_suffix + hhbasis_suffix]
+
+# PC growth
+files_landing_rpc = []
+fig_landing_tiered_rpc = heatmap(
+    input=landing_tiered_rpc,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'tiered_rpc_' +
+               income_choice + '_' + outcome_choice + '_' +
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (RM bil): Full Tiering',
+    lb=0,
+    ub=landing_tiered_rpc.max().max(),
+    format='.2f'
+)
+files_landing_rpc = files_landing_rpc + [path_output + 'landing_impact_sim_' + 'tiered_rpc_' +
+                                         income_choice + '_' + outcome_choice + '_' +
+                                         fd_suffix + hhbasis_suffix]
+fig_landing_partial_rpc = heatmap(
+    input=landing_partial_rpc,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'partial_rpc_' +
+               income_choice + '_' + outcome_choice + '_' +
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (RM bil): Partial Tiering',
+    lb=0,
+    ub=landing_partial_rpc.max().max(),
+    format='.2f'
+)
+files_landing_rpc = files_landing_rpc + [path_output + 'landing_impact_sim_' + 'partial_rpc_' +
+                                         income_choice + '_' + outcome_choice + '_' +
+                                         fd_suffix + hhbasis_suffix]
+fig_landing_flat_rpc = heatmap(
+    input=landing_flat_rpc,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'flat_rpc_' +
+               income_choice + '_' + outcome_choice + '_' +
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (): Flat Rate',
+    lb=0,
+    ub=landing_flat_rpc.max().max(),
+    format='.2f'
+)
+files_landing_rpc = files_landing_rpc + [path_output + 'landing_impact_sim_' + 'flat_rpc_' +
+                                         income_choice + '_' + outcome_choice + '_' +
+                                         fd_suffix + hhbasis_suffix]
+
+# GDP growth
+files_landing_rgdp = []
+fig_landing_tiered_rgdp = heatmap(
+    input=landing_tiered_rgdp,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'tiered_rgdp_' +
+               income_choice + '_' + outcome_choice + '_' +
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (RM bil): Full Tiering',
+    lb=0,
+    ub=landing_tiered_rgdp.max().max(),
+    format='.2f'
+)
+files_landing_rgdp = files_landing_rgdp + [path_output + 'landing_impact_sim_' + 'tiered_rgdp_' +
+                                           income_choice + '_' + outcome_choice + '_' +
+                                           fd_suffix + hhbasis_suffix]
+fig_landing_partial_rgdp = heatmap(
+    input=landing_partial_rgdp,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'partial_rgdp_' +
+               income_choice + '_' + outcome_choice + '_' +
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (RM bil): Partial Tiering',
+    lb=0,
+    ub=landing_partial_rgdp.max().max(),
+    format='.2f'
+)
+files_landing_rgdp = files_landing_rgdp + [path_output + 'landing_impact_sim_' + 'partial_rgdp_' +
+                                           income_choice + '_' + outcome_choice + '_' +
+                                           fd_suffix + hhbasis_suffix]
+fig_landing_flat_rgdp = heatmap(
+    input=landing_flat_rgdp,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'landing_impact_sim_' + 'flat_rgdp_' +
+               income_choice + '_' + outcome_choice + '_' +
+               fd_suffix + hhbasis_suffix + '.png',
+    title='Annual Landing Impact (): Flat Rate',
+    lb=0,
+    ub=landing_flat_rgdp.max().max(),
+    format='.2f'
+)
+files_landing_rgdp = files_landing_rgdp + [path_output + 'landing_impact_sim_' + 'flat_rgdp_' +
+                                           income_choice + '_' + outcome_choice + '_' +
+                                           fd_suffix + hhbasis_suffix]
+
+# Compile landing impact heatmaps
+pil_img2pdf(
+    list_images=files_landing_nominal,
+    extension='png',
+    pdf_name=path_output + 'landing_impact_sim_' + 'nominal_' +
+             income_choice + '_' + outcome_choice + '_' +
+             fd_suffix + hhbasis_suffix
+)
+telsendfiles(
     conf=tel_config,
-    path=path_output + 'landing_impact_sim_' +
+    path=path_output + 'landing_impact_sim_' + 'nominal_' +
          income_choice + '_' + outcome_choice + '_' +
-         fd_suffix + hhbasis_suffix + '.png',
-    cap='landing_impact_sim_' +
+         fd_suffix + hhbasis_suffix + '.pdf',
+    cap='landing_impact_sim_' + 'nominal_' +
+        income_choice + '_' + outcome_choice + '_' +
+        fd_suffix + hhbasis_suffix
+)
+
+pil_img2pdf(
+    list_images=files_landing_rpc,
+    extension='png',
+    pdf_name=path_output + 'landing_impact_sim_' + 'rpc_' +
+             income_choice + '_' + outcome_choice + '_' +
+             fd_suffix + hhbasis_suffix
+)
+telsendfiles(
+    conf=tel_config,
+    path=path_output + 'landing_impact_sim_' + 'rpc_' +
+         income_choice + '_' + outcome_choice + '_' +
+         fd_suffix + hhbasis_suffix + '.pdf',
+    cap='landing_impact_sim_' + 'nominal_' +
+        income_choice + '_' + outcome_choice + '_' +
+        fd_suffix + hhbasis_suffix
+)
+
+pil_img2pdf(
+    list_images=files_landing_rgdp,
+    extension='png',
+    pdf_name=path_output + 'landing_impact_sim_' + 'rgdp_' +
+             income_choice + '_' + outcome_choice + '_' +
+             fd_suffix + hhbasis_suffix
+)
+telsendfiles(
+    conf=tel_config,
+    path=path_output + 'landing_impact_sim_' + 'rgdp_' +
+         income_choice + '_' + outcome_choice + '_' +
+         fd_suffix + hhbasis_suffix + '.pdf',
+    cap='landing_impact_sim_' + 'nominal_' +
         income_choice + '_' + outcome_choice + '_' +
         fd_suffix + hhbasis_suffix
 )
 
 
-# III.B --- Use landing impact to compute dynamic impact using estimated OIRFs from VAR
+# III.B --- Use landing impact to compute indirect impact using estimated OIRFs from VAR
 # Function
-def compute_var_dynamic_impact(
+def compute_var_indirect_impact(
         irf,
         list_responses,
         shock,
@@ -299,100 +383,231 @@ def compute_var_dynamic_impact(
         convert_q_to_a
 ):
     # deep copy of parsed IRF
-    dynamic = irf.copy()
+    indirect = irf.copy()
     # parse further
-    dynamic = dynamic[dynamic['response'].isin(list_responses) & dynamic['shock'].isin([shock])]
+    indirect = indirect[indirect['response'].isin(list_responses) & indirect['shock'].isin([shock])]
     # scale IRFs (originally unit shock)
-    dynamic['irf'] = dynamic['irf'] * shock_size
+    indirect['irf'] = indirect['irf'] * shock_size
     # reset index
-    dynamic = dynamic.reset_index(drop=True)
+    indirect = indirect.reset_index(drop=True)
     # convert from quarterly response to annual response
     if convert_q_to_a:
-        dynamic['horizon_year'] = dynamic['horizon'] // 4
-        dynamic = dynamic.groupby(['shock', 'response', 'horizon_year'])['irf'].mean().reset_index()
+        indirect['horizon_year'] = indirect['horizon'] // 4
+        indirect = indirect.groupby(['shock', 'response', 'horizon_year'])['irf'].mean().reset_index()
+        # Clean up
+        indirect = indirect[indirect['horizon_year'] < 4]  # ignore final quarter
+    # Clean up
+    indirect = indirect.rename(columns={'irf': 'indirect_impact'})
+    indirect_rounded = indirect.copy()
+    indirect_rounded['indirect_impact'] = indirect_rounded['indirect_impact'].round(2)
     # output
-    return dynamic
+    return indirect, indirect_rounded
+
+
+def export_dfi_parquet_csv_telegram(input, file_name):
+    input.to_parquet(file_name + '.parquet')
+    input.to_csv(file_name + '.csv')
+    dfi.export(input, file_name + '.png',
+               fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)
+    telsendimg(
+        conf=tel_config,
+        path=file_name + '.png',
+        cap=file_name
+    )
 
 
 # Compute
-dynamic = compute_var_dynamic_impact(
+indirect_tiered, indirect_tiered_rounded = compute_var_indirect_impact(
     irf=irf,
     list_responses=choices_macro_response,
     shock=choice_macro_shock,
-    shock_size=landing_total['Impact on 2023 PC Growth (pp)'].sum(),
+    shock_size=landing_tiered_rpc.loc['All Benefits', 'Landing Impact'].max(),
     convert_q_to_a=True
 )
-# Clean up
-dynamic = dynamic[dynamic['horizon_year'] < 4]  # ignore final quarter
-dynamic = dynamic.rename(columns={'irf': 'dynamic_impact'})
-dynamic_rounded = dynamic.copy()
-dynamic_rounded['dynamic_impact'] = dynamic_rounded['dynamic_impact'].round(2)
-# Output
-dynamic_rounded.to_parquet(path_output + 'dynamic_impact_sim_' +
-                           income_choice + '_' + outcome_choice + '_' +
-                           fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.parquet')
-dynamic_rounded.to_csv(path_output + 'dynamic_impact_sim_' +
-                       income_choice + '_' + outcome_choice + '_' +
-                       fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.csv')
-dfi.export(dynamic_rounded,
-           path_output + 'dynamic_impact_sim_' +
-           income_choice + '_' + outcome_choice + '_' +
-           fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.png',
-           fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)
-telsendimg(
-    conf=tel_config,
-    path=path_output + 'dynamic_impact_sim_' +
-         income_choice + '_' + outcome_choice + '_' +
-         fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.png',
-    cap='dynamic_impact_sim_' +
-        income_choice + '_' + outcome_choice + '_' +
-        fd_suffix + hhbasis_suffix + '_' + macro_suffix
+indirect_partial, indirect_partial_rounded = compute_var_indirect_impact(
+    irf=irf,
+    list_responses=choices_macro_response,
+    shock=choice_macro_shock,
+    shock_size=landing_partial_rpc.loc['All Benefits', 'Landing Impact'].max(),
+    convert_q_to_a=True
+)
+indirect_flat, indirect_flat_rounded = compute_var_indirect_impact(
+    irf=irf,
+    list_responses=choices_macro_response,
+    shock=choice_macro_shock,
+    shock_size=landing_flat_rpc.loc['All Benefits', 'Landing Impact'].max(),
+    convert_q_to_a=True
 )
 
-# III.C --- Aggregate impact
-# Deep copy
-aggregate = dynamic.copy()
-# Key in landing impact
-aggregate.loc[
-    (
-            (aggregate['horizon_year'] == 0) & (aggregate['response'] == 'Private Consumption')
-    ),
-    'landing_impact'
-] = landing_total['Impact on 2023 PC Growth (pp)'].sum()
-aggregate.loc[
-    (
-            (aggregate['horizon_year'] == 0) & (aggregate['response'] == 'GDP')
-    ),
-    'landing_impact'
-] = landing_total['Impact on 2023 GDP Growth (pp)'].sum()
-aggregate = aggregate.fillna(0)
-# Compute total impact across time
-aggregate['total_impact'] = aggregate['dynamic_impact'] + aggregate['landing_impact']
-# Clean up
-aggregate = aggregate[['shock', 'response', 'horizon_year', 'landing_impact', 'dynamic_impact', 'total_impact']]
-aggregate_rounded = aggregate.copy()
-aggregate_rounded[['landing_impact', 'dynamic_impact', 'total_impact']] = \
-    aggregate_rounded[['landing_impact', 'dynamic_impact', 'total_impact']].round(2)
 # Output
-aggregate_rounded.to_parquet(path_output + 'aggregate_impact_sim_' +
-                             income_choice + '_' + outcome_choice + '_' +
-                             fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.parquet')
-aggregate_rounded.to_csv(path_output + 'aggregate_impact_sim_' +
-                         income_choice + '_' + outcome_choice + '_' +
-                         fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.csv')
-dfi.export(aggregate_rounded,
-           path_output + 'aggregate_impact_sim_' +
-           income_choice + '_' + outcome_choice + '_' +
-           fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.png',
-           fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)
-telsendimg(
-    conf=tel_config,
-    path=path_output + 'aggregate_impact_sim_' +
-         income_choice + '_' + outcome_choice + '_' +
-         fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.png',
-    cap='aggregate_impact_sim_' +
-        income_choice + '_' + outcome_choice + '_' +
-        fd_suffix + hhbasis_suffix + '_' + macro_suffix
+export_dfi_parquet_csv_telegram(
+    input=indirect_tiered_rounded,
+    file_name=path_output + 'indirect_impact_sim_' + 'tiered_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+export_dfi_parquet_csv_telegram(
+    input=indirect_partial_rounded,
+    file_name=path_output + 'indirect_impact_sim_' + 'partial_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+export_dfi_parquet_csv_telegram(
+    input=indirect_flat_rounded,
+    file_name=path_output + 'indirect_impact_sim_' + 'flat_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+
+
+# III.C --- Aggregate impact
+# Functions
+def create_aggregate_impact(indirect, landing_rpc, landing_rgdp):
+    # Deep copy
+    aggregate = indirect.copy()
+    # Input landing impact (real PC and real GDP growth pp)
+    aggregate.loc[
+        (
+                (aggregate['horizon_year'] == 0) & (aggregate['response'] == 'Private Consumption')
+        ),
+        'landing_impact'
+    ] = landing_rpc.loc['All Benefits', 'Landing Impact'].max()
+    aggregate.loc[
+        (
+                (aggregate['horizon_year'] == 0) & (aggregate['response'] == 'GDP')
+        ),
+        'landing_impact'
+    ] = landing_rgdp.loc['All Benefits', 'Landing Impact'].max()
+    # Compute total impact across time
+    aggregate['landing_impact'] = aggregate['landing_impact'].fillna(0)
+    aggregate['total_impact'] = aggregate['indirect_impact'] + aggregate['landing_impact']
+    # Clean up
+    aggregate = aggregate[
+        ['shock', 'response', 'horizon_year', 'landing_impact', 'indirect_impact', 'total_impact']
+    ]
+    aggregate_rounded = aggregate.copy()
+    aggregate_rounded[['landing_impact', 'indirect_impact', 'total_impact']] = \
+        aggregate_rounded[['landing_impact', 'indirect_impact', 'total_impact']].round(2)
+    # Output
+    return aggregate, aggregate_rounded
+
+
+# Compute
+aggregate_tiered, aggregate_tiered_rounded = create_aggregate_impact(
+    indirect=indirect_tiered,
+    landing_rpc=landing_tiered_rpc,
+    landing_rgdp=landing_tiered_rgdp
+)
+aggregate_partial, aggregate_partial_rounded = create_aggregate_impact(
+    indirect=indirect_partial,
+    landing_rpc=landing_partial_rpc,
+    landing_rgdp=landing_partial_rgdp
+)
+aggregate_flat, aggregate_flat_rounded = create_aggregate_impact(
+    indirect=indirect_flat,
+    landing_rpc=landing_flat_rpc,
+    landing_rgdp=landing_flat_rgdp
+)
+
+# Export
+export_dfi_parquet_csv_telegram(
+    input=aggregate_tiered_rounded,
+    file_name=path_output + 'aggregate_impact_sim_' + 'tiered_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+export_dfi_parquet_csv_telegram(
+    input=aggregate_partial_rounded,
+    file_name=path_output + 'aggregate_impact_sim_' + 'partial_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+export_dfi_parquet_csv_telegram(
+    input=aggregate_flat_rounded,
+    file_name=path_output + 'aggregate_impact_sim_' + 'flat_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+
+
+# III.D --- Repeated years aggregate impact
+# Function
+def repeated_aggregate_impact(aggregate, landing_rpc, landing_rgdp, indirect, rounds_to_repeat):
+    # Deep copy
+    repeated_agg = aggregate.copy()
+    # Repeat landing impact beyond year 0 for (PC and GDP)
+    repeated_agg.loc[
+        (
+                (repeated_agg['horizon_year'] <= rounds_to_repeat) &
+                (repeated_agg['shock'] == 'Private Consumption') &
+                (repeated_agg['response'] == 'Private Consumption')
+        ),
+        'landing_impact'] = landing_rpc.loc['All Benefits', 'Landing Impact'].max()
+    repeated_agg.loc[
+        (
+                (repeated_agg['horizon_year'] <= rounds_to_repeat) &
+                (repeated_agg['shock'] == 'Private Consumption') &
+                (repeated_agg['response'] == 'GDP')
+        ),
+        'landing_impact'] = landing_rgdp.loc['All Benefits', 'Landing Impact'].max()
+    # Repeat indirect impact beyond year 0
+    round = 1
+    while round <= rounds_to_repeat:
+        repeated_agg.loc[repeated_agg['horizon_year'] >= round, 'indirect_impact'] = \
+            repeated_agg['indirect_impact'] + \
+            indirect.groupby(['shock', 'response'])['indirect_impact'].shift(round)
+        round += 1
+    # Recalculate total impact
+    repeated_agg['total_impact'] = repeated_agg['landing_impact'] + repeated_agg['indirect_impact']
+    # Clean up
+    repeated_agg_rounded = repeated_agg.copy()
+    repeated_agg_rounded[['landing_impact', 'indirect_impact', 'total_impact']] = \
+        repeated_agg_rounded[['landing_impact', 'indirect_impact', 'total_impact']].round(2)
+    # Output
+    return repeated_agg, repeated_agg_rounded
+
+
+# Compute
+repeated_agg_tiered, repeated_agg_tiered_rounded = repeated_aggregate_impact(
+    aggregate=aggregate_tiered,
+    landing_rpc=landing_tiered_rpc,
+    landing_rgdp=landing_tiered_rgdp,
+    indirect=indirect_tiered,
+    rounds_to_repeat=3
+)
+repeated_agg_partial, repeated_agg_partial_rounded = repeated_aggregate_impact(
+    aggregate=aggregate_partial,
+    landing_rpc=landing_partial_rpc,
+    landing_rgdp=landing_partial_rgdp,
+    indirect=indirect_partial,
+    rounds_to_repeat=3
+)
+repeated_agg_flat, repeated_agg_flat_rounded = repeated_aggregate_impact(
+    aggregate=aggregate_flat,
+    landing_rpc=landing_flat_rpc,
+    landing_rgdp=landing_flat_rgdp,
+    indirect=indirect_flat,
+    rounds_to_repeat=3
+)
+
+# Export
+export_dfi_parquet_csv_telegram(
+    input=repeated_agg_tiered_rounded,
+    file_name=path_output + 'repeated_agg_impact_sim_' + 'tiered_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+export_dfi_parquet_csv_telegram(
+    input=repeated_agg_partial_rounded,
+    file_name=path_output + 'repeated_agg_impact_sim_' + 'partial_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+export_dfi_parquet_csv_telegram(
+    input=repeated_agg_flat_rounded,
+    file_name=path_output + 'repeated_agg_impact_sim_' + 'flat_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
 )
 
 # X --- Notify
