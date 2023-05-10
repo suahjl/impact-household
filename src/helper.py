@@ -102,7 +102,8 @@ def get_data_from_ceic(
     df = pd.DataFrame()
     content = []
     if historical_extension == False:
-        content = Ceic.series(series_id=series_ids, start_date=start_date).data
+        for series in series_ids:
+            content += Ceic.series(series_id=series, start_date=start_date).data
     else:
         for series in series_ids:
             content += Ceic.series(
@@ -460,6 +461,44 @@ def barchart(
             textposition='outside'
         )
     )
+    # layouts
+    fig.update_layout(
+        title=main_title,
+        plot_bgcolor='white',
+        font=dict(color='black', size=16),
+        height=768,
+        width=1366,
+    )
+    fig.update_traces(textfont_size=28)
+    # output
+    return fig
+
+
+def wide_grouped_barchart(
+        data: pd.DataFrame,
+        y_cols: list,
+        group_col: str,
+        main_title: str,
+        decimal_points: int,
+        group_colours: list
+):
+    # generate figure
+    fig = go.Figure()
+    # add bar chart
+    for group, colour in zip(list(data[group_col].unique()), group_colours):
+        x_vals = list(data[y_cols].columns)
+        y_vals = list(data.loc[data[group_col] == group, y_cols].values[0])
+        y_str = [str(round(i, decimal_points)) for i in y_vals]
+        fig.add_trace(
+            go.Bar(
+                x=x_vals,
+                y=y_vals,
+                name=str(group),
+                marker=dict(color=colour),
+                text=y_str,
+                textposition='outside'
+            )
+        )
     # layouts
     fig.update_layout(
         title=main_title,

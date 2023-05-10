@@ -23,6 +23,7 @@ path_data = './data/macro/'
 # I.A --- Load CEIC data
 # List of ceic series ids and names
 seriesids = pd.read_csv(path_data + 'ceic_macro.csv')
+seriesids_petrol = pd.read_csv(path_data + 'ceic_macro_petrol.csv')
 # Split into GDP (with historical extension) and others (without historical extension)
 seriesids_gdp = seriesids[0:6]  # first 6
 seriesids_others = seriesids[6:]
@@ -32,6 +33,9 @@ seriesids_gdp = [int(i) for i in seriesids_gdp]
 # Extract only series ID (others)
 seriesids_others = [re.sub("[^0-9]+", "", i) for i in list(seriesids_others['series_id'])]  # keep only numbers
 seriesids_others = [int(i) for i in seriesids_others]
+# Extract only series ID (petrol)
+# seriesids_petrol = [i for i in seriesids_petrol['series_id']]
+seriesids_petrol = [int(i) for i in seriesids_petrol['series_id']]
 # Pull data from CEIC
 df_gdp = get_data_from_ceic(
     series_ids=seriesids_gdp,
@@ -45,8 +49,28 @@ df_others = get_data_from_ceic(
     historical_extension=False  # without historical extensions
 )
 df_others = df_others.pivot(index='date', columns='name', values='value')
+df_petrol = get_data_from_ceic(
+    series_ids=seriesids_petrol,
+    start_date=date(2014, 12, 1),
+    historical_extension=False
+)
+df_petrol = df_petrol.pivot(index='date', columns='name', values='value')
+# Convert petrol prices into quarterly, and merge old and new series
+df_petrol = df_petrol.reset_index()
+df_petrol['quarter'] = pd.to_datetime(df_petrol['date']).dt.to_period('q')
+df_petrol = \
+    df_petrol.groupby('quarter')[['oil_price_ceiling_price_ron_95', '_dc_oil_price_ron95']] \
+        .mean(numeric_only=True) \
+        .reset_index()
+df_petrol['oil_price_ceiling_price_ron_95'] = \
+    df_petrol['oil_price_ceiling_price_ron_95']\
+        .combine_first(df_petrol['_dc_oil_price_ron95'])
+df_petrol['date'] = pd.to_datetime(df_petrol['quarter'].astype('str')).dt.date
+df_petrol = df_petrol[['date', 'oil_price_ceiling_price_ron_95']]
+df_petrol = df_petrol.set_index('date')
 # Merge into single data frame
 df = df_gdp.merge(df_others, how='outer', right_index=True, left_index=True)
+df = df.merge(df_petrol, how='outer', right_index=True, left_index=True)
 # Extract column names for later
 cols_raw_snake = list(df.columns)
 # Sort and reset index
@@ -57,6 +81,7 @@ df['date'] = pd.to_datetime(df['date']).dt.date
 # Delete interim data frames
 del df_gdp
 del df_others
+del df_petrol
 # Convert into quarterly series
 df['quarter'] = pd.to_datetime(df['date']).dt.to_period('Q')
 df = df.groupby('quarter')[cols_raw_snake].mean(numeric_only=True)  # this will also remove the 'date' column
@@ -71,13 +96,15 @@ dict_nice_col_names = {
     'commodity_price_nominal_energy_crude_oil_brent': 'brent',
     'consumer_price_index_cpi_': 'cpi',
     'cpi_transport_tp_': 'cpitransport',
+    'consumer_price_index_cpi_core': 'cpicore',
     'economic_policy_uncertainty_index_global_ppp_adjusted_gdp': 'gepu',
     'forex_month_average_malaysian_ringgit_to_us_dollar': 'myrusd',
     'government_securities_yield_10_years': 'mgs10y',
     'nominal_effective_exchange_rate_index_bis_2020_100_broad': 'neer',
     'real_effective_exchange_rate_index_bis_2020_100_broad': 'reer',
     'short_term_interest_rate_month_end_klibor_3_months': 'klibor3m',
-    'interbank_offered_rate_fixing_1_month': 'klibor1m'
+    'interbank_offered_rate_fixing_1_month': 'klibor1m',
+    'oil_price_ceiling_price_ron_95': 'ron95'
 }
 df = df.rename(columns=dict_nice_col_names)
 
@@ -117,7 +144,7 @@ for i in ['_zero', '_x', '_z'] + col_x_cands:
 cols_nice = list(df.columns)
 # Split into level and rate columns
 cols_levels = ['gdp', 'pc', 'gc', 'gfcf', 'ex', 'im',
-               'cpi', 'cpitransport', 'brent', 'neer', 'reer', 'myrusd',
+               'cpi', 'cpicore', 'cpitransport', 'brent', 'ron95', 'neer', 'reer', 'myrusd',
                'importworldipi', 'prodworldipi', 'gepu']
 cols_rates = ['mgs10y', 'klibor3m', 'klibor1m']  # Apply difference, not growth transformation to GEPU
 cols_nochange = ['maxgepu']
@@ -161,13 +188,13 @@ df_yoy['quarter'] = df_yoy['quarter'].astype('str')
 df_ln['quarter'] = df_ln['quarter'].astype('str')
 df_ln_qoq['quarter'] = df_ln_qoq['quarter'].astype('str')
 df_ln_yoy['quarter'] = df_ln_yoy['quarter'].astype('str')
-# Trim rows with NAs
-df = df.dropna(axis=0)
-df_qoq = df_qoq.dropna(axis=0)
-df_yoy = df_yoy.dropna(axis=0)
-df_ln = df_ln.dropna(axis=0)
-df_ln_qoq = df_ln_qoq.dropna(axis=0)
-df_ln_yoy = df_ln_yoy.dropna(axis=0)
+# Trim rows with NAs (ignored as we have variables used in subanalysis requiring shorter time series)
+# df = df.dropna(axis=0)
+# df_qoq = df_qoq.dropna(axis=0)
+# df_yoy = df_yoy.dropna(axis=0)
+# df_ln = df_ln.dropna(axis=0)
+# df_ln_qoq = df_ln_qoq.dropna(axis=0)
+# df_ln_yoy = df_ln_yoy.dropna(axis=0)
 # V --- Output
 df.to_parquet(path_data + 'macro_data_levels.parquet')
 df_qoq.to_parquet(path_data + 'macro_data_qoq.parquet')

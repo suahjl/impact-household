@@ -1,4 +1,3 @@
-# WIP --- 8 May 2023
 # Use income group-specific mpc to simulate total group impact
 
 import pandas as pd
@@ -6,7 +5,7 @@ import numpy as np
 from tabulate import tabulate
 from src.helper import \
     telsendmsg, telsendimg, telsendfiles, \
-    heatmap, pil_img2pdf
+    heatmap, pil_img2pdf, wide_grouped_barchart
 import dataframe_image as dfi
 from datetime import timedelta, date
 from tqdm import tqdm
@@ -68,7 +67,9 @@ hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_H
 # Which parameters
 choice_macro_shock = 'Private Consumption'
 choice_micro_outcome = 'Consumption'
-choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NEER', 'MGS10Y']
+choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NEER', 'MGS 10-Year Yields']
+choice_rounds_to_repeat = 1
+choice_max_q = 7
 
 # I --- Load MPC, IRF, and disbursement estimates
 # IRF estimates
@@ -181,14 +182,14 @@ files_landing_nominal = []
 fig_landing_tiered = heatmap(
     input=landing_tiered,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'tiered_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
     title='Annual Landing Impact (RM bil): Full Tiering',
     lb=0,
     ub=landing_tiered.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_nominal = files_landing_nominal + [path_output + 'landing_impact_sim_' + 'tiered_' +
                                                  income_choice + '_' + outcome_choice + '_' +
@@ -196,14 +197,14 @@ files_landing_nominal = files_landing_nominal + [path_output + 'landing_impact_s
 fig_landing_partial = heatmap(
     input=landing_partial,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'partial_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
     title='Annual Landing Impact (RM bil): Partial Tiering',
     lb=0,
     ub=landing_partial.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_nominal = files_landing_nominal + [path_output + 'landing_impact_sim_' + 'partial_' +
                                                  income_choice + '_' + outcome_choice + '_' +
@@ -211,14 +212,14 @@ files_landing_nominal = files_landing_nominal + [path_output + 'landing_impact_s
 fig_landing_flat = heatmap(
     input=landing_flat,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'flat_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
     title='Annual Landing Impact (RM bil): Flat Rate',
     lb=0,
     ub=landing_flat.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_nominal = files_landing_nominal + [path_output + 'landing_impact_sim_' + 'flat_' +
                                                  income_choice + '_' + outcome_choice + '_' +
@@ -229,14 +230,14 @@ files_landing_rpc = []
 fig_landing_tiered_rpc = heatmap(
     input=landing_tiered_rpc,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'tiered_rpc_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
-    title='Annual Landing Impact (RM bil): Full Tiering',
+    title='Annual Landing Impact (PC Growth; pp): Full Tiering',
     lb=0,
     ub=landing_tiered_rpc.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_rpc = files_landing_rpc + [path_output + 'landing_impact_sim_' + 'tiered_rpc_' +
                                          income_choice + '_' + outcome_choice + '_' +
@@ -244,14 +245,14 @@ files_landing_rpc = files_landing_rpc + [path_output + 'landing_impact_sim_' + '
 fig_landing_partial_rpc = heatmap(
     input=landing_partial_rpc,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'partial_rpc_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
-    title='Annual Landing Impact (RM bil): Partial Tiering',
+    title='Annual Landing Impact (PC Growth; pp): Partial Tiering',
     lb=0,
     ub=landing_partial_rpc.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_rpc = files_landing_rpc + [path_output + 'landing_impact_sim_' + 'partial_rpc_' +
                                          income_choice + '_' + outcome_choice + '_' +
@@ -259,14 +260,14 @@ files_landing_rpc = files_landing_rpc + [path_output + 'landing_impact_sim_' + '
 fig_landing_flat_rpc = heatmap(
     input=landing_flat_rpc,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'flat_rpc_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
-    title='Annual Landing Impact (): Flat Rate',
+    title='Annual Landing Impact (PC Growth; pp): Flat Rate',
     lb=0,
     ub=landing_flat_rpc.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_rpc = files_landing_rpc + [path_output + 'landing_impact_sim_' + 'flat_rpc_' +
                                          income_choice + '_' + outcome_choice + '_' +
@@ -277,14 +278,14 @@ files_landing_rgdp = []
 fig_landing_tiered_rgdp = heatmap(
     input=landing_tiered_rgdp,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'tiered_rgdp_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
-    title='Annual Landing Impact (RM bil): Full Tiering',
+    title='Annual Landing Impact (GDP Growth; pp): Full Tiering',
     lb=0,
     ub=landing_tiered_rgdp.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_rgdp = files_landing_rgdp + [path_output + 'landing_impact_sim_' + 'tiered_rgdp_' +
                                            income_choice + '_' + outcome_choice + '_' +
@@ -292,14 +293,14 @@ files_landing_rgdp = files_landing_rgdp + [path_output + 'landing_impact_sim_' +
 fig_landing_partial_rgdp = heatmap(
     input=landing_partial_rgdp,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'partial_rgdp_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
-    title='Annual Landing Impact (RM bil): Partial Tiering',
+    title='Annual Landing Impact (GDP Growth; pp): Partial Tiering',
     lb=0,
     ub=landing_partial_rgdp.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_rgdp = files_landing_rgdp + [path_output + 'landing_impact_sim_' + 'partial_rgdp_' +
                                            income_choice + '_' + outcome_choice + '_' +
@@ -307,14 +308,14 @@ files_landing_rgdp = files_landing_rgdp + [path_output + 'landing_impact_sim_' +
 fig_landing_flat_rgdp = heatmap(
     input=landing_flat_rgdp,
     mask=False,
-    colourmap='coolwarm',
+    colourmap='vlag',
     outputfile=path_output + 'landing_impact_sim_' + 'flat_rgdp_' +
                income_choice + '_' + outcome_choice + '_' +
                fd_suffix + hhbasis_suffix + '.png',
-    title='Annual Landing Impact (): Flat Rate',
+    title='Annual Landing Impact (GDP Growth; pp): Flat Rate',
     lb=0,
     ub=landing_flat_rgdp.max().max(),
-    format='.2f'
+    format='.1f'
 )
 files_landing_rgdp = files_landing_rgdp + [path_output + 'landing_impact_sim_' + 'flat_rgdp_' +
                                            income_choice + '_' + outcome_choice + '_' +
@@ -380,7 +381,8 @@ def compute_var_indirect_impact(
         list_responses,
         shock,
         shock_size,
-        convert_q_to_a
+        convert_q_to_a,
+        max_q
 ):
     # deep copy of parsed IRF
     indirect = irf.copy()
@@ -388,6 +390,8 @@ def compute_var_indirect_impact(
     indirect = indirect[indirect['response'].isin(list_responses) & indirect['shock'].isin([shock])]
     # scale IRFs (originally unit shock)
     indirect['irf'] = indirect['irf'] * shock_size
+    # limit quarters
+    indirect = indirect[indirect['horizon'] <= max_q]
     # reset index
     indirect = indirect.reset_index(drop=True)
     # convert from quarterly response to annual response
@@ -422,21 +426,24 @@ indirect_tiered, indirect_tiered_rounded = compute_var_indirect_impact(
     list_responses=choices_macro_response,
     shock=choice_macro_shock,
     shock_size=landing_tiered_rpc.loc['All Benefits', 'Landing Impact'].max(),
-    convert_q_to_a=True
+    convert_q_to_a=True,
+    max_q=choice_max_q
 )
 indirect_partial, indirect_partial_rounded = compute_var_indirect_impact(
     irf=irf,
     list_responses=choices_macro_response,
     shock=choice_macro_shock,
     shock_size=landing_partial_rpc.loc['All Benefits', 'Landing Impact'].max(),
-    convert_q_to_a=True
+    convert_q_to_a=True,
+    max_q=choice_max_q
 )
 indirect_flat, indirect_flat_rounded = compute_var_indirect_impact(
     irf=irf,
     list_responses=choices_macro_response,
     shock=choice_macro_shock,
     shock_size=landing_flat_rpc.loc['All Benefits', 'Landing Impact'].max(),
-    convert_q_to_a=True
+    convert_q_to_a=True,
+    max_q=choice_max_q
 )
 
 # Output
@@ -573,21 +580,21 @@ repeated_agg_tiered, repeated_agg_tiered_rounded = repeated_aggregate_impact(
     landing_rpc=landing_tiered_rpc,
     landing_rgdp=landing_tiered_rgdp,
     indirect=indirect_tiered,
-    rounds_to_repeat=3
+    rounds_to_repeat=choice_rounds_to_repeat
 )
 repeated_agg_partial, repeated_agg_partial_rounded = repeated_aggregate_impact(
     aggregate=aggregate_partial,
     landing_rpc=landing_partial_rpc,
     landing_rgdp=landing_partial_rgdp,
     indirect=indirect_partial,
-    rounds_to_repeat=3
+    rounds_to_repeat=choice_rounds_to_repeat
 )
 repeated_agg_flat, repeated_agg_flat_rounded = repeated_aggregate_impact(
     aggregate=aggregate_flat,
     landing_rpc=landing_flat_rpc,
     landing_rgdp=landing_flat_rgdp,
     indirect=indirect_flat,
-    rounds_to_repeat=3
+    rounds_to_repeat=choice_rounds_to_repeat
 )
 
 # Export
@@ -608,6 +615,168 @@ export_dfi_parquet_csv_telegram(
     file_name=path_output + 'repeated_agg_impact_sim_' + 'flat_' +
               income_choice + '_' + outcome_choice + '_' +
               fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+
+
+# III.E --- Compile repeated aggregate impact of all combos
+def compile_all_combos(flat, partial, tiered):
+    # Deep copies
+    df_tiered = tiered.copy()
+    df_partial = partial.copy()
+    df_flat = flat.copy()
+
+    # Change columns
+    df_tiered = df_tiered.rename(
+        columns={
+            'landing_impact': 'Full Tiering: Landing',
+            'indirect_impact': 'Full Tiering: Indirect',
+            'total_impact': 'Full Tiering: Total'
+        }
+    )
+    df_partial = df_partial.rename(
+        columns={
+            'landing_impact': 'Partial Tiering: Landing',
+            'indirect_impact': 'Partial Tiering: Indirect',
+            'total_impact': 'Partial Tiering: Total'
+        }
+    )
+    df_flat = df_flat.rename(
+        columns={
+            'landing_impact': 'Flat Rate: Landing',
+            'indirect_impact': 'Flat Rate: Indirect',
+            'total_impact': 'Flat Rate: Total'
+        }
+    )
+
+    # Combine
+    allcombos = df_tiered.merge(df_partial, how='left', on=['shock', 'response', 'horizon_year'])
+    allcombos = allcombos.merge(df_flat, how='left', on=['shock', 'response', 'horizon_year'])
+
+    # Clean up
+    allcombos_rounded = allcombos.copy()
+    list_impact_cols = ['Full Tiering: Landing', 'Full Tiering: Indirect', 'Full Tiering: Total',
+                        'Partial Tiering: Landing', 'Partial Tiering: Indirect', 'Partial Tiering: Total',
+                        'Flat Rate: Landing', 'Flat Rate: Indirect', 'Flat Rate: Total']
+    allcombos_rounded[list_impact_cols] = allcombos_rounded[list_impact_cols].round(2)
+
+    # Output
+    return allcombos, allcombos_rounded
+
+
+allcombos, allcombos_rounded = \
+    compile_all_combos(
+        flat=repeated_agg_flat,
+        partial=repeated_agg_partial,
+        tiered=repeated_agg_tiered
+    )
+export_dfi_parquet_csv_telegram(
+    input=allcombos_rounded,
+    file_name=path_output + 'allcombos_' +
+              income_choice + '_' + outcome_choice + '_' +
+              fd_suffix + hhbasis_suffix + '_' + macro_suffix
+)
+
+
+# III.F --- Compile repeated aggregate impact of all combos, but split by response variable
+def split_allcombos_heatmap_telegram(allcombos, list_shocks, list_responses, total_only):
+    # Parameters
+    if total_only:
+        total_only_suffix = 'totalonly_'
+        list_impact_cols = ['Full Tiering: Total',
+                            'Partial Tiering: Total',
+                            'Flat Rate: Total']
+    elif not total_only:
+        total_only_suffix = ''
+        list_impact_cols = ['Full Tiering: Landing', 'Full Tiering: Indirect', 'Full Tiering: Total',
+                            'Partial Tiering: Landing', 'Partial Tiering: Indirect', 'Partial Tiering: Total',
+                            'Flat Rate: Landing', 'Flat Rate: Indirect', 'Flat Rate: Total']
+    # Deep copies
+    allcombos_full = allcombos.copy()
+    # Beautify time horizon
+    allcombos_full['horizon_year'] = allcombos_full['horizon_year'] + 1
+    allcombos_full['horizon_year'] = 'Year ' + allcombos_full['horizon_year'].astype('str')
+    # Split into shock-response specific heatmaps
+    list_files = []
+    for shock in list_shocks:
+        for response in list_responses:
+            # Subset impact dataframe
+            allcombos_sub = allcombos_full[
+                (allcombos_full['shock'] == shock) &
+                (allcombos_full['response'] == response)
+                ].copy()
+            # Keep only time horizon + impact estimates
+            for i in ['shock', 'response']:
+                del allcombos_sub[i]
+            allcombos_sub = allcombos_sub.set_index('horizon_year')
+            allcombos_sub = allcombos_sub[list_impact_cols]
+            # Generate heatmaps
+            fig_allcombos_sub = heatmap(
+                input=allcombos_sub,
+                mask=False,
+                colourmap='vlag',
+                outputfile=path_output + 'allcombos_' + total_only_suffix + shock + '_' + response + '_' +
+                           income_choice + '_' + outcome_choice + '_' +
+                           fd_suffix + hhbasis_suffix + '.png',
+                title='Breakdown of Impact on ' + response + ' (pp)',
+                lb=0,
+                ub=allcombos_sub.max().max(),
+                format='.1f'
+            )
+            list_files = list_files + [path_output + 'allcombos_' + total_only_suffix + shock + '_' + response + '_' +
+                                       income_choice + '_' + outcome_choice + '_' +
+                                       fd_suffix + hhbasis_suffix]
+            # Generate barchart
+            allcombos_sub = allcombos_sub.reset_index()  # so that horizon_year is part of the data frame, not index
+            bar_allcombos_sub = wide_grouped_barchart(
+                data=allcombos_sub,
+                y_cols=['Full Tiering: Total',
+                        'Partial Tiering: Total',
+                        'Flat Rate: Total'],
+                group_col='horizon_year',
+                main_title='Breakdown of Impact on ' + response + ' (pp)',
+                decimal_points=1,
+                group_colours=['lightblue', 'lightpink']
+            )
+            bar_allcombos_sub.write_image(
+                path_output + 'bar_allcombos_' + total_only_suffix + shock + '_' + response + '_' +
+                income_choice + '_' + outcome_choice + '_' +
+                fd_suffix + hhbasis_suffix + '.png')
+            list_files = list_files + [
+                path_output + 'bar_allcombos_' + total_only_suffix + shock + '_' + response + '_' +
+                income_choice + '_' + outcome_choice + '_' +
+                fd_suffix + hhbasis_suffix]
+
+    # Compile PDF
+    pil_img2pdf(list_images=list_files,
+                extension='png',
+                pdf_name=path_output + 'allcombos_' + total_only_suffix + 'shock_response_' +
+                         income_choice + '_' + outcome_choice + '_' +
+                         fd_suffix + hhbasis_suffix)
+    # Send telegram
+    telsendfiles(
+        conf=tel_config,
+        path=path_output + 'allcombos_' + total_only_suffix + 'shock_response_' +
+             income_choice + '_' + outcome_choice + '_' +
+             fd_suffix + hhbasis_suffix + '.pdf',
+        cap='allcombos_' + total_only_suffix + 'shock_response_' +
+            income_choice + '_' + outcome_choice + '_' +
+            fd_suffix + hhbasis_suffix
+    )
+
+
+split_allcombos_heatmap_telegram(
+    allcombos=allcombos,
+    list_shocks=[choice_macro_shock],
+    list_responses=choices_macro_response,
+    total_only=False
+)
+
+# III.G --- Compile repeated aggregate impact of all combos, but split by response variable; total impact only
+split_allcombos_heatmap_telegram(
+    allcombos=allcombos,
+    list_shocks=[choice_macro_shock],
+    list_responses=choices_macro_response,
+    total_only=True
 )
 
 # X --- Notify

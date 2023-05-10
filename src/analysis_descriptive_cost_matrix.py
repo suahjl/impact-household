@@ -167,6 +167,7 @@ costmat_partial_percgdp = costmat_percgdp.copy()
 costmat_flat_level = costmat_level.copy()
 costmat_flat_percgdp = costmat_percgdp.copy()
 
+
 # Loop to tabulate shares of households with K kids in Y income group
 def tabperc_xy_cost(data, x_col, y_col, list_y, x_max, big_n, mega_n, cost_per_x_per_t, nom_gdp, print_level):
     # Deep copy
@@ -580,7 +581,25 @@ costmat_flat_level = costmat_flat_level / 1000000000
 costmat_level = costmat_level / 1000000000
 costmat_partial_level = costmat_partial_level / 1000000000
 
-# III.E --- Output locally (before rounding)
+# III.E --- Show only total cost
+costmat_allcombos_level = pd.concat(
+    [
+        costmat_level[['Tiered Total']],
+        costmat_partial_level[['Partial Tiered Total']],
+        costmat_flat_level[['Flat Rate Total']]
+    ],
+    axis=1
+)
+costmat_allcombos_percgdp = pd.concat(
+    [
+        costmat_percgdp[['Tiered Total']],
+        costmat_partial_percgdp[['Partial Tiered Total']],
+        costmat_flat_percgdp[['Flat Rate Total']]
+    ],
+    axis=1
+)
+
+# III.F --- Output locally (before rounding)
 costmat_flat_level.to_parquet(path_output + 'cost_matrix_flat_level.parquet')
 costmat_flat_percgdp.to_parquet(path_output + 'cost_matrix_flat_percgdp.parquet')
 costmat_flat_level.to_csv(path_output + 'cost_matrix_flat_level.csv')
@@ -596,7 +615,10 @@ costmat_partial_percgdp.to_parquet(path_output + 'cost_matrix_partial_percgdp.pa
 costmat_partial_level.to_csv(path_output + 'cost_matrix_partial_level.csv')
 costmat_partial_percgdp.to_csv(path_output + 'cost_matrix_partial_percgdp.csv')
 
-# III.F --- Visualisation
+costmat_allcombos_level.to_parquet(path_output + 'cost_matrix_allcombos_level.parquet')
+costmat_allcombos_percgdp.to_parquet(path_output + 'cost_matrix_allcombos_percgdp.parquet')
+
+# III.G --- Visualisation
 # Round up values
 costmat_flat_level = costmat_flat_level.round(2)
 costmat_flat_percgdp = costmat_flat_percgdp.round(2)
@@ -606,6 +628,9 @@ costmat_percgdp = costmat_percgdp.round(2)
 
 costmat_partial_level = costmat_partial_level.round(2)
 costmat_partial_percgdp = costmat_partial_percgdp.round(2)
+
+costmat_allcombos_level = costmat_allcombos_level.round(2)
+costmat_allcombos_percgdp = costmat_allcombos_percgdp.round(2)
 
 # Convert into heatmap
 fig_costmat_flat_level = heatmap(
@@ -702,6 +727,38 @@ telsendimg(
     conf=tel_config,
     path=path_output + 'cost_matrix_partial_percgdp.png',
     cap='cost_matrix_partial_percgdp'
+)
+
+fig_costmat_allcombos_level = heatmap(
+    input=costmat_allcombos_level,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'cost_matrix_allcombos_level.png',
+    title='Annual Cost (RM bil): All Combinations',
+    lb=0,
+    ub=costmat_allcombos_level.max().max(),
+    format='.1f'
+)
+telsendimg(
+    conf=tel_config,
+    path=path_output + 'cost_matrix_allcombos_level.png',
+    cap='cost_matrix_allcombos_level'
+)
+
+fig_costmat_allcombos_percgdp = heatmap(
+    input=costmat_allcombos_percgdp,
+    mask=False,
+    colourmap='coolwarm',
+    outputfile=path_output + 'cost_matrix_allcombos_percgdp.png',
+    title='Annual Cost (% of 2022 GDP): All Combinations',
+    lb=0,
+    ub=costmat_allcombos_percgdp.max().max(),
+    format='.1f'
+)
+telsendimg(
+    conf=tel_config,
+    path=path_output + 'cost_matrix_allcombos_percgdp.png',
+    cap='cost_matrix_allcombos_percgdp'
 )
 
 # X --- Notify
