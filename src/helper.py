@@ -306,14 +306,16 @@ def est_varx(
 
 # --- CHARTS
 
-def heatmap(input: pd.DataFrame,
-            mask: bool,
-            colourmap: str,
-            outputfile: str,
-            title: str,
-            lb: float,
-            ub: float,
-            format: str):
+def heatmap(
+        input: pd.DataFrame,
+        mask: bool,
+        colourmap: str,
+        outputfile: str,
+        title: str,
+        lb: float,
+        ub: float,
+        format: str
+):
     fig = plt.figure()
     sns.heatmap(input,
                 mask=mask,
@@ -326,6 +328,39 @@ def heatmap(input: pd.DataFrame,
                 xticklabels=True,
                 yticklabels=True,
                 fmt=format)
+    plt.title(title, fontsize=11)
+    plt.xticks(fontsize=9)
+    plt.yticks(fontsize=9)
+    fig.tight_layout()
+    fig.savefig(outputfile)
+    plt.close()
+    return fig
+
+
+def heatmap_layered(
+        actual_input: pd.DataFrame,
+        disp_input: pd.DataFrame,
+        mask: bool,
+        colourmap: str,
+        outputfile: str,
+        title: str,
+        lb: float,
+        ub: float,
+        format: str
+):
+    fig = plt.figure()
+    sns.heatmap(actual_input,
+                mask=mask,
+                annot=disp_input,
+                cmap=colourmap,
+                center=0,
+                annot_kws={'size': 9},
+                vmin=lb,
+                vmax=ub,
+                xticklabels=True,
+                yticklabels=True,
+                fmt=format)
+
     plt.title(title, fontsize=11)
     plt.xticks(fontsize=9)
     plt.yticks(fontsize=9)
@@ -469,7 +504,7 @@ def barchart(
         height=768,
         width=1366,
     )
-    fig.update_traces(textfont_size=28)
+    fig.update_traces(textfont_size=22)
     # output
     return fig
 
@@ -507,7 +542,7 @@ def wide_grouped_barchart(
         height=768,
         width=1366,
     )
-    fig.update_traces(textfont_size=28)
+    fig.update_traces(textfont_size=22)
     # output
     return fig
 
