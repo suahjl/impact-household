@@ -71,9 +71,9 @@ choice_fuel_price_revision = 1
 choice_max_q = 7
 
 dict_scenarios_annual_shocks = {
-    'Immediate': 0.564,
-    '3 Months': 0.520,
-    '6 Months': 0.453
+    'Immediate': 0.644,
+    '3 Months': 0.598,
+    '6 Months': 0.530
 }
 list_scenarios = list(dict_scenarios_annual_shocks.keys())
 
@@ -237,7 +237,7 @@ def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
                 title='Breakdown of Impact on ' + response + ' (pp)',
                 lb=0,
                 ub=allcombos_sub.max().max(),
-                format='.1f'
+                format='.2f'
             )
             list_files = list_files + [path_output + 'impact_sim_petrol_' + shock + '_' + response + '_' +
                                        income_choice + '_' + outcome_choice + '_' +
@@ -249,7 +249,7 @@ def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
                 y_cols=list_impact_cols,
                 group_col='horizon_year',
                 main_title='Breakdown of Impact on ' + response + ' (pp)',
-                decimal_points=1,
+                decimal_points=2,
                 group_colours=['lightblue', 'lightpink']
             )
             bar_allcombos_sub.write_image(
@@ -299,7 +299,7 @@ def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
                 y_cols=list_impact_cols,
                 group_col='horizon_year',
                 main_title='Implied Levels Impact (Assuming LT Avg) on ' + response + ' (% Baseline)',
-                decimal_points=1,
+                decimal_points=2,
                 group_colours=['lightblue', 'lightpink']
             )
             bar_allcombos_sub_level_gap.write_image(
