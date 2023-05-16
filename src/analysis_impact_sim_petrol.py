@@ -5,7 +5,7 @@ import numpy as np
 from tabulate import tabulate
 from src.helper import \
     telsendmsg, telsendimg, telsendfiles, \
-    heatmap, pil_img2pdf, barchart
+    heatmap, pil_img2pdf, barchart, wide_grouped_barchart
 import dataframe_image as dfi
 from datetime import timedelta, date
 from tqdm import tqdm
@@ -69,6 +69,13 @@ choice_macro_shock = 'RON95'
 choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NEER', 'MGS 10-Year Yields']
 choice_fuel_price_revision = 1
 choice_max_q = 7
+
+dict_scenarios_annual_shocks = {
+    'Immediate': 0.564,
+    '3 Months': 0.520,
+    '6 Months': 0.453
+}
+list_scenarios = list(dict_scenarios_annual_shocks.keys())
 
 pc_ltavg = 6.934
 gfcf_ltavg = 2.450
@@ -165,19 +172,36 @@ def export_dfi_parquet_csv_telegram(input, file_name):
 
 
 # Compute
-indirect, indirect_rounded = compute_var_impact(
-    irf=irf,
-    list_responses=choices_macro_response,
-    shock=choice_macro_shock,
-    shock_size=1,
-    convert_q_to_a=True,
-    max_q=choice_max_q
-)
+scenario_count = 1
+for scenario, shock_size in tqdm(dict_scenarios_annual_shocks.items()):
+    indirect, indirect_rounded = compute_var_impact(
+        irf=irf,
+        list_responses=choices_macro_response,
+        shock=choice_macro_shock,
+        shock_size=shock_size,
+        convert_q_to_a=True,
+        max_q=choice_max_q
+    )
+    indirect = indirect.rename(columns={'impact': scenario})
+    indirect_rounded = indirect.rename(columns={'impact': scenario})
+    if scenario_count == 1:
+        indirect_consol = indirect.copy()
+        indirect_rounded_consol = indirect_rounded.copy()
+    elif scenario_count > 1:
+        indirect_consol = indirect_consol.merge(
+            indirect,
+            on=['shock', 'response', 'horizon_year']
+        )
+        indirect_rounded_consol = indirect_rounded_consol.merge(
+            indirect_rounded,
+            on=['shock', 'response', 'horizon_year']
+        )
+    scenario_count += 1
 
 # Visualisation
 # Dataframe image
 export_dfi_parquet_csv_telegram(
-    input=indirect_rounded,
+    input=indirect_rounded_consol,
     file_name=path_output + 'impact_sim_petrol_' +
               income_choice + '_' + outcome_choice + '_' +
               fd_suffix + hhbasis_suffix + '_' + macro_suffix
@@ -185,20 +209,48 @@ export_dfi_parquet_csv_telegram(
 
 
 # III.B --- Bar chart of impact by responses
-def compile_barcharts_telegram(indirect, dict_ltavg):
+def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
     indirect['horizon_year'] = 'Year ' + (indirect['horizon_year'] + 1).astype('str')  # convert to presentable form
     list_files = []
     for shock in [choice_macro_shock]:
         for response in tqdm(choices_macro_response):
+            # Parameters
+            list_impact_cols = list_scenarios
             # A. Growth impact
-            allcombos_sub = indirect[indirect['response'] == response].copy()
+            allcombos_sub = indirect[
+                (indirect['shock'] == shock) &
+                (indirect['response'] == response)
+                ].copy()
+            # Keep only time horizon + impact estimates
+            for i in ['shock', 'response']:
+                del allcombos_sub[i]
+            allcombos_sub = allcombos_sub.set_index('horizon_year')
+            allcombos_sub = allcombos_sub[list_impact_cols]
+            # Generate heatmaps
+            fig_allcombos_sub = heatmap(
+                input=allcombos_sub,
+                mask=False,
+                colourmap='vlag',
+                outputfile=path_output + 'impact_sim_petrol_' + shock + '_' + response + '_' +
+                           income_choice + '_' + outcome_choice + '_' +
+                           fd_suffix + hhbasis_suffix + '.png',
+                title='Breakdown of Impact on ' + response + ' (pp)',
+                lb=0,
+                ub=allcombos_sub.max().max(),
+                format='.1f'
+            )
+            list_files = list_files + [path_output + 'impact_sim_petrol_' + shock + '_' + response + '_' +
+                                       income_choice + '_' + outcome_choice + '_' +
+                                       fd_suffix + hhbasis_suffix]
             # Generate bar chart
-            bar_allcombos_sub = barchart(
+            allcombos_sub = allcombos_sub.reset_index()  # so that horizon_year is part of the data frame, not index
+            bar_allcombos_sub = wide_grouped_barchart(
                 data=allcombos_sub,
-                y_col='impact',
-                x_col='horizon_year',
+                y_cols=list_impact_cols,
+                group_col='horizon_year',
                 main_title='Breakdown of Impact on ' + response + ' (pp)',
-                decimal_points=1
+                decimal_points=1,
+                group_colours=['lightblue', 'lightpink']
             )
             bar_allcombos_sub.write_image(
                 path_output + 'bar_impact_sim_petrol_' + shock + '_' + response + '_' +
@@ -212,13 +264,12 @@ def compile_barcharts_telegram(indirect, dict_ltavg):
             # B. Levels impact
             # Create data frame to house levels
             allcombos_sub_cf = allcombos_sub.copy()
-            allcombos_sub_level = allcombos_sub_cf.copy()
+            allcombos_sub_level = allcombos_sub.copy()
             # Compute counterfactual levels using LT avg
             ltavg = dict_ltavg[response]
             for horizon in range(0, len(allcombos_sub_cf)):
-                allcombos_sub_cf.loc[
-                    allcombos_sub_cf['horizon_year'] == 'Year ' + str(horizon + 1),
-                    'impact'] = \
+                allcombos_sub_cf.loc[allcombos_sub_cf['horizon_year'] == 'Year ' + str(horizon + 1),
+                                     list_impact_cols] = \
                     100 * (1 + ltavg / 100) ** (horizon + 1)
             # Compute realised levels
             round_sub_levels = 1
@@ -226,37 +277,39 @@ def compile_barcharts_telegram(indirect, dict_ltavg):
                 if round_sub_levels == 1:
                     allcombos_sub_level.loc[
                         allcombos_sub_level['horizon_year'] == 'Year ' + str(horizon + 1),
-                        'impact'] = \
+                        list_impact_cols] = \
                         100 * (1 + (ltavg + allcombos_sub.loc[
                             allcombos_sub['horizon_year'] == 'Year ' + str(horizon + 1),
-                            'impact']) / 100)
+                            list_impact_cols]) / 100)
                 elif round_sub_levels > 1:
                     allcombos_sub_level.loc[
                         allcombos_sub_level['horizon_year'] == 'Year ' + str(horizon + 1),
-                        'impact'] = \
-                        allcombos_sub_level['impact'].shift(1) * (1 + (ltavg + allcombos_sub.loc[
+                        list_impact_cols] = \
+                        allcombos_sub_level[list_impact_cols].shift(1) * (1 + (ltavg + allcombos_sub.loc[
                             allcombos_sub['horizon_year'] == 'Year ' + str(horizon + 1),
-                            'impact']) / 100)
+                            list_impact_cols]) / 100)
                 round_sub_levels += 1
             # Compute levels impact
             allcombos_sub_level_gap = allcombos_sub_level.copy()
-            allcombos_sub_level_gap['impact'] = \
-                allcombos_sub_level_gap['impact'] - allcombos_sub_cf['impact']
+            allcombos_sub_level_gap[list_impact_cols] = \
+                allcombos_sub_level_gap[list_impact_cols] - allcombos_sub_cf[list_impact_cols]
             # Create bar chart
-            bar_allcombos_sub_level_gap = barchart(
+            bar_allcombos_sub_level_gap = wide_grouped_barchart(
                 data=allcombos_sub_level_gap,
-                y_col='impact',
-                x_col='horizon_year',
+                y_cols=list_impact_cols,
+                group_col='horizon_year',
                 main_title='Implied Levels Impact (Assuming LT Avg) on ' + response + ' (% Baseline)',
-                decimal_points=1
+                decimal_points=1,
+                group_colours=['lightblue', 'lightpink']
             )
             bar_allcombos_sub_level_gap.write_image(
                 path_output + 'bar_impact_sim_petrol_level_gap_' + shock + '_' + response + '_' +
                 income_choice + '_' + outcome_choice + '_' +
                 fd_suffix + hhbasis_suffix + '.png')
-            list_files = list_files + [path_output + 'bar_impact_sim_petrol_level_gap_' + shock + '_' + response + '_' +
-                                       income_choice + '_' + outcome_choice + '_' +
-                                       fd_suffix + hhbasis_suffix]
+            list_files = list_files + [
+                path_output + 'bar_impact_sim_petrol_level_gap_' + shock + '_' + response + '_' +
+                income_choice + '_' + outcome_choice + '_' +
+                fd_suffix + hhbasis_suffix]
 
     # Compile PDF
     pil_img2pdf(list_images=list_files,
@@ -276,7 +329,11 @@ def compile_barcharts_telegram(indirect, dict_ltavg):
     )
 
 
-compile_barcharts_telegram(indirect=indirect, dict_ltavg=dict_ltavg)
+compile_barcharts_telegram(
+    indirect=indirect_consol,
+    dict_ltavg=dict_ltavg,
+    list_scenarios=list_scenarios
+)
 
 # X --- Notify
 telsendmsg(conf=tel_config,

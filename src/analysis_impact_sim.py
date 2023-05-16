@@ -1416,7 +1416,6 @@ def split_allcombos_heatmap_telegram(allcombos, list_shocks, list_responses, tot
                                        income_choice + '_' + outcome_choice + '_' +
                                        fd_suffix + hhbasis_suffix]
             # Generate barchart
-            allcombos_sub = allcombos_sub.reset_index()  # so that horizon_year is part of the data frame, not index
             bar_allcombos_sub = wide_grouped_barchart(
                 data=allcombos_sub,
                 y_cols=list_impact_cols,
@@ -1425,6 +1424,7 @@ def split_allcombos_heatmap_telegram(allcombos, list_shocks, list_responses, tot
                 decimal_points=1,
                 group_colours=['lightblue', 'lightpink']
             )
+            allcombos_sub = allcombos_sub.reset_index()  # so that horizon_year is part of the data frame, not index
             bar_allcombos_sub.write_image(
                 path_output + 'bar_allcombos_' + total_only_suffix + shock + '_' + response + '_' +
                 income_choice + '_' + outcome_choice + '_' +
