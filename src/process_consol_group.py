@@ -143,7 +143,7 @@ def gen_wa_group(data):
     data.loc[data['working_age'] == 0, 'working_age_group'] = '0'
     data.loc[data['working_age'] == 1, 'working_age_group'] = '1'
     data.loc[data['working_age'] == 2, 'working_age_group'] = '2'
-    data.loc[data['working_age'] == 3, 'working_age_group'] = '3+'
+    data.loc[data['working_age'] >= 3, 'working_age_group'] = '3+'
     # del data['working_age']
 
 

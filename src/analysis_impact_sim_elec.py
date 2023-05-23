@@ -1,4 +1,4 @@
-# Impact of fuel price subsidy rationalisation
+# Impact of electricity subsidy rationalisation
 
 import pandas as pd
 import numpy as np
@@ -65,14 +65,12 @@ elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 # Which parameters
-choice_macro_shock = 'RON95'
+choice_macro_shock = 'cpielec'
 choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NEER', 'MGS 10-Year Yields']
 choice_max_q = 7
 
 dict_scenarios_annual_shocks = {
-    'Immediate': 0.644,
-    '3 Months': 0.598,
-    '6 Months': 0.530
+    'Full Removal': 0.5,
 }
 list_scenarios = list(dict_scenarios_annual_shocks.keys())
 
@@ -93,7 +91,7 @@ dict_ltavg = {
 
 # I --- Load MPC, IRF, and disbursement estimates
 # IRF estimates (check which IRF is used)
-irf = pd.read_parquet(path_output + 'macro_var_petrol_irf_all_varyx_narrative_avg_' + macro_suffix + '.parquet')
+irf = pd.read_parquet(path_output + 'macro_var_elec_irf_all_varyx_narrative_avg_' + macro_suffix + '.parquet')
 # Nice names
 dict_cols_nice = {
     'ex': 'Exports',
@@ -203,7 +201,7 @@ for scenario, shock_size in tqdm(dict_scenarios_annual_shocks.items()):
 # Dataframe image
 export_dfi_parquet_csv_telegram(
     input=indirect_rounded_consol,
-    file_name=path_output + 'impact_sim_petrol_' +
+    file_name=path_output + 'impact_sim_elec_' +
               income_choice + '_' + outcome_choice + '_' +
               fd_suffix + hhbasis_suffix + '_' + macro_suffix
 )
@@ -232,7 +230,7 @@ def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
                 input=allcombos_sub,
                 mask=False,
                 colourmap='vlag',
-                outputfile=path_output + 'impact_sim_petrol_' + shock + '_' + response + '_' +
+                outputfile=path_output + 'impact_sim_elec_' + shock + '_' + response + '_' +
                            income_choice + '_' + outcome_choice + '_' +
                            fd_suffix + hhbasis_suffix + '.png',
                 title='Breakdown of Impact on ' + response + ' (pp)',
@@ -240,7 +238,7 @@ def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
                 ub=allcombos_sub.max().max(),
                 format='.2f'
             )
-            list_files = list_files + [path_output + 'impact_sim_petrol_' + shock + '_' + response + '_' +
+            list_files = list_files + [path_output + 'impact_sim_elec_' + shock + '_' + response + '_' +
                                        income_choice + '_' + outcome_choice + '_' +
                                        fd_suffix + hhbasis_suffix]
             # Generate bar chart
@@ -254,11 +252,11 @@ def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
                 group_colours=['lightblue', 'lightpink']
             )
             bar_allcombos_sub.write_image(
-                path_output + 'bar_impact_sim_petrol_' + shock + '_' + response + '_' +
+                path_output + 'bar_impact_sim_elec_' + shock + '_' + response + '_' +
                 income_choice + '_' + outcome_choice + '_' +
                 fd_suffix + hhbasis_suffix + '.png'
             )
-            list_files = list_files + [path_output + 'bar_impact_sim_petrol_' + shock + '_' + response + '_' +
+            list_files = list_files + [path_output + 'bar_impact_sim_elec_' + shock + '_' + response + '_' +
                                        income_choice + '_' + outcome_choice + '_' +
                                        fd_suffix + hhbasis_suffix]
 
@@ -304,27 +302,27 @@ def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
                 group_colours=['lightblue', 'lightpink']
             )
             bar_allcombos_sub_level_gap.write_image(
-                path_output + 'bar_impact_sim_petrol_level_gap_' + shock + '_' + response + '_' +
+                path_output + 'bar_impact_sim_elec_level_gap_' + shock + '_' + response + '_' +
                 income_choice + '_' + outcome_choice + '_' +
                 fd_suffix + hhbasis_suffix + '.png')
             list_files = list_files + [
-                path_output + 'bar_impact_sim_petrol_level_gap_' + shock + '_' + response + '_' +
+                path_output + 'bar_impact_sim_elec_level_gap_' + shock + '_' + response + '_' +
                 income_choice + '_' + outcome_choice + '_' +
                 fd_suffix + hhbasis_suffix]
 
     # Compile PDF
     pil_img2pdf(list_images=list_files,
                 extension='png',
-                pdf_name=path_output + 'bar_impact_sim_petrol_' + 'shock_response_' +
+                pdf_name=path_output + 'bar_impact_sim_elec_' + 'shock_response_' +
                          income_choice + '_' + outcome_choice + '_' +
                          fd_suffix + hhbasis_suffix)
     # Send telegram
     telsendfiles(
         conf=tel_config,
-        path=path_output + 'bar_impact_sim_petrol_' + 'shock_response_' +
+        path=path_output + 'bar_impact_sim_elec_' + 'shock_response_' +
              income_choice + '_' + outcome_choice + '_' +
              fd_suffix + hhbasis_suffix + '.pdf',
-        cap='bar_impact_sim_petrol_' + 'shock_response_' +
+        cap='bar_impact_sim_elec_' + 'shock_response_' +
             income_choice + '_' + outcome_choice + '_' +
             fd_suffix + hhbasis_suffix
     )
@@ -338,7 +336,7 @@ compile_barcharts_telegram(
 
 # X --- Notify
 telsendmsg(conf=tel_config,
-           msg='impact-household --- analysis_impact_sim_petrol: COMPLETED')
+           msg='impact-household --- analysis_impact_sim_elec: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

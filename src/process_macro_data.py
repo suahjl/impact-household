@@ -97,6 +97,7 @@ dict_nice_col_names = {
     'consumer_price_index_cpi_': 'cpi',
     'cpi_transport_tp_': 'cpitransport',
     'consumer_price_index_cpi_core': 'cpicore',
+    'cpi_hw_electricity_gas_other_fuels_electricity': 'cpielec',
     'economic_policy_uncertainty_index_global_ppp_adjusted_gdp': 'gepu',
     'forex_month_average_malaysian_ringgit_to_us_dollar': 'myrusd',
     'government_securities_yield_10_years': 'mgs10y',
@@ -104,7 +105,7 @@ dict_nice_col_names = {
     'real_effective_exchange_rate_index_bis_2020_100_broad': 'reer',
     'short_term_interest_rate_month_end_klibor_3_months': 'klibor3m',
     'interbank_offered_rate_fixing_1_month': 'klibor1m',
-    'oil_price_ceiling_price_ron_95': 'ron95'
+    'oil_price_ceiling_price_ron_95': 'ron95',
 }
 df = df.rename(columns=dict_nice_col_names)
 
@@ -144,7 +145,8 @@ for i in ['_zero', '_x', '_z'] + col_x_cands:
 cols_nice = list(df.columns)
 # Split into level and rate columns
 cols_levels = ['gdp', 'pc', 'gc', 'gfcf', 'ex', 'im',
-               'cpi', 'cpicore', 'cpitransport', 'brent', 'ron95', 'neer', 'reer', 'myrusd',
+               'cpi', 'cpicore', 'cpielec', 'cpitransport',
+               'brent', 'ron95', 'neer', 'reer', 'myrusd',
                'importworldipi', 'prodworldipi', 'gepu']
 cols_rates = ['mgs10y', 'klibor3m', 'klibor1m']  # Apply difference, not growth transformation to GEPU
 cols_nochange = ['maxgepu']
