@@ -412,7 +412,7 @@ def repeated_aggregate_impact(aggregate, landing_shock_rpc, landing_shock_rgdp, 
 
 def export_dfi_parquet_csv_telegram(input, file_name):
     input.to_parquet(file_name + '.parquet')
-    input.to_csv(file_name + '.csv')
+    input.to_csv(file_name + '.csv', index=False)
     # dfi.export(input, file_name + '.png',
     #            fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)
     # telsendimg(
@@ -514,6 +514,13 @@ for tiering, tiering_nice in \
             ['WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Landing',
              'WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Indirect',
              'WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Total']
+# Output allcombos
+allcombos.to_parquet(path_output + 'allcombos_consol_' + 'shock_response_' +
+                     income_choice + '_' + outcome_choice + '_' +
+                     fd_suffix + hhbasis_suffix + '.parquet')
+allcombos.to_csv(path_output + 'allcombos_consol_' + 'shock_response_' +
+                     income_choice + '_' + outcome_choice + '_' +
+                     fd_suffix + hhbasis_suffix + '.csv', index=False)
 
 
 # V --- Compile repeated aggregate impact of all combos, but split by response variable

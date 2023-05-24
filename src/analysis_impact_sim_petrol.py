@@ -70,7 +70,7 @@ choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NE
 choice_max_q = 7
 
 dict_scenarios_annual_shocks = {
-    'Immediate': 0.644,
+    '0 Month': 0.644,
     '3 Months': 0.598,
     '6 Months': 0.530
 }

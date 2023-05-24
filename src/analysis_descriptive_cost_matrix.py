@@ -256,11 +256,11 @@ costmat_base_level = pd.DataFrame(
     columns=['benefit'] + list_incgroups + ['total']
 )
 costmat_base_level['benefit'] = pd.Series(['kid', 'working_age2', 'elderly2'])
+
 costmat_base_percgdp = pd.DataFrame(
     columns=['benefit'] + list_incgroups + ['total']
 )
 costmat_base_percgdp['benefit'] = pd.Series(['kid', 'working_age2', 'elderly2'])
-
 
 # Function: Compute scenario-specific cost
 def compute_scenario_cost(
@@ -340,8 +340,8 @@ def compute_scenario_cost(
                     ,
                     'annual_cost'].sum()
             costmat_percgdp.loc[costmat_percgdp['benefit'] == benefit_target, incgroup] = \
-                tabperc_flattened.loc[
-                    tabperc_flattened['gross_income_group'] == incgroup
+                tabperc.loc[
+                    tabperc['gross_income_group'] == incgroup
                     ,
                     'annual_cost_gdp'].sum()
 

@@ -322,7 +322,7 @@ def heatmap(
                 annot=True,
                 cmap=colourmap,
                 center=0,
-                annot_kws={'size': 12},
+                annot_kws={'size': 11},
                 vmin=lb,
                 vmax=ub,
                 xticklabels=True,
