@@ -69,8 +69,9 @@ choice_macro_shock = 'CPI'
 choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NEER', 'MGS 10-Year Yields']
 choice_max_q = 7
 
+landing_shock_size = 22.3 * 0.027
 dict_scenarios_annual_shocks = {
-    'Full Removal': 22.3 * 0.027,  # CPI weight = 2.7%
+    'Full Removal': landing_shock_size,  # CPI weight = 2.7%
 }
 list_scenarios = list(dict_scenarios_annual_shocks.keys())
 
@@ -174,6 +175,7 @@ def export_dfi_parquet_csv_telegram(input, file_name):
 # Compute
 scenario_count = 1
 for scenario, shock_size in tqdm(dict_scenarios_annual_shocks.items()):
+    # Compute scaled IRF
     indirect, indirect_rounded = compute_var_impact(
         irf=irf,
         list_responses=choices_macro_response,
@@ -182,8 +184,27 @@ for scenario, shock_size in tqdm(dict_scenarios_annual_shocks.items()):
         convert_q_to_a=True,
         max_q=choice_max_q
     )
+    # Add landing shock to indirect shock
+    indirect.loc[
+        (indirect['response'] == 'CPI') & (indirect['horizon_year'] == 0)
+        ,
+        'impact'] = \
+        indirect.loc[
+            (indirect['response'] == 'CPI') & (indirect['horizon_year'] == 0)
+            ,
+            'impact'] + landing_shock_size
+    indirect_rounded.loc[
+        (indirect_rounded['response'] == 'CPI') & (indirect_rounded['horizon_year'] == 0)
+        ,
+        'impact'] = \
+        indirect_rounded.loc[
+            (indirect_rounded['response'] == 'CPI') & (indirect_rounded['horizon_year'] == 0)
+            ,
+            'impact'] + landing_shock_size
+    # Rename impact columns
     indirect = indirect.rename(columns={'impact': scenario})
-    indirect_rounded = indirect.rename(columns={'impact': scenario})
+    indirect_rounded = indirect_rounded.rename(columns={'impact': scenario})
+    # Consolidate
     if scenario_count == 1:
         indirect_consol = indirect.copy()
         indirect_rounded_consol = indirect_rounded.copy()
