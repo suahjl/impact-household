@@ -1,0 +1,13 @@
+,shock,response,horizon_year,indirect_impact
+0,Private Consumption,CPI,0,0.21
+1,Private Consumption,CPI,1,0.07
+2,Private Consumption,GDP,0,0.82
+3,Private Consumption,GDP,1,0.01
+4,Private Consumption,Investment,0,1.54
+5,Private Consumption,Investment,1,0.08
+6,Private Consumption,MGS 10-Year Yields,0,0.01
+7,Private Consumption,MGS 10-Year Yields,1,0.01
+8,Private Consumption,NEER,0,0.03
+9,Private Consumption,NEER,1,-0.02
+10,Private Consumption,Private Consumption,0,1.23
+11,Private Consumption,Private Consumption,1,0.06

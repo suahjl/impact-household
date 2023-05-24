@@ -65,12 +65,12 @@ elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 # Which parameters
-choice_macro_shock = 'cpielec'
+choice_macro_shock = 'CPI'
 choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NEER', 'MGS 10-Year Yields']
 choice_max_q = 7
 
 dict_scenarios_annual_shocks = {
-    'Full Removal': 0.5,
+    'Full Removal': 22.3 * 0.027,  # CPI weight = 2.7%
 }
 list_scenarios = list(dict_scenarios_annual_shocks.keys())
 
@@ -91,7 +91,8 @@ dict_ltavg = {
 
 # I --- Load MPC, IRF, and disbursement estimates
 # IRF estimates (check which IRF is used)
-irf = pd.read_parquet(path_output + 'macro_var_elec_irf_all_varyx_narrative_avg_' + macro_suffix + '.parquet')
+irf = pd.read_parquet(path_output +
+                      'macro_var_irf_all_varyx_narrative_avg_' + macro_suffix + '.parquet')  # take from OG
 # Nice names
 dict_cols_nice = {
     'ex': 'Exports',

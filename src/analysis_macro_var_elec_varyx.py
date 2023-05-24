@@ -75,7 +75,7 @@ for endog in tqdm(cols_all_endog_perm):
         choice_ic='hqic',
         choice_trend='c',
         choice_horizon=choice_horizon,
-        choice_maxlags=4  # cpielec starts at 2010/11, shorter maxlag is needed
+        choice_maxlags=2  # cpielec starts at 2010/11, shorter maxlag is needed
     )
     # Extract IRFs
     tab_irf = pd.DataFrame(columns=['shock', 'response', 'horizon', 'irf'])
@@ -305,11 +305,11 @@ fig_kitchensink_avg = manual_irf_subplots(
     font_size=14
 )
 fig_kitchensink_avg.write_image(path_output + 'macro_var_elec_irf_all_varyx_kitchensink_avg_' + input_suffix + '.png')
-telsendimg(
-    conf=tel_config,
-    path=path_output + 'macro_var_elec_irf_all_varyx_kitchensink_avg_' + input_suffix + '.png',
-    cap='macro_var_elec_irf_all_varyx_kitchensink_avg_' + input_suffix
-)
+# telsendimg(
+#     conf=tel_config,
+#     path=path_output + 'macro_var_elec_irf_all_varyx_kitchensink_avg_' + input_suffix + '.png',
+#     cap='macro_var_elec_irf_all_varyx_kitchensink_avg_' + input_suffix
+# )
 # Narrative sign restrictions
 fig_narrative_avg = manual_irf_subplots(
     data=tab_irf_narrative_avg,
@@ -327,11 +327,11 @@ fig_narrative_avg = manual_irf_subplots(
     font_size=14
 )
 fig_narrative_avg.write_image(path_output + 'macro_var_elec_irf_all_varyx_narrative_avg_' + input_suffix + '.png')
-telsendimg(
-    conf=tel_config,
-    path=path_output + 'macro_var_elec_irf_all_varyx_narrative_avg_' + input_suffix + '.png',
-    cap='macro_var_elec_irf_all_varyx_narrative_avg_' + input_suffix
-)
+# telsendimg(
+#     conf=tel_config,
+#     path=path_output + 'macro_var_elec_irf_all_varyx_narrative_avg_' + input_suffix + '.png',
+#     cap='macro_var_elec_irf_all_varyx_narrative_avg_' + input_suffix
+# )
 # Narrative sign restrictions 2
 fig_narrative2_avg = manual_irf_subplots(
     data=tab_irf_narrative2_avg,
@@ -349,15 +349,15 @@ fig_narrative2_avg = manual_irf_subplots(
     font_size=14
 )
 fig_narrative2_avg.write_image(path_output + 'macro_var_elec_irf_all_varyx_narrative2_avg_' + input_suffix + '.png')
-telsendimg(
-    conf=tel_config,
-    path=path_output + 'macro_var_elec_irf_all_varyx_narrative2_avg_' + input_suffix + '.png',
-    cap='macro_var_elec_irf_all_varyx_narrative2_avg_' + input_suffix
-)
+# telsendimg(
+#     conf=tel_config,
+#     path=path_output + 'macro_var_elec_irf_all_varyx_narrative2_avg_' + input_suffix + '.png',
+#     cap='macro_var_elec_irf_all_varyx_narrative2_avg_' + input_suffix
+# )
 
 # X --- Notify
-telsendmsg(conf=tel_config,
-           msg='impact-household --- analysis_macro_var_elec_varyx: COMPLETED')
+# telsendmsg(conf=tel_config,
+#            msg='impact-household --- analysis_macro_var_elec_varyx: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')
