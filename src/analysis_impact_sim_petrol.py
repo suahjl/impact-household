@@ -124,9 +124,7 @@ for i in ['shock', 'response']:
 irf = irf[irf['shock'] == choice_macro_shock]
 
 
-# III.0 --- Set base parameters
-
-# III.A --- Use landing impact to compute indirect impact using estimated OIRFs from VAR
+# III --- Use landing impact to compute indirect impact using estimated OIRFs from VAR
 # Function
 def compute_var_impact(
         irf,
@@ -209,7 +207,89 @@ export_dfi_parquet_csv_telegram(
 )
 
 
-# III.B --- Bar chart of impact by responses
+# IV --- Compute levels impact from repeated aggregate impact of all combos
+def compute_levels_impact(
+        allcombos,
+        list_impact_cols,
+        list_shocks,
+        list_responses,
+        dict_ltavg
+):
+    round_shock_response = 0
+    # Cycle through all shock-response combos
+    for shock in list_shocks:
+        for response in tqdm(list_responses):
+            # Parse shock-response combo
+            allcombos_sub = allcombos[
+                (allcombos['shock'] == shock) &
+                (allcombos['response'] == response)
+                ].copy()
+
+            # Create data frame to house levels
+            allcombos_sub_cf = allcombos_sub.copy()
+            allcombos_sub_level = allcombos_sub.copy()
+
+            # Compute counterfactual levels using LT avg
+            ltavg = dict_ltavg[response]
+            for horizon in range(0, len(allcombos_sub_cf)):
+                allcombos_sub_cf.loc[allcombos_sub_cf['horizon_year'] == horizon,
+                                     list_impact_cols] = \
+                    100 * (1 + ltavg / 100) ** (horizon + 1)
+
+            # Compute realised levels
+            round_sub_levels = 1
+            for horizon in range(0, len(allcombos_sub_cf)):
+                if round_sub_levels == 1:
+                    allcombos_sub_level.loc[
+                        allcombos_sub_level['horizon_year'] == horizon,
+                        list_impact_cols] = \
+                        100 * (1 + (ltavg + allcombos_sub.loc[
+                            allcombos_sub['horizon_year'] == horizon,
+                            list_impact_cols]) / 100)
+                elif round_sub_levels > 1:
+                    allcombos_sub_level.loc[
+                        allcombos_sub_level['horizon_year'] == horizon,
+                        list_impact_cols] = \
+                        allcombos_sub_level[list_impact_cols].shift(1) * \
+                        (1 + (ltavg + allcombos_sub.loc[
+                            allcombos_sub['horizon_year'] == horizon,
+                            list_impact_cols]) / 100)
+                round_sub_levels += 1
+
+            # Compute levels impact
+            allcombos_sub_level_gap = allcombos_sub_level.copy()
+            allcombos_sub_level_gap[list_impact_cols] = \
+                allcombos_sub_level_gap[list_impact_cols] - allcombos_sub_cf[list_impact_cols]
+
+            # Consolidate
+            if round_shock_response == 0:
+                allcombos_level_gap = allcombos_sub_level_gap.copy()
+            elif round_shock_response > 0:
+                allcombos_level_gap = pd.concat([allcombos_level_gap, allcombos_sub_level_gap], axis=0)  # top-down
+
+            # Move to next combo
+            round_shock_response += 1
+
+    # Output
+    return allcombos_level_gap
+
+
+allcombos_level_gap = compute_levels_impact(
+    allcombos=indirect_rounded_consol,
+    list_impact_cols=list_scenarios,
+    list_shocks=[choice_macro_shock],
+    list_responses=choices_macro_response,
+    dict_ltavg=dict_ltavg
+)
+allcombos_level_gap.to_parquet(path_output + 'impact_sim_petrol_level_gap_' +
+                               income_choice + '_' + outcome_choice + '_' +
+                               fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.parquet')
+allcombos_level_gap.to_csv(path_output + 'impact_sim_petrol_level_gap_' +
+                           income_choice + '_' + outcome_choice + '_' +
+                           fd_suffix + hhbasis_suffix + '_' + macro_suffix + '.csv', index=False)
+
+
+# V --- Bar chart of impact by responses
 def compile_barcharts_telegram(indirect, dict_ltavg, list_scenarios):
     indirect['horizon_year'] = 'Year ' + (indirect['horizon_year'] + 1).astype('str')  # convert to presentable form
     list_files = []

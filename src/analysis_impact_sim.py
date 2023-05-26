@@ -174,7 +174,7 @@ files_landing_nominal = []
 files_landing_rpc = []
 files_landing_rgdp = []
 for tiering, tiering_nice in zip(['tiered', 'flat'], ['Tiered', 'Flat']):
-    for restrict_threshold in tqdm([3, 4, 5, False]):
+    for restrict_threshold in tqdm([4, 5, False]):
         # Load
         disb = pd.read_parquet(
             path_output +
@@ -429,7 +429,7 @@ list_scenarios_names_impact_breakdown = []
 for tiering, tiering_nice in \
         zip(['tiered', 'flat'], ['Tiered', 'Flat']):
     for restrict_threshold, restrict_threshold_nice in \
-            tqdm(zip([3, 4, 5, False], ['B40', 'B40 & M20-', 'B40 & M40', 'T20'])):
+            tqdm(zip([4, 5, False], ['B60', 'B80', 'All'])):
         # 0. Extract landing impact size
         landing_impact_quantum_rpc = ordered_list_landing_impact_quantum_rpc[landing_impact_tracker]
         landing_impact_quantum_rgdp = ordered_list_landing_impact_quantum_rgdp[landing_impact_tracker]
@@ -519,11 +519,93 @@ allcombos.to_parquet(path_output + 'allcombos_consol_' + 'shock_response_' +
                      income_choice + '_' + outcome_choice + '_' +
                      fd_suffix + hhbasis_suffix + '.parquet')
 allcombos.to_csv(path_output + 'allcombos_consol_' + 'shock_response_' +
-                     income_choice + '_' + outcome_choice + '_' +
-                     fd_suffix + hhbasis_suffix + '.csv', index=False)
+                 income_choice + '_' + outcome_choice + '_' +
+                 fd_suffix + hhbasis_suffix + '.csv', index=False)
 
 
-# V --- Compile repeated aggregate impact of all combos, but split by response variable
+# V --- Compute levels impact from repeated aggregate impact of all combos
+def compute_levels_impact(
+        allcombos,
+        list_impact_cols,
+        list_shocks,
+        list_responses,
+        dict_ltavg
+):
+    round_shock_response = 0
+    # Cycle through all shock-response combos
+    for shock in list_shocks:
+        for response in tqdm(list_responses):
+            # Parse shock-response combo
+            allcombos_sub = allcombos[
+                (allcombos['shock'] == shock) &
+                (allcombos['response'] == response)
+                ].copy()
+
+            # Create data frame to house levels
+            allcombos_sub_cf = allcombos_sub.copy()
+            allcombos_sub_level = allcombos_sub.copy()
+
+            # Compute counterfactual levels using LT avg
+            ltavg = dict_ltavg[response]
+            for horizon in range(0, len(allcombos_sub_cf)):
+                allcombos_sub_cf.loc[allcombos_sub_cf['horizon_year'] == horizon,
+                                     list_impact_cols] = \
+                    100 * (1 + ltavg / 100) ** (horizon + 1)
+
+            # Compute realised levels
+            round_sub_levels = 1
+            for horizon in range(0, len(allcombos_sub_cf)):
+                if round_sub_levels == 1:
+                    allcombos_sub_level.loc[
+                        allcombos_sub_level['horizon_year'] == horizon,
+                        list_impact_cols] = \
+                        100 * (1 + (ltavg + allcombos_sub.loc[
+                            allcombos_sub['horizon_year'] == horizon,
+                            list_impact_cols]) / 100)
+                elif round_sub_levels > 1:
+                    allcombos_sub_level.loc[
+                        allcombos_sub_level['horizon_year'] == horizon,
+                        list_impact_cols] = \
+                        allcombos_sub_level[list_impact_cols].shift(1) * \
+                        (1 + (ltavg + allcombos_sub.loc[
+                            allcombos_sub['horizon_year'] == horizon,
+                            list_impact_cols]) / 100)
+                round_sub_levels += 1
+
+            # Compute levels impact
+            allcombos_sub_level_gap = allcombos_sub_level.copy()
+            allcombos_sub_level_gap[list_impact_cols] = \
+                allcombos_sub_level_gap[list_impact_cols] - allcombos_sub_cf[list_impact_cols]
+
+            # Consolidate
+            if round_shock_response == 0:
+                allcombos_level_gap = allcombos_sub_level_gap.copy()
+            elif round_shock_response > 0:
+                allcombos_level_gap = pd.concat([allcombos_level_gap, allcombos_sub_level_gap], axis=0)  # top-down
+
+            # Move to next combo
+            round_shock_response += 1
+
+    # Output
+    return allcombos_level_gap
+
+
+allcombos_level_gap = compute_levels_impact(
+    allcombos=allcombos,
+    list_impact_cols=list_scenarios_names_impact_breakdown,
+    list_shocks=[choice_macro_shock],
+    list_responses=choices_macro_response,
+    dict_ltavg=dict_ltavg
+)
+allcombos_level_gap.to_parquet(path_output + 'allcombos_level_gap_consol_' + 'shock_response_' +
+                               income_choice + '_' + outcome_choice + '_' +
+                               fd_suffix + hhbasis_suffix + '.parquet')
+allcombos_level_gap.to_csv(path_output + 'allcombos_level_gap_consol_' + 'shock_response_' +
+                           income_choice + '_' + outcome_choice + '_' +
+                           fd_suffix + hhbasis_suffix + '.csv', index=False)
+
+
+# VI --- Compile repeated aggregate impact of all combos, but split by response variable
 def split_allcombos_heatmap_telegram(
         allcombos,
         impact_cols_total,
@@ -549,6 +631,9 @@ def split_allcombos_heatmap_telegram(
     list_files = []
     for shock in list_shocks:
         for response in tqdm(list_responses):
+            # Extract LT avg
+            ltavg = dict_ltavg[response]
+
             # A. Growth impact
             allcombos_sub = allcombos_full[
                 (allcombos_full['shock'] == shock) &
@@ -598,8 +683,6 @@ def split_allcombos_heatmap_telegram(
             # Create data frame to house levels
             allcombos_sub_cf = allcombos_sub.copy()
             allcombos_sub_level = allcombos_sub.copy()
-            # Compute counterfactual levels using LT avg
-            ltavg = dict_ltavg[response]
             for horizon in range(0, len(allcombos_sub_cf)):
                 allcombos_sub_cf.loc[allcombos_sub_cf['horizon_year'] == 'Year ' + str(horizon + 1),
                                      list_impact_cols] = \

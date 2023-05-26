@@ -354,13 +354,12 @@ def heatmap_layered(
                 annot=disp_input,
                 cmap=colourmap,
                 center=0,
-                annot_kws={'size': 9},
+                annot_kws={'size': 12},
                 vmin=lb,
                 vmax=ub,
                 xticklabels=True,
                 yticklabels=True,
                 fmt=format)
-
     plt.title(title, fontsize=11)
     plt.xticks(fontsize=9)
     plt.yticks(fontsize=9)
@@ -515,7 +514,9 @@ def wide_grouped_barchart(
         group_col: str,
         main_title: str,
         decimal_points: int,
-        group_colours: list
+        group_colours: list,
+        custom_ymin=None,
+        custom_ymax=None
 ):
     # generate figure
     fig = go.Figure()
@@ -543,6 +544,8 @@ def wide_grouped_barchart(
         width=1366,
     )
     fig.update_traces(textfont_size=22)
+    if (custom_ymax is not None) & (custom_ymin is not None):
+        fig.update_yaxes(range=[custom_ymin, custom_ymax])
     # output
     return fig
 

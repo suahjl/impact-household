@@ -415,9 +415,9 @@ def compute_scenario_cost(
 # IV --- Compute, export breakdowns, and aggregate all combos
 # A --- Set up group restrictions
 dict_scenarios_wa_restrict = {
-    'B40': 3,
-    'B40 & M20-': 4,
-    'B40 & M40': 5,
+    # 'B40': 3,
+    'B60': 4,
+    'B80': 5,
     'All': False
 }
 # B --- Universal and flat for kids and elderly, tier and restrict WA
@@ -635,6 +635,12 @@ fig_costmat_percgdp_consol = heatmap(
     format='.1f'
 )
 list_file_names = [file_name_level, file_name_percgdp] + list_file_names
+# Generate parquet and csv files for consolidated disbursement table
+costmat_level_consol.to_parquet(file_name_level + '.parquet')
+costmat_level_consol.to_csv(file_name_level + '.csv', index=False)
+costmat_percgdp_consol.to_parquet(file_name_percgdp + '.parquet')
+costmat_percgdp_consol.to_csv(file_name_percgdp + '.csv', index=False)
+list_file_names = [file_name_level, file_name_percgdp] + list_file_names
 # Generate consolidated PDF
 pil_img2pdf(list_images=list_file_names,
             extension='png',
@@ -643,7 +649,8 @@ pil_img2pdf(list_images=list_file_names,
                      'wa_flat_restrict' +
                      '_consol')
 
-# D --- Export
+
+# X --- Export
 telsendfiles(
     conf=tel_config,
     path=path_output + 'cost_matrix_' +
