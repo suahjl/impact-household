@@ -217,7 +217,7 @@ b2_idle_women = b2_idle_women.groupby('HID')['PP'] \
 # b2: Income-generating adult females (18-59)
 b2_working_women = df_b2[(((df_b2['U'] >= 18) & (df_b2['U'] < 60)) &
                           (df_b2['PP'] == 1) & (
-                                      df_b2['J'] == 0))].copy()  # keep only rows corresponding to working adult females
+                                  df_b2['J'] == 0))].copy()  # keep only rows corresponding to working adult females
 b2_working_women = b2_working_women.groupby('HID')['PP'] \
     .count() \
     .reset_index() \
@@ -284,12 +284,13 @@ for i in ['NOIR', 'PKIR', 'PP']:
 
 # b3: isolate special subitems
 # Fuel only: item 0722
-cons_fuel = df_b3[df_b3['FourD'] == 722]
+cons_fuel = df_b3[df_b3['FourD'].isin([722, 451])]
 cons_fuel = cons_fuel.groupby(['HID', 'FourD'])['amaun'].sum().reset_index()
 cons_fuel = pd.pivot(cons_fuel, index='HID', columns='FourD', values='amaun').reset_index()  # long to wide
 cons_fuel = cons_fuel.rename(
     columns={
-        722: 'cons_0722_fuel'
+        722: 'cons_0722_fuel',
+        451: 'cons_0451_elec'
     }
 )
 # Transport ex cars, motorcycles, bicycles, and servicing
@@ -399,6 +400,7 @@ dict_rename = \
         # 'cons_13': '',
         # 'cons_0722_fuel': '',
         # 'cons_07_ex_bigticket': '',
+        # 'cons_0451_elec': ''
     }
 df = df.rename(columns=dict_rename)
 
@@ -415,7 +417,7 @@ for i in ['salaried_wages', 'other_wages', 'asset_income',
 for i in ['cons_01_12', 'cons_01_13'] + \
          ['cons_0' + str(i) for i in range(1, 10)] + \
          ['cons_' + str(i) for i in range(11, 14)] + \
-         ['cons_0722_fuel', 'cons_07_ex_bigticket']:
+         ['cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']:
     df[i] = df[i] / (df['hh_size'] ** (1 / 2))
 for i in ['net_margin', 'gross_margin']:
     df[i] = df[i] / (df['hh_size'] ** (1 / 2))
@@ -477,6 +479,7 @@ dict_dtypes_19 = \
         'cons_13': 'float',
         'cons_0722_fuel': 'float',
         'cons_07_ex_bigticket': 'float',
+        'cons_0451_elec': 'float',
         'gross_margin': 'float',
         'net_margin': 'float',
     }

@@ -175,10 +175,13 @@ files_landing_rpc = []
 files_landing_rgdp = []
 for tiering, tiering_nice in zip(['tiered', 'flat'], ['Tiered', 'Flat']):
     for restrict_threshold in tqdm([4, 5, False]):
-        # Load
+        # Load --- RESTRICTIONS ON ALL, TIERED / FLAT ON ALL
         disb = pd.read_parquet(
             path_output +
-            'cost_matrix_kids_elderly_flat_universal_' +
+            'cost_matrix_' +
+            'kids_elderly_' + tiering + '_restrict_' +
+            str(restrict_threshold) +
+            '_' +
             'wa_' + tiering + '_restrict_' +
             str(restrict_threshold) +
             '_level' + '.parquet'
@@ -199,7 +202,10 @@ for tiering, tiering_nice in zip(['tiered', 'flat'], ['Tiered', 'Flat']):
         # Convert landing impact into heat maps
         # Nominal
         file_name = path_output + \
-                    'landing_impact_sim_kids_elderly_flat_universal_' + \
+                    'landing_impact_sim_' + \
+                    'kids_elderly' + tiering + '_restrict_' + \
+                    str(restrict_threshold) + \
+                    '_' + \
                     'wa_' + tiering + '_restrict_' + \
                     str(restrict_threshold) + \
                     '_level' + '_nominal_' + \
@@ -210,7 +216,7 @@ for tiering, tiering_nice in zip(['tiered', 'flat'], ['Tiered', 'Flat']):
             mask=False,
             colourmap='vlag',
             outputfile=file_name + '.png',
-            title='Landing Impact (RM bil): ' + tiering_nice + ' & Restricted WA; Flat & Universal Others',
+            title='Landing Impact (RM bil): ' + tiering_nice + ' & Restricted',
             lb=0,
             ub=landing.max().max(),
             format='.1f'
@@ -218,7 +224,10 @@ for tiering, tiering_nice in zip(['tiered', 'flat'], ['Tiered', 'Flat']):
         files_landing_nominal = files_landing_nominal + [file_name]
         # PC growth
         file_name = path_output + \
-                    'landing_impact_sim_kids_elderly_flat_universal_' + \
+                    'landing_impact_sim_' + \
+                    'kids_elderly' + tiering + '_restrict_' + \
+                    str(restrict_threshold) + \
+                    '_' + \
                     'wa_' + tiering + '_restrict_' + \
                     str(restrict_threshold) + \
                     '_level' + '_rpc_' + \
@@ -229,7 +238,7 @@ for tiering, tiering_nice in zip(['tiered', 'flat'], ['Tiered', 'Flat']):
             mask=False,
             colourmap='vlag',
             outputfile=file_name + '.png',
-            title='Landing Impact (PC; pp): ' + tiering_nice + ' & Restricted WA; Flat & Universal Others',
+            title='Landing Impact (PC; pp): ' + tiering_nice + ' & Restricted',
             lb=0,
             ub=landing_rpc.max().max(),
             format='.1f'
@@ -238,7 +247,10 @@ for tiering, tiering_nice in zip(['tiered', 'flat'], ['Tiered', 'Flat']):
 
         # GDP growth
         file_name = path_output + \
-                    'landing_impact_sim_kids_elderly_flat_universal_' + \
+                    'landing_impact_sim_' + \
+                    'kids_elderly' + tiering + '_restrict_' + \
+                    str(restrict_threshold) + \
+                    '_' + \
                     'wa_' + tiering + '_restrict_' + \
                     str(restrict_threshold) + \
                     '_level' + '_rgdp_' + \
@@ -249,7 +261,7 @@ for tiering, tiering_nice in zip(['tiered', 'flat'], ['Tiered', 'Flat']):
             mask=False,
             colourmap='vlag',
             outputfile=file_name + '.png',
-            title='Landing Impact (GDP; pp): ' + tiering_nice + ' & Restricted WA; Flat & Universal Others',
+            title='Landing Impact (GDP; pp): ' + tiering_nice + ' & Restricted',
             lb=0,
             ub=landing_rgdp.max().max(),
             format='.1f'
@@ -445,7 +457,10 @@ for tiering, tiering_nice in \
             max_q=choice_max_q
         )
         # Output
-        file_name = path_output + 'indirect_impact_sim_kids_elderly_flat_universal_' + \
+        file_name = path_output + 'indirect_impact_sim_' + \
+                    'kids_elderly' + tiering + '_restrict_' + \
+                    str(restrict_threshold) + \
+                    '_' + \
                     'wa_' + tiering + '_restrict_' + \
                     str(restrict_threshold) + \
                     income_choice + '_' + outcome_choice + '_' + \
@@ -463,7 +478,10 @@ for tiering, tiering_nice in \
             landing_shock_rgdp=landing_impact_quantum_rgdp
         )
         # Output
-        file_name = path_output + 'aggregate_impact_sim_kids_elderly_flat_universal_' + \
+        file_name = path_output + 'aggregate_impact_sim_' + \
+                    'kids_elderly' + tiering + '_restrict_' + \
+                    str(restrict_threshold) + \
+                    '_' + \
                     'wa_' + tiering + '_restrict_' + \
                     str(restrict_threshold) + \
                     income_choice + '_' + outcome_choice + '_' + \
@@ -483,7 +501,10 @@ for tiering, tiering_nice in \
             rounds_to_repeat=choice_rounds_to_repeat
         )
         # Output
-        file_name = path_output + 'repeated_agg_impact_sim_kids_elderly_flat_universal_' + \
+        file_name = path_output + 'repeated_agg_impact_sim' + \
+                    'kids_elderly' + tiering + '_restrict_' + \
+                    str(restrict_threshold) + \
+                    '_' + \
                     'wa_' + tiering + '_restrict_' + \
                     str(restrict_threshold) + \
                     income_choice + '_' + outcome_choice + '_' + \
@@ -495,9 +516,9 @@ for tiering, tiering_nice in \
 
         # D. Add to aggregated frame
         repeated_agg = repeated_agg.rename(columns={
-            'landing_impact': 'WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Landing',
-            'indirect_impact': 'WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Indirect',
-            'total_impact': 'WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Total'
+            'landing_impact': tiering_nice + ' and ' + restrict_threshold_nice + ': Landing',
+            'indirect_impact': tiering_nice + ' and ' + restrict_threshold_nice + ': Indirect',
+            'total_impact': tiering_nice + ' and ' + restrict_threshold_nice + ': Total'
         })
         if landing_impact_tracker == 0:
             allcombos = repeated_agg.copy()
@@ -508,12 +529,12 @@ for tiering, tiering_nice in \
         landing_impact_tracker += 1
         list_scenarios_names_total_impact = \
             list_scenarios_names_total_impact + \
-            ['WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Total']
+            [tiering_nice + ' and ' + restrict_threshold_nice + ': Total']
         list_scenarios_names_impact_breakdown = \
             list_scenarios_names_impact_breakdown + \
-            ['WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Landing',
-             'WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Indirect',
-             'WA: ' + tiering_nice + ' and ' + restrict_threshold_nice + ': Total']
+            [tiering_nice + ' and ' + restrict_threshold_nice + ': Landing',
+             tiering_nice + ' and ' + restrict_threshold_nice + ': Indirect',
+             tiering_nice + ' and ' + restrict_threshold_nice + ': Total']
 # Output allcombos
 allcombos.to_parquet(path_output + 'allcombos_consol_' + 'shock_response_' +
                      income_choice + '_' + outcome_choice + '_' +

@@ -103,7 +103,7 @@ cols_features_base = ['gross_income'] + \
                      ['cons_01_12', 'cons_01_13'] + \
                      ['cons_0' + str(i) for i in range(1, 10)] + \
                      ['cons_1' + str(i) for i in range(0, 4)]
-cols_features = cols_features_base + ['cons_0722_fuel', 'cons_07_ex_bigticket']
+cols_features = cols_features_base + ['cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']
 
 use_iforest = True
 if use_iforest:

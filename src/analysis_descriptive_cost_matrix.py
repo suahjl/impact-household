@@ -262,6 +262,7 @@ costmat_base_percgdp = pd.DataFrame(
 )
 costmat_base_percgdp['benefit'] = pd.Series(['kid', 'working_age2', 'elderly2'])
 
+
 # Function: Compute scenario-specific cost
 def compute_scenario_cost(
         multiplier_set,
@@ -649,6 +650,243 @@ pil_img2pdf(list_images=list_file_names,
                      'wa_flat_restrict' +
                      '_consol')
 
+# D --- Restricted and flat for everything
+round_scenario = 1
+list_file_names = []
+for scenario_name, choice_threshold_exclude_wa in tqdm(dict_scenarios_wa_restrict.items()):
+    # Compute
+    costmat_level, costmat_percgdp = compute_scenario_cost(
+        multiplier_set=tiered_amount_multiplier,
+        tier_wa=False,  # flat rate
+        tier_kids=False,
+        tier_elderly=False,
+        threshold_exclude_wa=choice_threshold_exclude_wa,  # restrict
+        threshold_exclude_kids=choice_threshold_exclude_wa,
+        threshold_exclude_elderly=choice_threshold_exclude_wa
+    )
+    # File names of scenario-specific breakdown
+    file_name_level = path_output + \
+                      'cost_matrix_' + \
+                      'kids_elderly_flat_restrict_' + \
+                      str(choice_threshold_exclude_wa) + \
+                      '_' + \
+                      'wa_flat_restrict_' + \
+                      str(choice_threshold_exclude_wa) + \
+                      '_level'
+    file_name_percgdp = path_output + \
+                        'cost_matrix_' + \
+                        'kids_elderly_flat_restrict_' + \
+                        str(choice_threshold_exclude_wa) + \
+                        '_' + \
+                        'wa_flat_restrict_' + \
+                        str(choice_threshold_exclude_wa) + \
+                        '_percgdp'
+    # Export parquet and csv of scenario-specific breakdown
+    costmat_level.to_parquet(file_name_level + '.parquet')
+    costmat_level.to_csv(file_name_level + '.csv', index=False)
+    costmat_percgdp.to_parquet(file_name_percgdp + '.parquet')
+    costmat_percgdp.to_csv(file_name_percgdp + '.csv', index=False)
+    # Heatmap of scenario-specific breakdown
+    fig_costmat_level = heatmap(
+        input=costmat_level,
+        mask=False,
+        colourmap='vlag',
+        outputfile=file_name_level + '.png',
+        title='WA, Kids & Elderly: Flat and ' + scenario_name,
+        lb=0,
+        ub=costmat_level.max().max(),
+        format='.1f'
+    )
+    fig_costmat_percgdp = heatmap(
+        input=costmat_percgdp,
+        mask=False,
+        colourmap='vlag',
+        outputfile=file_name_percgdp + '.png',
+        title='WA, Kids & Elderly: Flat and ' + scenario_name + '(% GDP)',
+        lb=0,
+        ub=costmat_percgdp.max().max(),
+        format='.1f'
+    )
+    list_file_names = list_file_names + [file_name_level, file_name_percgdp]
+    # Consolidate
+    if round_scenario == 1:
+        costmat_level_consol = pd.DataFrame(costmat_level['Total']).copy()
+        costmat_percgdp_consol = pd.DataFrame(costmat_percgdp['Total']).copy()
+    if round_scenario > 1:
+        costmat_level_consol = pd.concat(
+            [costmat_level_consol, costmat_level['Total']],
+            axis=1)  # left-right concat
+        costmat_percgdp_consol = pd.concat(
+            [costmat_percgdp_consol, costmat_percgdp['Total']],
+            axis=1)  # left-right concat
+    # Distinguish new columns
+    costmat_level_consol = costmat_level_consol.rename(columns={'Total': scenario_name})
+    costmat_percgdp_consol = costmat_percgdp_consol.rename(columns={'Total': scenario_name})
+    round_scenario += 1
+# Heatmap for consolidated version
+file_name_level = path_output + \
+                  'cost_matrix_' + \
+                  'kids_elderly_flat_restrict_' + \
+                  'wa_flat_restrict' + \
+                  '_level'
+file_name_percgdp = path_output + \
+                    'cost_matrix_' + \
+                    'kids_elderly_flat_restrict_' + \
+                    'wa_flat_restrict' + \
+                    '_percgdp'
+fig_costmat_level_consol = heatmap(
+    input=costmat_level_consol,
+    mask=False,
+    colourmap='vlag',
+    outputfile=file_name_level + '.png',
+    title='WA, Kids & Elderly: Flat and Restricted',
+    lb=0,
+    ub=costmat_level_consol.max().max(),
+    format='.1f'
+)
+fig_costmat_percgdp_consol = heatmap(
+    input=costmat_percgdp_consol,
+    mask=False,
+    colourmap='vlag',
+    outputfile=file_name_percgdp + '.png',
+    title='WA, Kids & Elderly: Flat and Restricted (% GDP)',
+    lb=0,
+    ub=costmat_percgdp_consol.max().max(),
+    format='.1f'
+)
+list_file_names = [file_name_level, file_name_percgdp] + list_file_names
+# Generate parquet and csv files for consolidated disbursement table
+costmat_level_consol.to_parquet(file_name_level + '.parquet')
+costmat_level_consol.to_csv(file_name_level + '.csv', index=False)
+costmat_percgdp_consol.to_parquet(file_name_percgdp + '.parquet')
+costmat_percgdp_consol.to_csv(file_name_percgdp + '.csv', index=False)
+list_file_names = [file_name_level, file_name_percgdp] + list_file_names
+# Generate consolidated PDF
+pil_img2pdf(list_images=list_file_names,
+            extension='png',
+            pdf_name=path_output + 'cost_matrix_' +
+                     'kids_elderly_flat_restrict_' +
+                     'wa_flat_restrict' +
+                     '_consol')
+
+# E --- Restricted and tier everything
+round_scenario = 1
+list_file_names = []
+for scenario_name, choice_threshold_exclude_wa in tqdm(dict_scenarios_wa_restrict.items()):
+    # Compute
+    costmat_level, costmat_percgdp = compute_scenario_cost(
+        multiplier_set=tiered_amount_multiplier,
+        tier_wa=True,  # tiered rate
+        tier_kids=True,
+        tier_elderly=True,
+        threshold_exclude_wa=choice_threshold_exclude_wa,  # restrict
+        threshold_exclude_kids=choice_threshold_exclude_wa,
+        threshold_exclude_elderly=choice_threshold_exclude_wa
+    )
+    # File names of scenario-specific breakdown
+    file_name_level = path_output + \
+                      'cost_matrix_' + \
+                      'kids_elderly_tiered_restrict_' + \
+                      str(choice_threshold_exclude_wa) + \
+                      '_' + \
+                      'wa_tiered_restrict_' + \
+                      str(choice_threshold_exclude_wa) + \
+                      '_level'
+    file_name_percgdp = path_output + \
+                        'cost_matrix_' + \
+                        'kids_elderly_tiered_restrict_' + \
+                        str(choice_threshold_exclude_wa) + \
+                        '_' + \
+                        'wa_tiered_restrict_' + \
+                        str(choice_threshold_exclude_wa) + \
+                        '_percgdp'
+    # Export parquet and csv of scenario-specific breakdown
+    costmat_level.to_parquet(file_name_level + '.parquet')
+    costmat_level.to_csv(file_name_level + '.csv', index=False)
+    costmat_percgdp.to_parquet(file_name_percgdp + '.parquet')
+    costmat_percgdp.to_csv(file_name_percgdp + '.csv', index=False)
+    # Heatmap of scenario-specific breakdown
+    fig_costmat_level = heatmap(
+        input=costmat_level,
+        mask=False,
+        colourmap='vlag',
+        outputfile=file_name_level + '.png',
+        title='WA, Kids & Elderly: Tiered and ' + scenario_name,
+        lb=0,
+        ub=costmat_level.max().max(),
+        format='.1f'
+    )
+    fig_costmat_percgdp = heatmap(
+        input=costmat_percgdp,
+        mask=False,
+        colourmap='vlag',
+        outputfile=file_name_percgdp + '.png',
+        title='WA, Kids & Elderly: Tiered and ' + scenario_name + '(% GDP)',
+        lb=0,
+        ub=costmat_percgdp.max().max(),
+        format='.1f'
+    )
+    list_file_names = list_file_names + [file_name_level, file_name_percgdp]
+    # Consolidate
+    if round_scenario == 1:
+        costmat_level_consol = pd.DataFrame(costmat_level['Total']).copy()
+        costmat_percgdp_consol = pd.DataFrame(costmat_percgdp['Total']).copy()
+    if round_scenario > 1:
+        costmat_level_consol = pd.concat(
+            [costmat_level_consol, costmat_level['Total']],
+            axis=1)  # left-right concat
+        costmat_percgdp_consol = pd.concat(
+            [costmat_percgdp_consol, costmat_percgdp['Total']],
+            axis=1)  # left-right concat
+    # Distinguish new columns
+    costmat_level_consol = costmat_level_consol.rename(columns={'Total': scenario_name})
+    costmat_percgdp_consol = costmat_percgdp_consol.rename(columns={'Total': scenario_name})
+    round_scenario += 1
+# Heatmap for consolidated version
+file_name_level = path_output + \
+                  'cost_matrix_' + \
+                  'kids_elderly_tiered_restrict_' + \
+                  'wa_tiered_restrict' + \
+                  '_level'
+file_name_percgdp = path_output + \
+                    'cost_matrix_' + \
+                    'kids_elderly_tiered_restrict_' + \
+                    'wa_tiered_restrict' + \
+                    '_percgdp'
+fig_costmat_level_consol = heatmap(
+    input=costmat_level_consol,
+    mask=False,
+    colourmap='vlag',
+    outputfile=file_name_level + '.png',
+    title='WA, Kids & Elderly: Tiered and Restricted',
+    lb=0,
+    ub=costmat_level_consol.max().max(),
+    format='.1f'
+)
+fig_costmat_percgdp_consol = heatmap(
+    input=costmat_percgdp_consol,
+    mask=False,
+    colourmap='vlag',
+    outputfile=file_name_percgdp + '.png',
+    title='WA, Kids & Elderly: Tiered and Restricted (% GDP)',
+    lb=0,
+    ub=costmat_percgdp_consol.max().max(),
+    format='.1f'
+)
+list_file_names = [file_name_level, file_name_percgdp] + list_file_names
+# Generate parquet and csv files for consolidated disbursement table
+costmat_level_consol.to_parquet(file_name_level + '.parquet')
+costmat_level_consol.to_csv(file_name_level + '.csv', index=False)
+costmat_percgdp_consol.to_parquet(file_name_percgdp + '.parquet')
+costmat_percgdp_consol.to_csv(file_name_percgdp + '.csv', index=False)
+list_file_names = [file_name_level, file_name_percgdp] + list_file_names
+# Generate consolidated PDF
+pil_img2pdf(list_images=list_file_names,
+            extension='png',
+            pdf_name=path_output + 'cost_matrix_' +
+                     'kids_elderly_tiered_restrict_' +
+                     'wa_tiered_restrict' +
+                     '_consol')
 
 # X --- Export
 telsendfiles(
@@ -671,6 +909,28 @@ telsendfiles(
     cap='cost_matrix_' +
         'kids_elderly_flat_universal_' +
         'wa_flat_restrict' +
+        '_consol'
+)
+telsendfiles(
+    conf=tel_config,
+    path=path_output + 'cost_matrix_' +
+         'kids_elderly_flat_restrict_' +
+         'wa_flat_restrict' +
+         '_consol' + '.pdf',
+    cap='cost_matrix_' +
+        'kids_elderly_flat_restrict_' +
+        'wa_flat_restrict' +
+        '_consol'
+)
+telsendfiles(
+    conf=tel_config,
+    path=path_output + 'cost_matrix_' +
+         'kids_elderly_tiered_restrict_' +
+         'wa_tiered_restrict' +
+         '_consol' + '.pdf',
+    cap='cost_matrix_' +
+        'kids_elderly_tiered_restrict_' +
+        'wa_tiered_restrict' +
         '_consol'
 )
 

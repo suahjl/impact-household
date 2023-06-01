@@ -805,7 +805,7 @@ col_cons = ['cons_01', 'cons_02', 'cons_03', 'cons_04',
             'cons_09', 'cons_10', 'cons_11', 'cons_12',
             'cons_13',
             'cons_01_12', 'cons_01_13',
-            'cons_0722_fuel', 'cons_07_ex_bigticket']
+            'cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']
 col_inc = ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
 col_outcomes = col_cons + col_inc
 # Observables to be grouped on (exclude some overlapping variables like kid, working_age2, elderly2)

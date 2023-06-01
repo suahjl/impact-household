@@ -257,12 +257,13 @@ for i in ['Kawasan', 'No_IR', 'No_AIR', 'Perhubungan_KIR', 'Penerima_Pendapatan'
 
 # b3: isolate special subitems
 # Fuel only: item 0722
-cons_fuel = df_b3[df_b3['FourD'] == 722]
+cons_fuel = df_b3[df_b3['FourD'].isin([722, 451])]
 cons_fuel = cons_fuel.groupby(['ID', 'FourD'])['Amaun'].sum().reset_index()
 cons_fuel = pd.pivot(cons_fuel, index='ID', columns='FourD', values='Amaun').reset_index()  # long to wide
 cons_fuel = cons_fuel.rename(
     columns={
-        722: 'cons_0722_fuel'
+        722: 'cons_0722_fuel',
+        451: 'cons_0451_elec'
     }
 )
 # Transport ex cars, motorcycles, bicycles, and servicing
@@ -391,6 +392,7 @@ dict_rename = \
         # 'cons_13': '',
         # 'cons_0722_fuel': '',
         # 'cons_07_ex_bigticket': '',
+        # 'cons_0451_elec': ''
     }
 df = df.rename(columns=dict_rename)
 
@@ -409,7 +411,7 @@ for i in ['gross_income']:  # and this is monthly
 for i in ['cons_01_12', 'cons_01_13'] + \
          ['cons_0' + str(i) for i in range(1, 10)] + \
          ['cons_' + str(i) for i in range(11, 14)] + \
-         ['cons_0722_fuel', 'cons_07_ex_bigticket']:  # likewise this
+         ['cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']:
     df[i] = df[i] / (df['hh_size'] ** (1 / 2))
 
 # post-merge: birth year
@@ -467,6 +469,7 @@ dict_dtypes_14 = \
         'cons_01_13': 'float',
         'gross_margin': 'float',
         'cons_0722_fuel': 'float',
+        'cons_0451_elec': 'float',
         'cons_07_ex_bigticket': 'float',
     }
 df = df.astype(dict_dtypes_14)

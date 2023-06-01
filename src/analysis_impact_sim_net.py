@@ -73,7 +73,6 @@ elif not cumul_net_impact_level_gap:
     level_suffix = ''
     level_chart_title = ''
 
-
 # Which parameters
 choices_macro_response = ['GDP', 'Private Consumption', 'Investment', 'CPI', 'NEER', 'MGS 10-Year Yields']
 # Long-term averages to scale ranges
@@ -99,6 +98,14 @@ cash = pd.read_parquet(path_output + 'allcombos_' + level_suffix + 'consol_' + '
 cash = cash[['response', 'horizon_year'] + [i for i in cash.columns if (': Total' in i)]]
 cash.columns = [i.replace(': Total', '') for i in cash.columns]
 scenarios_cash = [i for i in cash.columns if ('response' not in i) and ('horizon_year' not in i)]
+# scenarios_cash = [i for i in cash.columns if
+#                   ('response' not in i) and
+#                   ('horizon_year' not in i) and
+#                   ('Tiered' not in i)]
+# scenarios_cash = [i for i in cash.columns if
+#                   ('response' not in i) and
+#                   ('horizon_year' not in i) and
+#                   ('Flat' not in i)]
 
 petrol = pd.read_parquet(path_output + 'impact_sim_petrol_' + level_suffix +
                          income_choice + '_' + outcome_choice + '_' +
@@ -325,6 +332,51 @@ for response, ltavg in zip(choices_macro_response, list(dict_ltavg.values())):
     list_file_names = list_file_names + [file_name]
 # Consolidate pdf
 file_pdf = path_output + 'net_impact_cumul_compressed_' + level_suffix + \
+           income_choice + '_' + outcome_choice + '_' + \
+           fd_suffix + hhbasis_suffix
+pil_img2pdf(
+    list_images=list_file_names,
+    extension='png',
+    pdf_name=file_pdf
+)
+telsendfiles(
+    conf=tel_config,
+    path=file_pdf + '.pdf',
+    cap=file_pdf
+)
+
+# VI.B --- Generate variable-by-variable but cumulative net impact (squiggly line)
+list_file_names = []
+for response, ltavg in zip(choices_macro_response, list(dict_ltavg.values())):
+    # Subset + deep copy
+    net_sub = net_cumul.loc[net_cumul['response'] == response,
+                            ['Petrol Scenarios'] + scenarios_cash].copy()
+    # Set index
+    net_sub = net_sub.set_index('Petrol Scenarios')
+    # COMPRESS Y AXIS (PETROL SCENARIOS)
+    net_sub_val = pd.DataFrame(net_sub.mean(axis=0)).transpose()
+    net_sub_val.index = pd.Series(['Immediate to 6 Months'])
+    net_sub_val.index.name = 'Petrol Scenarios'
+    # GENERATE DISPLAY FRAME
+    net_sub_disp = pd.DataFrame(net_sub.mean(axis=0)).round(1).transpose().astype('str')
+    # Generate heatmap
+    file_name = path_output + 'net_impact_cumul_squiggly_' + level_suffix + response + '_' + \
+                income_choice + '_' + outcome_choice + '_' + \
+                fd_suffix + hhbasis_suffix
+    fig = heatmap_layered(
+        actual_input=net_sub_val,
+        disp_input=net_sub_disp,
+        mask=False,
+        colourmap='vlag',
+        outputfile=file_name + '.png',
+        title='Cumulative Net Impact on ' + response + level_chart_title,
+        lb=-1 * np.abs(ltavg) * 2,
+        ub=np.abs(ltavg) * 2,
+        format='s'
+    )
+    list_file_names = list_file_names + [file_name]
+# Consolidate pdf
+file_pdf = path_output + 'net_impact_cumul_squiggly_' + level_suffix + \
            income_choice + '_' + outcome_choice + '_' + \
            fd_suffix + hhbasis_suffix
 pil_img2pdf(

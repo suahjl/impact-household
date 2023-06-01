@@ -302,12 +302,13 @@ df_b3['TwoD'] = df_b3['FourD'].str[:2]
 
 # b3: isolate special subitems
 # Fuel only: item 0722
-cons_fuel = df_b3[df_b3['FourD'] == '0722']
+cons_fuel = df_b3[df_b3['FourD'].isin(['0722', '0451'])]
 cons_fuel = cons_fuel.groupby(['id', 'FourD'])['Amount'].sum().reset_index()
 cons_fuel = pd.pivot(cons_fuel, index='id', columns='FourD', values='Amount').reset_index()  # long to wide
 cons_fuel = cons_fuel.rename(
     columns={
-        '0722': 'cons_0722_fuel'
+        '0722': 'cons_0722_fuel',
+        '0451': 'cons_0451_elec'
     }
 )
 # Transport ex cars, motorcycles, bicycles, and servicing
@@ -417,6 +418,7 @@ dict_rename = \
         # 'cons_13': '',
         # 'cons_0722_fuel': '',
         # 'cons_07_ex_bigticket': '',
+        # 'cons_0451_elec': ''
     }
 df = df.rename(columns=dict_rename)
 
@@ -433,7 +435,7 @@ for i in ['salaried_wages', 'other_wages', 'asset_income',
 for i in ['cons_01_12', 'cons_01_13'] + \
          ['cons_0' + str(i) for i in range(1, 10)] + \
          ['cons_' + str(i) for i in range(11, 14)] + \
-         ['cons_0722_fuel', 'cons_07_ex_bigticket']:
+         ['cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']:
     df[i] = df[i] / (df['hh_size'] ** (1/2))
 for i in ['net_margin', 'gross_margin']:
     df[i] = df[i] / (df['hh_size'] ** (1/2))
@@ -498,6 +500,7 @@ dict_dtypes_16 = \
         'cons_13': 'float',
         'cons_0722_fuel': 'float',
         'cons_07_ex_bigticket': 'float',
+        'cons_0451_elec': 'float',
         'gross_margin': 'float',
         'net_margin': 'float',
     }
