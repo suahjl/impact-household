@@ -62,7 +62,7 @@ list_outcomes = ['gross_income'] + \
                 ['gross_transfers'] + \
                 ['cons_01_13', 'cons_01_12'] + \
                 ['cons_01', 'cons_04', 'cons_06', 'cons_07', 'cons_10'] + \
-                ['cons_0722_fuel', 'cons_07_ex_bigticket']
+                ['cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']
 # F&B, util, healthcare, transport & fuels, education
 # ['salaried_wages', 'other_wages', 'asset_income', 'gross_transfers', 'gross_income']
 
@@ -70,7 +70,7 @@ list_outcomes = ['gross_income'] + \
 list_all_cons = ['cons_01_13', 'cons_01_12'] + \
                 ['cons_0' + str(i) for i in range(1, 10)] + \
                 ['cons_1' + str(i) for i in range(0, 4)] + \
-                ['cons_0722_fuel', 'cons_07_ex_bigticket']
+                ['cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']
 if use_spending_income_ratio:
     for cons in list_all_cons:
         df[cons] = 100 * df[cons] / df['gross_income']
@@ -97,6 +97,142 @@ def capybara_tiny(data, y_col, x_col):
 
 
 def gen_gross_income_group(data, aggregation):
+    if aggregation == -2:
+        for t in tqdm(list(data['year'].unique())):
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.9)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '90p_100p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.8)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.9)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '80p_90p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.7)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.8)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '70p_80p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.6)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.7)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '60p_70p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.5)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.6)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '50p_60p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.4)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.5)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '40p_50p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.3)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.4)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '30p_40p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.2)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.3)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '20_30p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] >= data.loc[data['year'] == t, 'gross_income'].quantile(q=0.1)
+                        ) &
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.2)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '10p_20p'
+            data.loc[
+                (
+                        (
+                                data['gross_income'] < data.loc[data['year'] == t, 'gross_income'].quantile(q=0.1)
+                        ) &
+                        (
+                                data['year'] == t
+                        )
+                ),
+                'gross_income_group'
+            ] = '0p_10p'
     if aggregation == -1:
         for t in tqdm(list(data['year'].unique())):
             data.loc[
@@ -460,7 +596,7 @@ def gen_income_allbasis(data):
 
 # III.0 --- Generate income groups
 # Define income group buckets
-gen_gross_income_group(data=df, aggregation=-1)  # check aggregation choice
+gen_gross_income_group(data=df, aggregation=-2)  # check aggregation choice
 
 # III.0 --- Generate income per capita and equivalised income
 gen_income_allbasis(data=df)

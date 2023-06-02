@@ -212,7 +212,7 @@ telsendfiles(
     cap=file_pdf
 )
 
-# V.B --- Generate year-by-year, and variable-by-variable net impact frames (compressed)
+# V.C --- Generate year-by-year, and variable-by-variable net impact frames (compressed)
 list_file_names = []
 for response, ltavg in zip(choices_macro_response, list(dict_ltavg.values())):
     for horizon in list(net['horizon_year'].unique()):
@@ -259,6 +259,53 @@ telsendfiles(
     path=file_pdf + '.pdf',
     cap=file_pdf
 )
+
+# V.C --- Generate year-by-year, and variable-by-variable net impact frames (squiggly lines)
+list_file_names = []
+for response, ltavg in zip(choices_macro_response, list(dict_ltavg.values())):
+    for horizon in list(net['horizon_year'].unique()):
+        # Subset + deep copy
+        net_sub = net.loc[(net['response'] == response) & (net['horizon_year'] == horizon),
+                          ['Petrol Scenarios'] + scenarios_cash].copy()
+        # Set index
+        net_sub = net_sub.set_index('Petrol Scenarios')
+        # COMPRESS Y AXIS (PETROL SCENARIOS)
+        net_sub_val = pd.DataFrame(net_sub.mean(axis=0)).transpose()
+        net_sub_val.index = pd.Series(['Immediate to 6 Months'])
+        net_sub_val.index.name = 'Petrol Scenarios'
+        # GENERATE DISPLAY FRAME
+        net_sub_disp = pd.DataFrame(net_sub.mean(axis=0)).round(1).transpose().astype('str')
+        # Generate heatmap
+        file_name = path_output + 'net_impact_squiggly_' + level_suffix + response + '_' + horizon + '_' + \
+                    income_choice + '_' + outcome_choice + '_' + \
+                    fd_suffix + hhbasis_suffix
+        fig = heatmap_layered(
+            actual_input=net_sub_val,
+            disp_input=net_sub_disp,
+            mask=False,
+            colourmap='vlag',
+            outputfile=file_name + '.png',
+            title='Net Impact on ' + response + ' For ' + horizon + level_chart_title,
+            lb=-1 * np.abs(ltavg),
+            ub=np.abs(ltavg),
+            format='s'
+        )
+        list_file_names = list_file_names + [file_name]
+# Consolidate pdf
+file_pdf = path_output + 'net_impact_squiggly_' + level_suffix + \
+           income_choice + '_' + outcome_choice + '_' + \
+           fd_suffix + hhbasis_suffix
+pil_img2pdf(
+    list_images=list_file_names,
+    extension='png',
+    pdf_name=file_pdf
+)
+telsendfiles(
+    conf=tel_config,
+    path=file_pdf + '.pdf',
+    cap=file_pdf
+)
+
 
 # VI.A --- Generate variable-by-variable but cumulative net impact (full)
 list_file_names = []
@@ -345,7 +392,7 @@ telsendfiles(
     cap=file_pdf
 )
 
-# VI.B --- Generate variable-by-variable but cumulative net impact (squiggly line)
+# VI.C --- Generate variable-by-variable but cumulative net impact (squiggly line)
 list_file_names = []
 for response, ltavg in zip(choices_macro_response, list(dict_ltavg.values())):
     # Subset + deep copy
