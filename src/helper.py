@@ -101,17 +101,23 @@ def get_data_from_ceic(
 
     df = pd.DataFrame()
     content = []
-    if historical_extension == False:
-        for series in series_ids:
-            content += Ceic.series(series_id=series, start_date=start_date).data
+    if not historical_extension:
+        content = Ceic.series(series_id=series_ids, start_date=start_date).data
     else:
         for series in series_ids:
-            content += Ceic.series(
-                series_id=series,
-                start_date=start_date,
-                with_historical_extension=True,
-            ).data
-
+            try:
+                content += Ceic.series(
+                    series_id=series,
+                    start_date=start_date,
+                    with_historical_extension=True,
+                ).data
+            except:
+                # revert to without historical extension if fails
+                content += Ceic.series(
+                    series_id=series,
+                    start_date=start_date,
+                    with_historical_extension=False,
+                ).data
     for i in range(len(series_ids)):  # for i in range(len(content))
         data = pd.DataFrame(
             [(tp._date, tp.value) for tp in content[i].time_points],
