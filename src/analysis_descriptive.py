@@ -131,7 +131,7 @@ def capybara(data, y_cols, x_cols, t_col, quantiles, quantiles_nice):
     return tab_consol
 
 
-def capybara_mini(data, y_col, x_col, quantiles, quantiles_nice):
+def capybara_baby(data, y_col, x_col, quantiles, quantiles_nice):
     # Prelims
     d = data.copy()
     # Tabulate y (y must be continuous, and x must be categorical)
@@ -435,7 +435,7 @@ for y in tqdm(list_outcomes):
     dfi.export(latest_median_marginsinccons_incgroup, latest_median_name + '.png')
     # Heat maps
     for t in df['year'].unique():
-        tab_marginsinccons_incgroup = capybara_mini(
+        tab_marginsinccons_incgroup = capybara_baby(
             data=df[df['year'] == t],
             y_col=y,
             x_col='gross_income_group',
@@ -515,7 +515,7 @@ if not skip_inc_cons_by_obs:
                        fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)
             # Heatmaps
             for t in df['year'].unique():
-                tab_marginsinccons_obs = capybara_mini(
+                tab_marginsinccons_obs = capybara_baby(
                     data=df[df['year'] == t],
                     y_col=y,
                     x_col=x,

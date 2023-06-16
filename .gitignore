@@ -178,3 +178,15 @@ old_static_*.txt
 
 # conf files for telegram-send
 *.conf
+
+# LaTeX
+*.tex
+*.bib
+*.pdf
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.gz
+
