@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, barchart
+from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, barchart, heatmap, pil_img2pdf
 from tabulate import tabulate
 import dataframe_image as dfi
 from tqdm import tqdm
@@ -29,10 +29,13 @@ hhbasis_adj_analysis = ast.literal_eval(os.getenv('HHBASIS_ADJ_ANALYSIS'))
 equivalised_adj_analysis = ast.literal_eval(os.getenv('EQUIVALISED_ADJ_ANALYSIS'))
 if hhbasis_adj_analysis:
     hhbasis_suffix = '_hhbasis'
+    hhbasis_chart_title = ' (Total HH)'
 if equivalised_adj_analysis:
     hhbasis_suffix = '_equivalised'
+    hhbasis_chart_title = ' (Equivalised)'
 elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
     hhbasis_suffix = ''
+    hhbasis_chart_title = ''
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 
@@ -192,6 +195,73 @@ if not show_ci:
         del params_table_timefe_consol[col]
         del params_table_re_consol[col]
 
+# Export heat maps by methodology
+list_variables_heatmaps = ['quantile', 'Parameter']
+if show_ci:
+    list_variables_heatmaps = list_variables_heatmaps + ['LowerCI', 'UpperCI']
+list_heatmaps_file_names = []
+# FE
+d = params_table_fe_consol.copy()
+d = d[list_variables_heatmaps].set_index('quantile')
+file_name = 'output/params_table_overall_quantile_fe' + '_' + \
+            outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
+list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
+heatmap_fe = heatmap(
+    input=d,
+    mask=False,
+    colourmap='vlag',
+    outputfile=file_name + '.png',
+    title='FE: MPC by income group' + hhbasis_chart_title,
+    lb=0,
+    ub=0.6,
+    format='.2f'
+)
+# TimeFE
+d = params_table_timefe_consol.copy()
+d = d[list_variables_heatmaps].set_index('quantile')
+file_name = 'output/params_table_overall_quantile_timefe' + '_' + \
+            outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
+list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
+heatmap_timefe = heatmap(
+    input=d,
+    mask=False,
+    colourmap='vlag',
+    outputfile=file_name + '.png',
+    title='Time FE: MPC by income group' + hhbasis_chart_title,
+    lb=0,
+    ub=0.6,
+    format='.2f'
+)
+# RE
+d = params_table_re_consol.copy()
+d = d[list_variables_heatmaps].set_index('quantile')
+file_name = 'output/params_table_overall_quantile_re' + '_' + \
+            outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
+list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
+heatmap_re = heatmap(
+    input=d,
+    mask=False,
+    colourmap='vlag',
+    outputfile=file_name + '.png',
+    title='RE: MPC by income group' + hhbasis_chart_title,
+    lb=0,
+    ub=0.6,
+    format='.2f'
+)
+# Compile and send
+pdf_file_name = 'output/params_table_overall_quantile_consol' + '_' + \
+                outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
+pil_img2pdf(
+    list_images=list_heatmaps_file_names,
+    extension='png',
+    pdf_name=pdf_file_name
+)
+telsendfiles(
+    conf=tel_config,
+    path=pdf_file_name + '.pdf',
+    cap=pdf_file_name
+)
+
 # Mega merge
 params_table_consol = pd.concat(
     [params_table_fe_consol, params_table_timefe_consol, params_table_re_consol],
@@ -199,7 +269,8 @@ params_table_consol = pd.concat(
 )
 # Order columns
 if show_ci:
-    params_table_consol = params_table_consol[['outcome_variable', 'method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']]
+    params_table_consol = params_table_consol[
+        ['outcome_variable', 'method', 'quantile', 'Parameter', 'LowerCI', 'UpperCI']]
 if not show_ci:
     params_table_consol = params_table_consol[['outcome_variable', 'method', 'quantile', 'Parameter']]
 # Export as csv and image

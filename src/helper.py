@@ -328,7 +328,7 @@ def heatmap(
                 annot=True,
                 cmap=colourmap,
                 center=0,
-                annot_kws={'size': 11},
+                annot_kws={'size': 24},  # 9, 12, 16, 20, 24, 28
                 vmin=lb,
                 vmax=ub,
                 xticklabels=True,
@@ -360,7 +360,7 @@ def heatmap_layered(
                 annot=disp_input,
                 cmap=colourmap,
                 center=0,
-                annot_kws={'size': 12},
+                annot_kws={'size': 12},  # 9, 12, 20, 28
                 vmin=lb,
                 vmax=ub,
                 xticklabels=True,

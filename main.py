@@ -9,33 +9,33 @@ load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
 
 # Process raw data
-process_raw = True
+process_raw = False
 if process_raw:
     import src.process_raw_2009
     import src.process_raw_2014
     import src.process_raw_2016
     import src.process_raw_2019
 
-process_raw_hhbasis = True
+process_raw_hhbasis = False
 if process_raw_hhbasis:
     import src.process_raw_2014_hhbasis
     import src.process_raw_2016_hhbasis
     import src.process_raw_2019_hhbasis
 
-process_raw_equivalised = True
+process_raw_equivalised = False
 if process_raw_equivalised:
     import src.process_raw_2014_equivalised
     import src.process_raw_2016_equivalised
     import src.process_raw_2019_equivalised
 
 # Pre-analysis processing
-process_pre_analysis = True
+process_pre_analysis = False
 if process_pre_analysis:
     import src.process_outliers
-    import src.process_consol_group_old
+    import src.process_consol_group
 
 # Analyse (uses trimmed-outliers per-capita data frames)
-generate_adj_analysis = False
+generate_adj_analysis = True
 if generate_adj_analysis:
     import src.analysis_reg_overall
     import src.analysis_reg_overall_quantile

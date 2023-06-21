@@ -596,7 +596,7 @@ def gen_income_allbasis(data):
 
 # III.0 --- Generate income groups
 # Define income group buckets
-gen_gross_income_group(data=df, aggregation=-2)  # check aggregation choice
+gen_gross_income_group(data=df, aggregation=-1)  # check aggregation choice
 
 # III.0 --- Generate income per capita and equivalised income
 gen_income_allbasis(data=df)
