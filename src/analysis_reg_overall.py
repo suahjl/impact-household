@@ -134,6 +134,19 @@ if show_ci:
     params_table_cohort = params_table_cohort[['method', 'Parameter', 'LowerCI', 'UpperCI']]
 if not show_ci:
     params_table_cohort = params_table_cohort[['method', 'Parameter']]
+# Set dtype
+if show_ci:
+    params_table_cohort = params_table_cohort.astype({
+        'method': 'str',
+        'Parameter': 'float',
+        'LowerCI': 'float',
+        'UpperCI': 'float'
+    })
+elif not show_ci:
+    params_table_cohort = params_table_cohort.astype({
+        'method': 'str',
+        'Parameter': 'float',
+    })
 # Export
 dfi.export(params_table_cohort,
            'output/params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png')
@@ -142,6 +155,11 @@ telsendimg(
     path='output/params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
     cap='params_table_overall_mean' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
 )
+# Export csv
+params_table_cohort.to_csv('output/params_table_overall_mean' + '_' + outcome_choice + '_'
+                           + income_choice + '_' + fd_suffix + hhbasis_suffix + '.csv', index=False)
+params_table_cohort.to_parquet('output/params_table_overall_mean' + '_' + outcome_choice + '_'
+                               + income_choice + '_' + fd_suffix + hhbasis_suffix + '.parquet')
 
 # Execute individual-level (no FD option)
 
