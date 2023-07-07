@@ -168,15 +168,9 @@ df['gross_income_group'] = df['gross_income_group'].replace(
     }
 )
 
-# Restrict to 2WA, 2 kids
-df = df[(df['working_age2'] == 2) & (df['kid'] == 2)]
 
 # III --- The analysis
-# Tabulate median spending on fuel 0722, and elec 0451 by income group
-tab = df.groupby('gross_income_group')[['cons_0722_fuel', 'cons_0451_elec']].median()
-
-
-# Compute implied subsidies
+# Functions
 def compute_subsidies(input, fuel_sub_litre, elec_sub_rate):
     # deep copy
     sub = input.copy()
@@ -188,28 +182,70 @@ def compute_subsidies(input, fuel_sub_litre, elec_sub_rate):
     sub['cons_0451_elec'] = sub['cons_0451_elec'] * (elec_sub_rate / 100)
     # X. Total
     sub['total'] = sub['cons_0722_fuel'] + sub['cons_0451_elec']
+    # X. Rename
+    sub = sub.rename(
+        columns={
+            'total': 'Total',
+            'cons_0722_fuel': 'Fuel',
+            'cons_0451_elec': 'Electricity'
+        }
+    )
     # X. Output
     return sub
 
 
-sub = compute_subsidies(input=tab, fuel_sub_litre=1.05, elec_sub_rate=22.3)
-file_name = path_output + 'tab_subsidy_incidence'
-fig = heatmap(
-    input=sub,
-    mask=False,
-    colourmap='vlag',
-    outputfile=file_name + '.png',
-    title='Estimated Subsidies Received by Income Group (Median HH)',
-    lb=0,
-    ub=sub.max().max(),
-    format='.0f'
-)
-telsendimg(
-    conf=tel_config,
-    path=file_name + '.png',
-    cap=file_name
-)
+# Restrict household profile
+list_wa = [1, 2, 3]
+list_child = [0, 1, 2, 3]
+list_elderly = [0, 1, 2]
+list_file_names = []
+for wa in tqdm(list_wa):
+    for child in list_child:
+        for elderly in list_elderly:
+            d = df[(df['working_age2'] == wa) & (df['kid'] == child) & (df['elderly2'] == elderly)]
 
+            # Tabulate median spending on fuel 0722, and elec 0451 by income group
+            tab = d.groupby('gross_income_group')[['cons_0722_fuel', 'cons_0451_elec']].median()
+
+            # Compute implied subsidies
+            sub = compute_subsidies(input=tab, fuel_sub_litre=1.05, elec_sub_rate=22.3)
+            file_name = path_output + \
+                        'tab_subsidy_incidence_' + \
+                        str(wa) + 'wa' + '_' + \
+                        str(child) + 'child' + '_' + \
+                        str(elderly) + 'elderly'
+            list_file_names = list_file_names + [file_name]
+            fig = heatmap(
+                input=sub,
+                mask=False,
+                colourmap='vlag',
+                outputfile=file_name + '.png',
+                title='Estimated Subsidies Received by Income Group; ' +
+                      '\n' +
+                      str(wa) + ' Working Adults, ' +
+                      str(child) + ' Child, ' +
+                      str(elderly) + ' Elderly',
+                lb=0,
+                ub=sub.max().max(),
+                format='.0f'
+            )
+            # telsendimg(
+            #     conf=tel_config,
+            #     path=file_name + '.png',
+            #     cap=file_name
+            # )
+# PDF
+file_name_pdf = path_output + 'tab_subsidy_incidence_consol'
+pil_img2pdf(
+    list_images=list_file_names,
+    extension='png',
+    pdf_name=file_name_pdf
+)
+telsendfiles(
+    conf=tel_config,
+    path=file_name_pdf + '.pdf',
+    cap=file_name_pdf
+)
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')
