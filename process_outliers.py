@@ -1,10 +1,10 @@
+# %%
 # Process outliers of respective raw files, before consolidating for further analysis
-
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.ensemble import IsolationForest
-from src.helper import telsendmsg, telsendimg, telsendfiles
+from helper import telsendmsg, telsendimg, telsendfiles
 from tabulate import tabulate
 from tqdm import tqdm
 import time
@@ -14,29 +14,36 @@ import ast
 
 time_start = time.time()
 
+# %%
 # 0 --- Main settings
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
-path_2009 = './data/hies_2009/'
-path_2014 = './data/hies_2014/'
-path_2016 = './data/hies_2016/'
-path_2019 = './data/hies_2019/'
+path_2009 = 'data/hies_2009/'
+path_2014 = 'data/hies_2014/'
+path_2016 = 'data/hies_2016/'
+path_2019 = 'data/hies_2019/'
+path_2022 = 'data/hies_2022/'
 opt_random_state = 11353415
 
+# %%
 # I --- Load processed vintages
 df_09 = pd.read_parquet(path_2009 + 'hies_2009_consol.parquet')
 df_14 = pd.read_parquet(path_2014 + 'hies_2014_consol.parquet')
 df_16 = pd.read_parquet(path_2016 + 'hies_2016_consol.parquet')
 df_19 = pd.read_parquet(path_2019 + 'hies_2019_consol.parquet')
+df_22 = pd.read_parquet(path_2022 + 'hies_2022_consol.parquet')
 
 df_14_hhbasis = pd.read_parquet(path_2014 + 'hies_2014_consol_hhbasis.parquet')
 df_16_hhbasis = pd.read_parquet(path_2016 + 'hies_2016_consol_hhbasis.parquet')
 df_19_hhbasis = pd.read_parquet(path_2019 + 'hies_2019_consol_hhbasis.parquet')
+df_22_hhbasis = pd.read_parquet(path_2022 + 'hies_2022_consol_hhbasis.parquet')
 
 df_14_equivalised = pd.read_parquet(path_2014 + 'hies_2014_consol_equivalised.parquet')
 df_16_equivalised = pd.read_parquet(path_2016 + 'hies_2016_consol_equivalised.parquet')
 df_19_equivalised = pd.read_parquet(path_2019 + 'hies_2019_consol_equivalised.parquet')
+df_22_equivalised = pd.read_parquet(path_2022 + 'hies_2022_consol_equivalised.parquet')
 
+# %%
 # II --- Outliers by income and spending (items 1 - 12)
 # Define functions
 def outlier_kmeans(data, cols_y_x, threshold):
@@ -107,51 +114,63 @@ cols_features = cols_features_base + ['cons_0722_fuel', 'cons_0451_elec', 'cons_
 
 use_iforest = True
 if use_iforest:
+    df_22 = outlier_isolationforest(data=df_22, cols_x=cols_features,
+                                    opt_max_samples=int(len(df_22) / 100), opt_threshold=0.05)
     df_19 = outlier_isolationforest(data=df_19, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_19) / 100), opt_threshold=0.01)
+                                    opt_max_samples=int(len(df_19) / 100), opt_threshold=0.05)
     df_16 = outlier_isolationforest(data=df_16, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_16) / 100), opt_threshold=0.01)
+                                    opt_max_samples=int(len(df_16) / 100), opt_threshold=0.05)
     df_14 = outlier_isolationforest(data=df_14, cols_x=cols_features,
-                                    opt_max_samples=int(len(df_14) / 100), opt_threshold=0.01)
+                                    opt_max_samples=int(len(df_14) / 100), opt_threshold=0.05)
     df_09 = outlier_isolationforest(data=df_09, cols_x=cols_features_base,
-                                    opt_max_samples=int(len(df_09) / 100), opt_threshold=0.01)
+                                    opt_max_samples=int(len(df_09) / 100), opt_threshold=0.05)
 
+    df_22_hhbasis = outlier_isolationforest(data=df_22_hhbasis, cols_x=cols_features,
+                                            opt_max_samples=int(len(df_22_hhbasis) / 100), opt_threshold=0.05)
     df_19_hhbasis = outlier_isolationforest(data=df_19_hhbasis, cols_x=cols_features,
-                                            opt_max_samples=int(len(df_19) / 100), opt_threshold=0.01)
+                                            opt_max_samples=int(len(df_19_hhbasis) / 100), opt_threshold=0.05)
     df_16_hhbasis = outlier_isolationforest(data=df_16_hhbasis, cols_x=cols_features,
-                                            opt_max_samples=int(len(df_16) / 100), opt_threshold=0.01)
+                                            opt_max_samples=int(len(df_16_hhbasis) / 100), opt_threshold=0.05)
     df_14_hhbasis = outlier_isolationforest(data=df_14_hhbasis, cols_x=cols_features,
-                                            opt_max_samples=int(len(df_14) / 100), opt_threshold=0.01)
+                                            opt_max_samples=int(len(df_14_hhbasis) / 100), opt_threshold=0.05)
 
 use_kmeans = False
 if use_kmeans:
+    df_22 = outlier_kmeans(data=df_22, cols_y_x=cols_features, threshold=0.99)
     df_19 = outlier_kmeans(data=df_19, cols_y_x=cols_features, threshold=0.99)
     df_16 = outlier_kmeans(data=df_16, cols_y_x=cols_features, threshold=0.99)
     df_14 = outlier_kmeans(data=df_14, cols_y_x=cols_features, threshold=0.99)
     df_09 = outlier_kmeans(data=df_09, cols_y_x=cols_features_base, threshold=0.99)
 
+    df_22_hhbasis = outlier_kmeans(data=df_22_hhbasis, cols_y_x=cols_features, threshold=0.99)
     df_19_hhbasis = outlier_kmeans(data=df_19_hhbasis, cols_y_x=cols_features, threshold=0.99)
     df_16_hhbasis = outlier_kmeans(data=df_16_hhbasis, cols_y_x=cols_features, threshold=0.99)
     df_14_hhbasis = outlier_kmeans(data=df_14_hhbasis, cols_y_x=cols_features, threshold=0.99)
 
+    df_22_equivalised = outlier_kmeans(data=df_22_equivalised, cols_y_x=cols_features, threshold=0.99)
     df_19_equivalised = outlier_kmeans(data=df_19_equivalised, cols_y_x=cols_features, threshold=0.99)
     df_16_equivalised = outlier_kmeans(data=df_16_equivalised, cols_y_x=cols_features, threshold=0.99)
     df_14_equivalised = outlier_kmeans(data=df_14_equivalised, cols_y_x=cols_features, threshold=0.99)
 
+# %%
 # X --- Output
+df_22.to_parquet(path_2022 + 'hies_2022_consol_trimmedoutliers.parquet')
 df_19.to_parquet(path_2019 + 'hies_2019_consol_trimmedoutliers.parquet')
 df_16.to_parquet(path_2016 + 'hies_2016_consol_trimmedoutliers.parquet')
 df_14.to_parquet(path_2014 + 'hies_2014_consol_trimmedoutliers.parquet')
 df_09.to_parquet(path_2009 + 'hies_2009_consol_trimmedoutliers.parquet')
 
+df_22_hhbasis.to_parquet(path_2022 + 'hies_2022_consol_hhbasis_trimmedoutliers.parquet')
 df_19_hhbasis.to_parquet(path_2019 + 'hies_2019_consol_hhbasis_trimmedoutliers.parquet')
 df_16_hhbasis.to_parquet(path_2016 + 'hies_2016_consol_hhbasis_trimmedoutliers.parquet')
 df_14_hhbasis.to_parquet(path_2014 + 'hies_2014_consol_hhbasis_trimmedoutliers.parquet')
 
+df_22_equivalised.to_parquet(path_2022 + 'hies_2022_consol_equivalised_trimmedoutliers.parquet')
 df_19_equivalised.to_parquet(path_2019 + 'hies_2019_consol_equivalised_trimmedoutliers.parquet')
 df_16_equivalised.to_parquet(path_2016 + 'hies_2016_consol_equivalised_trimmedoutliers.parquet')
 df_14_equivalised.to_parquet(path_2014 + 'hies_2014_consol_equivalised_trimmedoutliers.parquet')
 
+# %%
 # X --- Notify
 telsendmsg(conf=tel_config,
            msg='impact-household --- process_outliers: COMPLETED')

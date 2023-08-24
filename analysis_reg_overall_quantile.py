@@ -1,8 +1,8 @@
+# %%
 # Regression analysis, but overall, and by cohort quantiles
-
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, barchart, heatmap, pil_img2pdf
+from helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, barchart, heatmap, pil_img2pdf
 from tabulate import tabulate
 import dataframe_image as dfi
 from tqdm import tqdm
@@ -13,10 +13,11 @@ import ast
 
 time_start = time.time()
 
+# %%
 # 0 --- Main settings
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
-path_data = './data/hies_consol/'
+path_data = 'data/hies_consol/'
 income_choice = os.getenv('INCOME_CHOICE')
 outcome_choice = os.getenv('OUTCOME_CHOICE')
 use_first_diff = ast.literal_eval(os.getenv('USE_FIRST_DIFF'))
@@ -39,6 +40,7 @@ elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv('HHBASIS_COHORTS_WITH_HHSIZE'))
 
 
+# %%
 # --------- Analysis Starts ---------
 
 
@@ -50,21 +52,19 @@ def load_clean_estimate(input_suffix, opt_income, opt_consumption, opt_first_dif
     # Redefine year
     df = df.rename(columns={'_time': 'year'})
     # Keep only entity + time + time-variant variables
-    col_groups = \
-        [
-            'state',
-            'urban',
-            'education',
-            'ethnicity',
-            'malaysian',
-            'income_gen_members_group',
-            'male',
-            'birth_year_group',
-            'marriage',
-            'emp_status',
-            'industry',
-            'occupation'
-        ]
+    col_groups = [
+        "state",
+        "urban",
+        "education",
+        "ethnicity",
+        "income_gen_members_group",
+        "male",
+        "birth_year_group",
+        "marriage",
+        "emp_status",
+        "industry",
+        "occupation",
+    ]
     if hhbasis_adj_analysis and hhbasis_cohorts_with_hhsize:
         col_groups = col_groups + ['hh_size_group']
     df[col_groups] = df[col_groups].astype('str')
@@ -82,13 +82,12 @@ def load_clean_estimate(input_suffix, opt_income, opt_consumption, opt_first_dif
     for i in col_cons + col_inc:
         pass
         # df[i] = np.log(df[i])
-        # df_ind[i] = np.log(df_ind[i])
 
     # First diff
     if opt_first_diff:
         for y in col_cons + col_inc:
-            # df[y] = 100 * (df[y] - df.groupby('cohort_code')[y].shift(1)) / df.groupby('cohort_code')[y].shift(1)
-            df[y] = 100 * (df[y] - df.groupby('cohort_code')[y].shift(1))
+            # df[y] = (df[y] - df.groupby('cohort_code')[y].shift(1)) / df.groupby('cohort_code')[y].shift(1)
+            df[y] = (df[y] - df.groupby('cohort_code')[y].shift(1))
         df = df.dropna(axis=0)
 
     # III --- Estimation
@@ -278,14 +277,15 @@ params_table_consol.to_parquet('output/params_table_overall_quantile' + '_' +
                                outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.parquet')
 params_table_consol.to_csv('output/params_table_overall_quantile' + '_' +
                            outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.csv')
-dfi.export(params_table_consol,
-           'output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
-           fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)  # to overcome mar2023 error
-telsendimg(
-    conf=tel_config,
-    path='output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
-    cap='params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
-)
+# dfi.export(params_table_consol,
+#            'output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+#            fontsize=3.8, dpi=800, table_conversion='chrome', chrome_path=None)  # to overcome mar2023 error
+# telsendimg(
+#     conf=tel_config,
+#     path='output/params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+#     cap='params_table_overall_quantile' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
+# )
+print(tabulate(params_table_consol.round(3), headers='keys', tablefmt='pretty'))
 
 # Average all quantiles
 if show_ci:
@@ -296,16 +296,18 @@ if not show_ci:
     params_table_consol_avg = params_table_consol.groupby('method')[['Parameter']] \
         .mean(numeric_only=True) \
         .reset_index()
-dfi.export(params_table_consol_avg,
-           'output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png')
-telsendimg(
-    conf=tel_config,
-    path='output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
-    cap='params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
-)
+# dfi.export(params_table_consol_avg,
+#            'output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png')
+# telsendimg(
+#     conf=tel_config,
+#     path='output/params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix + '.png',
+#     cap='params_table_overall_quantile_avg' + '_' + outcome_choice + '_' + income_choice + '_' + fd_suffix + hhbasis_suffix
+# )
+print(tabulate(params_table_consol_avg.round(3), headers='keys', tablefmt='pretty'))
 
 # --------- Analysis Ends ---------
 
+# %%
 # X --- Notify
 telsendmsg(conf=tel_config,
            msg='impact-household --- analysis_reg_overall_quantile: COMPLETED')

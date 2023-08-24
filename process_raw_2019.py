@@ -1,5 +1,5 @@
 import pandas as pd
-from src.helper import telsendmsg, telsendimg, telsendfiles
+from helper import telsendmsg, telsendimg, telsendfiles
 from tabulate import tabulate
 from tqdm import tqdm
 import time

@@ -600,7 +600,7 @@ df["id"] = df.reset_index().index
 df = df.reset_index(drop=True)
 
 # %%
-# Post-merge: convert income, expenditure, and margins into monthly
+# Post-merge: convert income, expenditure, and margins into monthly per capita
 for i in [
     "salaried_wages",
     "other_wages",
@@ -608,15 +608,15 @@ for i in [
     "gross_transfers",
     "gross_income",
 ]:
-    df[i] = df[i] / 12
-    # df[i] = df[i] / (df['hh_size'] * 12)
-# for i in ['cons_01_12', 'cons_01_13'] + \
-#          ['cons_0' + str(i) for i in range(1, 10)] + \
-#          ['cons_' + str(i) for i in range(11, 14)] + \
-#          ['cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']:
-#     df[i] = df[i] / df['hh_size']
-# for i in ['net_margin', 'gross_margin']:
-#     df[i] = df[i] / df['hh_size']
+    # df[i] = df[i] / 12  # Convert from annual to monthly
+    df[i] = df[i] / ((df['hh_size'] ** (1 / 2)) * 12)
+for i in ['cons_01_12', 'cons_01_13'] + \
+         ['cons_0' + str(i) for i in range(1, 10)] + \
+         ['cons_' + str(i) for i in range(11, 14)] + \
+         ['cons_0722_fuel', 'cons_0451_elec', 'cons_07_ex_bigticket']:
+    df[i] = df[i] / (df['hh_size'] ** (1 / 2))
+for i in ['gross_margin']:
+    df[i] = df[i] / (df['hh_size'] ** (1 / 2))
 
 # %%
 # Post-merge: birth year
@@ -715,12 +715,12 @@ for col in cols_cat_inspect:
 
 # %%
 # V --- Save output
-df.to_parquet(path_data + "hies_2022_consol_hhbasis.parquet", compression="brotli")
+df.to_parquet(path_data + "hies_2022_consol_equivalised.parquet", compression="brotli")
 
 # %%
 # X --- Notify
 telsendmsg(
-    conf=tel_config, msg="impact-household --- process_raw_2022_hhbasis: COMPLETED"
+    conf=tel_config, msg="impact-household --- process_raw_2022_equivalised: COMPLETED"
 )
 
 # End
