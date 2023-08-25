@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from src.helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap, pil_img2pdf, boxplot_time
+from helper import telsendmsg, telsendimg, telsendfiles, fe_reg, re_reg, reg_ols, heatmap, pil_img2pdf, boxplot_time
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 import dataframe_image as dfi
@@ -17,9 +17,9 @@ time_start = time.time()
 # 0 --- Main settings
 load_dotenv()
 tel_config = os.getenv('TEL_CONFIG')
-path_data = './data/hies_consol/'
-path_output = './output/'
-path_2019 = './data/hies_2019/'
+path_data = 'data/hies_consol/'
+path_output = 'output/'
+path_2022 = 'data/hies_2022/'
 hhbasis_descriptive = ast.literal_eval(os.getenv('HHBASIS_DESCRIPTIVE'))
 equivalised_descriptive = ast.literal_eval(os.getenv('EQUIVALISED_DESCRIPTIVE'))
 if hhbasis_descriptive:
@@ -37,11 +37,10 @@ if not hhbasis_descriptive and not equivalised_descriptive:
 
 # I --- Load data
 df = pd.read_parquet(
-    path_2019 + 'hies_2019_consol' + input_suffix + '.parquet')  # CHECK: include / exclude outliers and on hhbasis
+    path_2022 + 'hies_2022_consol' + input_suffix + '.parquet')  # CHECK: include / exclude outliers and on hhbasis
 
 # II --- Pre-analysis prep
 # Malaysian only
-df = df[df['malaysian'] == 1]
 
 
 # Generate income groups

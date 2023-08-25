@@ -190,3 +190,5 @@ old_static_*.txt
 *.out
 *.gz
 
+# Special py files
+sendfiles.py

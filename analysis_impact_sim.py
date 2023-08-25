@@ -329,13 +329,13 @@ for tiering, tiering_nice in zip(["tiered", "flat"], ["Tiered", "Flat"]):
             path_output
             + "landing_impact_sim_"
             + "kids_elderly"
-            + tiering
-            + "_restrict_"
+            + tiering  # flat or tiered
+            + "_restrict_"  # restrict ONLY
             + str(restrict_threshold)
             + "_"
             + "wa_"
-            + tiering
-            + "_restrict_"
+            + tiering  # flat or tiered
+            + "_restrict_"  # restrict ONLY
             + str(restrict_threshold)
             + "_level"
             + "_rgdp_"

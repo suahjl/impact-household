@@ -388,7 +388,7 @@ for response, ltavg in zip(choices_macro_response, list(dict_ltavg.values())):
         net_sub_val.index.name = "Petrol Scenarios"
         # GENERATE DISPLAY FRAME
         net_sub_disp = (
-            pd.DataFrame(net_sub.mean(axis=0)).round(1).transpose().astype("str")
+            pd.DataFrame(net_sub.mean(axis=0)).round(2).transpose().astype("str")
         )
         # Generate heatmap
         file_name = (
@@ -557,7 +557,7 @@ for response, ltavg in zip(choices_macro_response, list(dict_ltavg.values())):
     net_sub_val.index = pd.Series(["Immediate to 6 Months"])
     net_sub_val.index.name = "Petrol Scenarios"
     # GENERATE DISPLAY FRAME
-    net_sub_disp = pd.DataFrame(net_sub.mean(axis=0)).round(1).transpose().astype("str")
+    net_sub_disp = pd.DataFrame(net_sub.mean(axis=0)).round(2).transpose().astype("str")
     # Generate heatmap
     file_name = (
         path_output
