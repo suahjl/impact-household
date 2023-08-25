@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 from tabulate import tabulate
-from src.helper import \
+from helper import \
     telsendmsg, telsendimg, telsendfiles, \
     heatmap, pil_img2pdf, barchart, wide_grouped_barchart
 import dataframe_image as dfi
@@ -21,7 +21,7 @@ time_start = time.time()
 load_dotenv()
 choice_horizon = int(os.getenv('IRF_HORIZON'))
 tel_config = os.getenv('TEL_CONFIG')
-path_output = './output/'
+path_output = 'output/'
 
 # Which macro-analysis
 macro_qoq = ast.literal_eval(os.getenv('MACRO_QOQ'))
@@ -161,13 +161,13 @@ def compute_var_impact(
 def export_dfi_parquet_csv_telegram(input, file_name):
     input.to_parquet(file_name + '.parquet')
     input.to_csv(file_name + '.csv')
-    dfi.export(input, file_name + '.png',
-               fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)
-    telsendimg(
-        conf=tel_config,
-        path=file_name + '.png',
-        cap=file_name
-    )
+    # dfi.export(input, file_name + '.png',
+            #    fontsize=1.5, dpi=1600, table_conversion='chrome', chrome_path=None)
+    # telsendimg(
+    #     conf=tel_config,
+    #     path=file_name + '.png',
+    #     cap=file_name
+    # )
 
 
 # Compute
