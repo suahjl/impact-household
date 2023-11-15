@@ -287,7 +287,7 @@ for tiering, tiering_nice in zip(["tiered", "flat"], ["Tiered", "Flat"]):
             title="Landing Impact (RM bil): " + tiering_nice + " & Restricted",
             lb=0,
             ub=landing.max().max(),
-            format=".1f",
+            format=".2f",
         )
         files_landing_nominal = files_landing_nominal + [file_name]
         # PC growth
@@ -320,7 +320,7 @@ for tiering, tiering_nice in zip(["tiered", "flat"], ["Tiered", "Flat"]):
             title="Landing Impact (PC; pp): " + tiering_nice + " & Restricted",
             lb=0,
             ub=landing_rpc.max().max(),
-            format=".1f",
+            format=".2f",
         )
         files_landing_rpc = files_landing_rpc + [file_name]
 
@@ -354,7 +354,7 @@ for tiering, tiering_nice in zip(["tiered", "flat"], ["Tiered", "Flat"]):
             title="Landing Impact (GDP; pp): " + tiering_nice + " & Restricted",
             lb=0,
             ub=landing_rgdp.max().max(),
-            format=".1f",
+            format=".2f",
         )
         files_landing_rgdp = files_landing_rgdp + [file_name]
         # ADD TO ORDERED LIST OF LANDING IMPACT (RPC GROWTH PP, and GDP GROWTH PP)
@@ -903,7 +903,7 @@ def split_allcombos_heatmap_telegram(
                 title="Breakdown of Impact on " + response + " (pp)",
                 lb=0,
                 ub=allcombos_sub.max().max(),
-                format=".1f",
+                format=".2f",
             )
             list_files = list_files + [
                 path_output
