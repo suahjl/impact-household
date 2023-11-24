@@ -19,6 +19,7 @@ if process_raw:
     import process_raw_2016
     import process_raw_2019
     import process_raw_2022
+    import process_raw_2022_bnm
 
 process_raw_hhbasis = False
 if process_raw_hhbasis:
@@ -26,6 +27,7 @@ if process_raw_hhbasis:
     import process_raw_2016_hhbasis
     import process_raw_2019_hhbasis
     import process_raw_2022_hhbasis
+    import process_raw_2022_bnm_hhbasis
 
 process_raw_equivalised = False
 if process_raw_equivalised:
@@ -33,6 +35,7 @@ if process_raw_equivalised:
     import process_raw_2016_equivalised
     import process_raw_2019_equivalised
     import process_raw_2022_equivalised
+    import process_raw_2022_bnm_equivalised
 
 # %%
 # Pre-analysis processing

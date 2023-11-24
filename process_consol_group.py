@@ -23,7 +23,8 @@ path_2009 = "data/hies_2009/"
 path_2014 = "data/hies_2014/"
 path_2016 = "data/hies_2016/"
 path_2019 = "data/hies_2019/"
-path_2022 = "data/hies_2022/"
+# path_2022 = "data/hies_2022/"
+path_2022 = "data/hies_2022_bnm/"
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv("HHBASIS_COHORTS_WITH_HHSIZE"))
 
 # %%

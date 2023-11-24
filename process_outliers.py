@@ -22,7 +22,8 @@ path_2009 = 'data/hies_2009/'
 path_2014 = 'data/hies_2014/'
 path_2016 = 'data/hies_2016/'
 path_2019 = 'data/hies_2019/'
-path_2022 = 'data/hies_2022/'
+# path_2022 = 'data/hies_2022/'
+path_2022 = 'data/hies_2022_bnm/'
 opt_random_state = 11353415
 
 # %%
