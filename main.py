@@ -66,7 +66,7 @@ generate_descriptive = False
 if generate_descriptive:
     import analysis_descriptive
     import analysis_descriptive_inc_allbasis_fixedincgroups
-    import analysis_inc_growth_change
+    # import analysis_inc_growth_change
 
 # %%
 # Macro analysis
