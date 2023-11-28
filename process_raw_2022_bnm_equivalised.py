@@ -367,9 +367,10 @@ del cons_transport_ex_bigticket
 cols_cons_01_12 = ['cons_0' + str(i) for i in range(1, 10)] + ['cons_' + str(i) for i in range(11, 13)]
 cols_cons_01_13 = ['cons_0' + str(i) for i in range(1, 10)] + ['cons_' + str(i) for i in range(11, 14)]
 df["cons_01_12"] = df[cols_cons_01_12].sum(axis=1)
-df["cons_01_13"] = df[cols_cons_01_13].sum(axis=1)
+# df["cons_01_13"] = df[cols_cons_01_13].sum(axis=1)
 del df["jum_g01g13"]
-del df["jum_g01g90"]
+# del df["jum_g01g90"]
+df = df.rename(columns={"jum_g01g90": "cons_01_13"})
 
 # %%
 # Margins

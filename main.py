@@ -45,24 +45,24 @@ if process_pre_analysis:
     import process_consol_group
 
 # %%
-# Analyse (uses trimmed-outliers per-capita data frames)
+# Analyse (uses trimmed-outliers hhbasis data frames)
 generate_adj_analysis = True
 if generate_adj_analysis:
     import analysis_reg_overall
     import analysis_reg_overall_quantile
 
-    time.sleep(15)
+    # time.sleep(15)
     import analysis_reg_strat
 
-    time.sleep(45)
+    # time.sleep(45)
     import analysis_reg_strat_quantile
 
-    time.sleep(30)
+    # time.sleep(30)
     import analysis_reg_strat_subgroups
 
 # %%
 # Descriptive stats
-generate_descriptive = False
+generate_descriptive = True
 if generate_descriptive:
     import analysis_descriptive
     import analysis_descriptive_inc_allbasis_fixedincgroups
