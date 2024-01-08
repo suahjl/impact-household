@@ -18,33 +18,32 @@ import json
 from dotenv import load_dotenv
 
 load_dotenv()
-plt.switch_backend('agg')
+plt.switch_backend("agg")
 
 
 # --- Notifications
 
-def telsendimg(conf='', path='', cap=''):
-    with open(path, 'rb') as f:
-        telegram_send.send(conf=conf,
-                           images=[f],
-                           captions=[cap])
+
+def telsendimg(conf="", path="", cap=""):
+    with open(path, "rb") as f:
+        telegram_send.send(conf=conf, images=[f], captions=[cap])
 
 
-def telsendfiles(conf='', path='', cap=''):
-    with open(path, 'rb') as f:
-        telegram_send.send(conf=conf,
-                           files=[f],
-                           captions=[cap])
+def telsendfiles(conf="", path="", cap=""):
+    with open(path, "rb") as f:
+        telegram_send.send(conf=conf, files=[f], captions=[cap])
 
 
-def telsendmsg(conf='', msg=''):
-    telegram_send.send(conf=conf,
-                       messages=[msg])
+def telsendmsg(conf="", msg=""):
+    telegram_send.send(conf=conf, messages=[msg])
 
 
 # --- Data
 def get_data_from_api_ceic(
-        series_ids: list[float], series_names: list[str], start_date: date, historical_extension: bool = False
+    series_ids: list[float],
+    series_names: list[str],
+    start_date: date,
+    historical_extension: bool = False,
 ) -> pd.DataFrame:
     """
     Get CEIC data.
@@ -71,7 +70,9 @@ def get_data_from_api_ceic(
                 f"{PATH}&with_historical_extension=True&token={os.getenv('CEIC_API_KEY')}"
             )
             content = content + json.loads(response.text)["data"]
-    for i, j in zip(range(len(series_ids)), series_names):  # series names not in API json
+    for i, j in zip(
+        range(len(series_ids)), series_names
+    ):  # series names not in API json
         data = pd.DataFrame(content[i]["timePoints"])[["date", "value"]]
         # name = content[i]["layout"][0]["table"]["name"]
         name = "_".join(j.split(": ")[1:])  # name --> j
@@ -86,7 +87,7 @@ def get_data_from_api_ceic(
 
 
 def get_data_from_ceic(
-        series_ids: list[float], start_date: date, historical_extension: bool = False
+    series_ids: list[float], start_date: date, historical_extension: bool = False
 ) -> pd.DataFrame:
     """
     Get CEIC data.
@@ -135,54 +136,51 @@ def get_data_from_ceic(
 
 # --- Linear regressions
 
-def reg_ols(
-        df: pd.DataFrame,
-        eqn: str
-):
+
+def reg_ols(df: pd.DataFrame, eqn: str):
     # Work on copy
     d = df.copy()
 
     # Estimate model
     mod = smf.ols(formula=eqn, data=d)
-    res = mod.fit(cov_type='HC3')
+    res = mod.fit(cov_type="HC3")
     # print(res.summary())
 
     # Return estimated parameters
     params_table = pd.concat([res.params, res.HC3_se], axis=1)
-    params_table.columns = ['Parameter', 'SE']
-    params_table['LowerCI'] = params_table['Parameter'] - 1.96 * params_table['SE']
-    params_table['UpperCI'] = params_table['Parameter'] + 1.96 * params_table['SE']
+    params_table.columns = ["Parameter", "SE"]
+    params_table["LowerCI"] = params_table["Parameter"] - 1.96 * params_table["SE"]
+    params_table["UpperCI"] = params_table["Parameter"] + 1.96 * params_table["SE"]
 
-    del params_table['SE']
+    del params_table["SE"]
 
     # Return joint test statistics
     joint_teststats = pd.DataFrame(
-        {'F-Test': [res.fvalue, res.f_pvalue], }
+        {
+            "F-Test": [res.fvalue, res.f_pvalue],
+        }
     )
     joint_teststats = joint_teststats.transpose()
-    joint_teststats.columns = ['F', 'P-Value']
+    joint_teststats.columns = ["F", "P-Value"]
 
     # Regression details
-    reg_det = pd.DataFrame(
-        {'Observations': [res.nobs],
-         'DF Residuals': [res.df_resid]}
-    )
+    reg_det = pd.DataFrame({"Observations": [res.nobs], "DF Residuals": [res.df_resid]})
     reg_det = reg_det.transpose()
-    reg_det.columns = ['Number']
+    reg_det.columns = ["Number"]
 
     # Output
     return mod, res, params_table, joint_teststats, reg_det
 
 
 def fe_reg(
-        df: pd.DataFrame,
-        y_col: str,
-        x_cols: list,
-        i_col: str,
-        t_col: str,
-        fixed_effects: bool,
-        time_effects: bool,
-        cov_choice: str,
+    df: pd.DataFrame,
+    y_col: str,
+    x_cols: list,
+    i_col: str,
+    t_col: str,
+    fixed_effects: bool,
+    time_effects: bool,
+    cov_choice: str,
 ):
     # Work on copy
     d = df.copy()
@@ -190,13 +188,13 @@ def fe_reg(
 
     # Create eqn
     if not fixed_effects and not time_effects:
-        eqn = y_col + '~' + '+'.join(x_cols)
+        eqn = y_col + "~" + "+".join(x_cols)
     if fixed_effects and not time_effects:
-        eqn = y_col + '~' + '+'.join(x_cols) + '+EntityEffects'
+        eqn = y_col + "~" + "+".join(x_cols) + "+EntityEffects"
     if time_effects and not fixed_effects:
-        eqn = y_col + '~' + '+'.join(x_cols) + '+TimeEffects'
+        eqn = y_col + "~" + "+".join(x_cols) + "+TimeEffects"
     if fixed_effects and time_effects:
-        eqn = y_col + '~' + '+'.join(x_cols) + '+EntityEffects+TimeEffects'
+        eqn = y_col + "~" + "+".join(x_cols) + "+EntityEffects+TimeEffects"
 
     # Estimate model
     mod = PanelOLS.from_formula(formula=eqn, data=d)
@@ -205,48 +203,56 @@ def fe_reg(
 
     # Return estimated parameters
     params_table = pd.concat([res.params, res.std_errors], axis=1)
-    params_table.columns = ['Parameter', 'SE']
-    params_table['LowerCI'] = params_table['Parameter'] - 1.96 * params_table['SE']
-    params_table['UpperCI'] = params_table['Parameter'] + 1.96 * params_table['SE']
+    params_table.columns = ["Parameter", "SE"]
+    params_table["LowerCI"] = params_table["Parameter"] - 1.96 * params_table["SE"]
+    params_table["UpperCI"] = params_table["Parameter"] + 1.96 * params_table["SE"]
 
-    del params_table['SE']
+    del params_table["SE"]
 
     # Return joint test statistics
     joint_teststats = pd.DataFrame(
-        {'F-Test (Poolability)': [res.f_pooled.stat, res.f_pooled.pval],
-         'F-Test (Naive)': [res.f_statistic.stat, res.f_statistic.pval],
-         'F-Test (Robust)': [res.f_statistic_robust.stat, res.f_statistic_robust.pval]}
+        {
+            "F-Test (Poolability)": [res.f_pooled.stat, res.f_pooled.pval],
+            "F-Test (Naive)": [res.f_statistic.stat, res.f_statistic.pval],
+            "F-Test (Robust)": [
+                res.f_statistic_robust.stat,
+                res.f_statistic_robust.pval,
+            ],
+        }
     )
     joint_teststats = joint_teststats.transpose()
-    joint_teststats.columns = ['F', 'P-Value']
+    joint_teststats.columns = ["F", "P-Value"]
 
     # Regression details
     reg_det = pd.DataFrame(
-        {'Observations': [res.nobs],
-         'Entities': [res.entity_info.total],
-         'Time Periods': [res.time_info.total]}
+        {
+            "Observations": [res.nobs],
+            "Entities": [res.entity_info.total],
+            "Time Periods": [res.time_info.total],
+            "R-Squared": [res.rsquared]
+        }
     )
     reg_det = reg_det.transpose()
-    reg_det.columns = ['Number']
+    reg_det.columns = ["Number"]
 
     # Output
     return mod, res, params_table, joint_teststats, reg_det
 
 
 def re_reg(
-        df: pd.DataFrame,
-        y_col: str,
-        x_cols: list,
-        i_col: str,
-        t_col: str,
-        cov_choice: str,
+    df: pd.DataFrame,
+    y_col: str,
+    x_cols: list,
+    i_col: str,
+    t_col: str,
+    cov_choice: str,
 ):
     # Work on copy
     d = df.copy()
     d = d.set_index([i_col, t_col])
 
     # Create eqn
-    eqn = y_col + '~' + '1 +' + '+'.join(x_cols)
+    eqn = y_col + "~" + "1 +" + "+".join(x_cols)
 
     # Estimate model
     mod = RandomEffects.from_formula(formula=eqn, data=d)
@@ -255,28 +261,36 @@ def re_reg(
 
     # Return estimated parameters
     params_table = pd.concat([res.params, res.std_errors], axis=1)
-    params_table.columns = ['Parameter', 'SE']
-    params_table['LowerCI'] = params_table['Parameter'] - 1.96 * params_table['SE']
-    params_table['UpperCI'] = params_table['Parameter'] + 1.96 * params_table['SE']
+    params_table.columns = ["Parameter", "SE"]
+    params_table["LowerCI"] = params_table["Parameter"] - 1.96 * params_table["SE"]
+    params_table["UpperCI"] = params_table["Parameter"] + 1.96 * params_table["SE"]
 
-    del params_table['SE']
+    del params_table["SE"]
 
     # Return joint test statistics
     joint_teststats = pd.DataFrame(
-        {'F-Test (Naive)': [res.f_statistic.stat, res.f_statistic.pval],
-         'F-Test (Robust)': [res.f_statistic_robust.stat, res.f_statistic_robust.pval]}
+        {
+            "F-Test (Naive)": [res.f_statistic.stat, res.f_statistic.pval],
+            "F-Test (Robust)": [
+                res.f_statistic_robust.stat,
+                res.f_statistic_robust.pval,
+            ],
+        }
     )
     joint_teststats = joint_teststats.transpose()
-    joint_teststats.columns = ['F', 'P-Value']
+    joint_teststats.columns = ["F", "P-Value"]
 
     # Regression details
     reg_det = pd.DataFrame(
-        {'Observations': [res.nobs],
-         'Entities': [res.entity_info.total],
-         'Time Periods': [res.time_info.total]}
+        {
+            "Observations": [res.nobs],
+            "Entities": [res.entity_info.total],
+            "Time Periods": [res.time_info.total],
+            "R-Squared": [res.rsquared]
+        }
     )
     reg_det = reg_det.transpose()
-    reg_det.columns = ['Number']
+    reg_det.columns = ["Number"]
 
     # Output
     return mod, res, params_table, joint_teststats, reg_det
@@ -286,14 +300,14 @@ def re_reg(
 
 
 def est_varx(
-        df: pd.DataFrame,
-        cols_endog: list,
-        run_varx: bool,
-        cols_exog: list,
-        choice_ic: str,
-        choice_trend: str,
-        choice_horizon: int,
-        choice_maxlags: int
+    df: pd.DataFrame,
+    cols_endog: list,
+    run_varx: bool,
+    cols_exog: list,
+    choice_ic: str,
+    choice_trend: str,
+    choice_horizon: int,
+    choice_maxlags: int,
 ):
     # Work on copy
     d = df.copy()
@@ -312,28 +326,32 @@ def est_varx(
 
 # --- CHARTS
 
+
 def heatmap(
-        input: pd.DataFrame,
-        mask: bool,
-        colourmap: str,
-        outputfile: str,
-        title: str,
-        lb: float,
-        ub: float,
-        format: str
+    input: pd.DataFrame,
+    mask: bool,
+    colourmap: str,
+    outputfile: str,
+    title: str,
+    lb: float,
+    ub: float,
+    format: str,
+    annot_size=9,
 ):
     fig = plt.figure()
-    sns.heatmap(input,
-                mask=mask,
-                annot=True,
-                cmap=colourmap,
-                center=0,
-                annot_kws={'size': 9},  # 9, 12, 16, 20, 24, 28
-                vmin=lb,
-                vmax=ub,
-                xticklabels=True,
-                yticklabels=True,
-                fmt=format)
+    sns.heatmap(
+        input,
+        mask=mask,
+        annot=True,
+        cmap=colourmap,
+        center=0,
+        annot_kws={"size": 9},  # 9, 12, 16, 20, 24, 28
+        vmin=lb,
+        vmax=ub,
+        xticklabels=True,
+        yticklabels=True,
+        fmt=format,
+    )
     plt.title(title, fontsize=11)
     plt.xticks(fontsize=9)
     plt.yticks(fontsize=9)
@@ -344,28 +362,30 @@ def heatmap(
 
 
 def heatmap_layered(
-        actual_input: pd.DataFrame,
-        disp_input: pd.DataFrame,
-        mask: bool,
-        colourmap: str,
-        outputfile: str,
-        title: str,
-        lb: float,
-        ub: float,
-        format: str
+    actual_input: pd.DataFrame,
+    disp_input: pd.DataFrame,
+    mask: bool,
+    colourmap: str,
+    outputfile: str,
+    title: str,
+    lb: float,
+    ub: float,
+    format: str,
 ):
     fig = plt.figure()
-    sns.heatmap(actual_input,
-                mask=mask,
-                annot=disp_input,
-                cmap=colourmap,
-                center=0,
-                annot_kws={'size': 12},  # 9, 12, 20, 28
-                vmin=lb,
-                vmax=ub,
-                xticklabels=True,
-                yticklabels=True,
-                fmt=format)
+    sns.heatmap(
+        actual_input,
+        mask=mask,
+        annot=disp_input,
+        cmap=colourmap,
+        center=0,
+        annot_kws={"size": 12},  # 9, 12, 20, 28
+        vmin=lb,
+        vmax=ub,
+        xticklabels=True,
+        yticklabels=True,
+        fmt=format,
+    )
     plt.title(title, fontsize=11)
     plt.xticks(fontsize=9)
     plt.yticks(fontsize=9)
@@ -378,30 +398,28 @@ def heatmap_layered(
 def pil_img2pdf(list_images: list, extension: str, pdf_name: str):
     seq = list_images.copy()  # deep copy
     list_img = []
-    file_pdf = pdf_name + '.pdf'
+    file_pdf = pdf_name + ".pdf"
     run = 0
     for i in seq:
-        img = Image.open(i + '.' + extension)
-        img = img.convert('RGB')  # PIL cannot save RGBA files as pdf
+        img = Image.open(i + "." + extension)
+        img = img.convert("RGB")  # PIL cannot save RGBA files as pdf
         if run == 0:
             first_img = img.copy()
         elif run > 0:
             list_img = list_img + [img]
         run += 1
-    first_img.save(file_pdf,
-                   'PDF',
-                   resolution=100.0,
-                   save_all=True,
-                   append_images=list_img)
+    first_img.save(
+        file_pdf, "PDF", resolution=100.0, save_all=True, append_images=list_img
+    )
 
 
 def boxplot(
-        data: pd.DataFrame,
-        y_cols: list,
-        x_col: str,
-        trace_names: list,
-        colours: list,
-        main_title: str
+    data: pd.DataFrame,
+    y_cols: list,
+    x_col: str,
+    trace_names: list,
+    colours: list,
+    main_title: str,
 ):
     # prelims
     d = data.copy()
@@ -417,33 +435,33 @@ def boxplot(
                 x=d[x_col],
                 name=trace_name,
                 marker=dict(opacity=0, color=colour),
-                boxpoints='outliers'
+                boxpoints="outliers",
             )
         )
         max_candidates = max_candidates + [d[y].quantile(q=0.99)]
         min_candidates = min_candidates + [d[y].min()]
-    fig.update_yaxes(range=[min(min_candidates), max(max_candidates)],
-                     showgrid=True, gridwidth=1, gridcolor='grey')
+    fig.update_yaxes(
+        range=[min(min_candidates), max(max_candidates)],
+        showgrid=True,
+        gridwidth=1,
+        gridcolor="grey",
+    )
     # layouts
     fig.update_layout(
-        title=main_title,
-        plotbg_color='white',
-        boxmode='group',
-        height=768,
-        width=1366
+        title=main_title, plotbg_color="white", boxmode="group", height=768, width=1366
     )
-    fig.update_xaxes(categoryorder='category ascending')
+    fig.update_xaxes(categoryorder="category ascending")
     # output
     return fig
 
 
 def boxplot_time(
-        data: pd.DataFrame,
-        y_col: str,
-        x_col: str,
-        t_col: str,
-        colours: list,
-        main_title: str
+    data: pd.DataFrame,
+    y_col: str,
+    x_col: str,
+    t_col: str,
+    colours: list,
+    main_title: str,
 ):
     # prelims
     d = data.copy()
@@ -461,33 +479,33 @@ def boxplot_time(
                 x=d.loc[d[t_col] == t, x_col],
                 name=str(t),
                 marker=dict(opacity=0, color=colour),
-                boxpoints='outliers'
+                boxpoints="outliers",
             )
         )
         max_candidates = max_candidates + [d.loc[d[t_col] == t, y_col].quantile(q=0.99)]
         min_candidates = min_candidates + [d.loc[d[t_col] == t, y_col].min()]
-    fig.update_yaxes(range=[min(min_candidates), max(max_candidates)],
-                     showgrid=True, gridwidth=1, gridcolor='grey')
+    fig.update_yaxes(
+        range=[min(min_candidates), max(max_candidates)],
+        showgrid=True,
+        gridwidth=1,
+        gridcolor="grey",
+    )
     # layouts
     fig.update_layout(
         title=main_title,
-        plot_bgcolor='white',
-        boxmode='group',
-        font=dict(color='black', size=12),
+        plot_bgcolor="white",
+        boxmode="group",
+        font=dict(color="black", size=12),
         height=768,
-        width=1366
+        width=1366,
     )
-    fig.update_xaxes(categoryorder='category ascending')
+    fig.update_xaxes(categoryorder="category ascending")
     # output
     return fig
 
 
 def barchart(
-        data: pd.DataFrame,
-        y_col: str,
-        x_col: str,
-        main_title: str,
-        decimal_points: int
+    data: pd.DataFrame, y_col: str, x_col: str, main_title: str, decimal_points: int
 ):
     # generate figure
     fig = go.Figure()
@@ -496,16 +514,16 @@ def barchart(
         go.Bar(
             x=data[x_col],
             y=data[y_col],
-            marker=dict(color='lightblue'),
-            text=data[y_col].round(decimal_points).astype('str'),
-            textposition='outside'
+            marker=dict(color="lightblue"),
+            text=data[y_col].round(decimal_points).astype("str"),
+            textposition="outside",
         )
     )
     # layouts
     fig.update_layout(
         title=main_title,
-        plot_bgcolor='white',
-        font=dict(color='black', size=16),
+        plot_bgcolor="white",
+        font=dict(color="black", size=16),
         height=768,
         width=1366,
     )
@@ -515,14 +533,14 @@ def barchart(
 
 
 def wide_grouped_barchart(
-        data: pd.DataFrame,
-        y_cols: list,
-        group_col: str,
-        main_title: str,
-        decimal_points: int,
-        group_colours: list,
-        custom_ymin=None,
-        custom_ymax=None
+    data: pd.DataFrame,
+    y_cols: list,
+    group_col: str,
+    main_title: str,
+    decimal_points: int,
+    group_colours: list,
+    custom_ymin=None,
+    custom_ymax=None,
 ):
     # generate figure
     fig = go.Figure()
@@ -538,14 +556,14 @@ def wide_grouped_barchart(
                 name=str(group),
                 marker=dict(color=colour),
                 text=y_str,
-                textposition='outside'
+                textposition="outside",
             )
         )
     # layouts
     fig.update_layout(
         title=main_title,
-        plot_bgcolor='white',
-        font=dict(color='black', size=16),
+        plot_bgcolor="white",
+        font=dict(color="black", size=16),
         height=768,
         width=1366,
     )
@@ -557,24 +575,24 @@ def wide_grouped_barchart(
 
 
 def manual_irf_subplots(
-        data,
-        endog,
-        shock_col,
-        response_col,
-        irf_col,
-        horizon_col,
-        main_title,
-        maxrows,
-        maxcols,
-        line_colour,
-        annot_size,
-        font_size
+    data,
+    endog,
+    shock_col,
+    response_col,
+    irf_col,
+    horizon_col,
+    main_title,
+    maxrows,
+    maxcols,
+    line_colour,
+    annot_size,
+    font_size,
 ):
     # Create titles first
     titles = []
     for response in endog:
         for shock in endog:
-            titles = titles + [shock + ' -> ' + response]
+            titles = titles + [shock + " -> " + response]
     maxr = maxrows
     maxc = maxcols
     fig = make_subplots(rows=maxr, cols=maxc, subplot_titles=titles)
@@ -584,45 +602,44 @@ def manual_irf_subplots(
     for response in endog:
         for shock in endog:
             # Data copy
-            d = data[(data[shock_col] == shock) & (data[response_col] == response)].copy()
+            d = data[
+                (data[shock_col] == shock) & (data[response_col] == response)
+            ].copy()
             # Add selected series
             fig.add_trace(
                 go.Scatter(
-                    x=d[horizon_col].astype('str'),
+                    x=d[horizon_col].astype("str"),
                     y=d[irf_col],
-                    mode='lines',
-                    line=dict(width=3, color=line_colour)
+                    mode="lines",
+                    line=dict(width=3, color=line_colour),
                 ),
                 row=nr,
-                col=nc
+                col=nc,
             )
             # Add zero line
             fig.add_hline(
-                y=0,
-                line_width=1,
-                line_dash='solid',
-                line_color='grey',
-                row=nr,
-                col=nc
+                y=0, line_width=1, line_dash="solid", line_color="grey", row=nr, col=nc
             )
             # Move to next subplot
             nc += 1
             if nr > maxr:
-                raise NotImplementedError('More subplots than allowed by dimension of main plot!')
+                raise NotImplementedError(
+                    "More subplots than allowed by dimension of main plot!"
+                )
             if nc > maxc:
                 nr += 1  # next row
                 nc = 1  # reset column
-    for annot in fig['layout']['annotations']:
-        annot['font'] = dict(size=annot_size, color='black')  # subplot title font size
+    for annot in fig["layout"]["annotations"]:
+        annot["font"] = dict(size=annot_size, color="black")  # subplot title font size
     fig.update_layout(
         title=main_title,
         # yaxis_title=y_title,
-        plot_bgcolor='white',
-        hovermode='x',
-        font=dict(color='black', size=font_size),
+        plot_bgcolor="white",
+        hovermode="x",
+        font=dict(color="black", size=font_size),
         showlegend=False,
         height=768,
-        width=1366
+        width=1366,
     )
     # output
     return fig

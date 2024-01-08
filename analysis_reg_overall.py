@@ -1,3 +1,4 @@
+# %%
 # Regression analysis, but overall
 
 import pandas as pd
@@ -21,6 +22,7 @@ import ast
 
 time_start = time.time()
 
+# %%
 # 0 --- Main settings
 load_dotenv()
 tel_config = os.getenv("TEL_CONFIG")
@@ -43,12 +45,14 @@ elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
     hhbasis_suffix = ""
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv("HHBASIS_COHORTS_WITH_HHSIZE"))
 
+# %%
 # I --- Load data
 df = pd.read_parquet(
     path_data + "hies_consol_agg_balanced_mean" + hhbasis_suffix + ".parquet"
 )
 df_ind = pd.read_parquet(path_data + "hies_consol_ind" + hhbasis_suffix + ".parquet")
 
+# %%
 # II --- Pre-analysis prep
 # Redefine year
 df = df.rename(columns={"_time": "year"})
@@ -111,6 +115,7 @@ if use_first_diff:
         df[y] = df[y] - df.groupby("cohort_code")[y].shift(1)
     df = df.dropna(axis=0)
 
+# %%
 # III --- Estimation
 # Setup
 # Execute cohort-level
@@ -216,7 +221,33 @@ params_table_cohort.to_parquet(
     + ".parquet"
 )
 print(tabulate(params_table_cohort.round(3), headers="keys", tablefmt="pretty"))
+# Export regression stats
+joint_teststats_fe.to_csv(
+    "output/joint_teststats_overall_mean"
+    + "_"
+    + outcome_choice
+    + "_"
+    + income_choice
+    + "_"
+    + fd_suffix
+    + hhbasis_suffix
+    + ".csv",
+    index=True,
+)
+reg_det_fe.to_csv(
+    "output/reg_det_overall_mean"
+    + "_"
+    + outcome_choice
+    + "_"
+    + income_choice
+    + "_"
+    + fd_suffix
+    + hhbasis_suffix
+    + ".csv",
+    index=True,
+)
 
+# %%
 # Execute individual-level (no FD option)
 
 (
@@ -248,8 +279,12 @@ if not show_ci:
 #     cap='params_table_ind_ols_overall' + '_' + outcome_choice + '_' + income_choice + hhbasis_suffix
 # )
 
+# %%
 # X --- Notify
-telsendmsg(conf=tel_config, msg="impact-household --- analysis_reg_overall: COMPLETED")
+# telsendmsg(conf=tel_config, msg="impact-household --- analysis_reg_overall: COMPLETED")
 
+# %%
 # End
 print("\n----- Ran in " + "{:.0f}".format(time.time() - time_start) + " seconds -----")
+
+# %%

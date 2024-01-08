@@ -1,5 +1,6 @@
-# Select descriptive stats (only income and consumption) across total HH, equivalised, and per capita basis using HH income groups
-
+# %%
+# Select descriptive stats (only income and consumption) across total HH, equivalised, and per capita basis using HH income groups & birth year groups
+# %%
 import pandas as pd
 import numpy as np
 from helper import (
@@ -25,17 +26,20 @@ import ast
 
 time_start = time.time()
 
+# %%
 # 0 --- Main settings
 load_dotenv()
 tel_config = os.getenv("TEL_CONFIG")
 path_data = "data/hies_consol/"
 use_spending_income_ratio = ast.literal_eval(os.getenv("USE_SPENDING_INCOME_RATIO"))
 
+# %%
 # I --- Load data
 df = pd.read_parquet(
     path_data + "hies_consol_ind_full" + "_hhbasis" + ".parquet"
 )  # CHECK: include / exclude outliers and on hhbasis
 
+# %%
 # II --- Pre-analysis prep
 # Malaysian only
 # Redefine year
@@ -86,7 +90,10 @@ if use_spending_income_ratio:
     for cons in list_all_cons:
         df[cons] = 100 * df[cons] / df["gross_income"]
 
+# Define birth year groups
+list_birth_year_groups = ["1959-", "1960_79", "1980+"]  # aggregation=2
 
+# %%
 # III.0 --- Define function
 
 
@@ -590,24 +597,28 @@ def gen_hh_size_group(data):
 
 
 def gen_income_allbasis(data):
-    for col in ["gross_income", "gross_transfers"]:
+    for col in ["gross_income", "gross_transfers"] + ["cons_01_13", "cons_01_12"]:
         data[col + "_equivalised"] = data[col] / (data["hh_size"] ** (1 / 2))
         data[col + "_capita"] = data[col] / data["hh_size"]
 
 
+# %%
 # III.0 --- Generate income groups
 # Define income group buckets
 gen_gross_income_group(data=df, aggregation=-1)  # check aggregation choice
 
+# %%
 # III.0 --- Generate income per capita and equivalised income
 gen_income_allbasis(data=df)
 
+# %%
 # III.0 --- Generate HH size buckets
 # Define hh size group buckets
 gen_hh_size_group(data=df)
 
+# %%
 # III.A1 --- Stratify income (of all 3 basis) by the same def of HH income group
-base_outcomes = ["gross_income", "gross_transfers"]
+base_outcomes = ["gross_income", "gross_transfers"] + ["cons_01_13", "cons_01_12"]
 list_heattables_median_names = []
 list_heattables_mean_names = []
 list_heattables_min_names = []
@@ -618,19 +629,28 @@ for outcome in tqdm(base_outcomes):
         d = df.copy()  # deep copy
         d = d[d["year"] == t]
         heattable_median_name = (
-            "output/tab_median_" + outcome + "_allbasis_fixedincgroups_" + str(t)
+            "output/tab_median_"
+            + outcome
+            + "_allbasis_fixedincgroups_birthyear_"
+            + str(t)
         )
         heattable_mean_name = (
-            "output/tab_mean_" + outcome + "_allbasis_fixedincgroups_" + str(t)
+            "output/tab_mean_"
+            + outcome
+            + "_allbasis_fixedincgroups_birthyear_"
+            + str(t)
         )
         heattable_min_name = (
-            "output/tab_min_" + outcome + "_allbasis_fixedincgroups_" + str(t)
+            "output/tab_min_" + outcome + "_allbasis_fixedincgroups_birthyear_" + str(t)
         )
         heattable_max_name = (
-            "output/tab_max_" + outcome + "_allbasis_fixedincgroups_" + str(t)
+            "output/tab_max_" + outcome + "_allbasis_fixedincgroups_birthyear_" + str(t)
         )
         heattable_allstats_name = (
-            "output/tab_allstats_" + outcome + "_allbasis_fixedincgroups_" + str(t)
+            "output/tab_allstats_"
+            + outcome
+            + "_allbasis_fixedincgroups_birthyear_"
+            + str(t)
         )
         list_heattables_median_names = list_heattables_median_names + [
             heattable_median_name
@@ -651,34 +671,45 @@ for outcome in tqdm(base_outcomes):
         for basis, basis_nice in zip(
             ["", "_equivalised", "_capita"], ["Total HH", "Equivalised", "Per Capita"]
         ):
-            tab_median, tab_mean, tab_min, tab_max = capybara_tiny(
-                data=d,  # uses year-specific data frame
-                x_col="gross_income_group",  # this is defined on total hh basis
-                y_col=outcome + basis,
-            )
-            tab_median = tab_median.rename(columns={outcome + basis: basis_nice})
-            tab_mean = tab_mean.rename(columns={outcome + basis: basis_nice})
-            tab_min = tab_min.rename(columns={outcome + basis: basis_nice})
-            tab_max = tab_max.rename(columns={outcome + basis: basis_nice})
-            if round == 1:
-                tab_median_consol = tab_median.copy()
-                tab_mean_consol = tab_mean.copy()
-                tab_min_consol = tab_min.copy()
-                tab_max_consol = tab_max.copy()
-            elif round > 1:
-                tab_median_consol = pd.concat(
-                    [tab_median_consol, tab_median], axis=1
-                )  # left-right
-                tab_mean_consol = pd.concat(
-                    [tab_mean_consol, tab_mean], axis=1
-                )  # left-right
-                tab_min_consol = pd.concat(
-                    [tab_min_consol, tab_min], axis=1
-                )  # left-right
-                tab_max_consol = pd.concat(
-                    [tab_max_consol, tab_max], axis=1
-                )  # left-right
-            round += 1
+            for birth_year_group in list_birth_year_groups:
+                d_sub = d.copy()
+                d_sub = d[d["birth_year_group"] == birth_year_group].copy()
+                tab_median, tab_mean, tab_min, tab_max = capybara_tiny(
+                    data=d_sub,  # uses year-birthyear-specific data frame
+                    x_col="gross_income_group",  # this is defined on total hh basis
+                    y_col=outcome + basis,
+                )
+                tab_median = tab_median.rename(
+                    columns={outcome + basis: basis_nice + "(" + birth_year_group + ")"}
+                )
+                tab_mean = tab_mean.rename(
+                    columns={outcome + basis: basis_nice + "(" + birth_year_group + ")"}
+                )
+                tab_min = tab_min.rename(
+                    columns={outcome + basis: basis_nice + "(" + birth_year_group + ")"}
+                )
+                tab_max = tab_max.rename(
+                    columns={outcome + basis: basis_nice + "(" + birth_year_group + ")"}
+                )
+                if round == 1:
+                    tab_median_consol = tab_median.copy()
+                    tab_mean_consol = tab_mean.copy()
+                    tab_min_consol = tab_min.copy()
+                    tab_max_consol = tab_max.copy()
+                elif round > 1:
+                    tab_median_consol = pd.concat(
+                        [tab_median_consol, tab_median], axis=1
+                    )  # left-right
+                    tab_mean_consol = pd.concat(
+                        [tab_mean_consol, tab_mean], axis=1
+                    )  # left-right
+                    tab_min_consol = pd.concat(
+                        [tab_min_consol, tab_min], axis=1
+                    )  # left-right
+                    tab_max_consol = pd.concat(
+                        [tab_max_consol, tab_max], axis=1
+                    )  # left-right
+                round += 1
         tab_median_consol = tab_median_consol.transpose()
         tab_mean_consol = tab_mean_consol.transpose()
         tab_min_consol = tab_min_consol.transpose()
@@ -695,6 +726,7 @@ for outcome in tqdm(base_outcomes):
             lb=tab_median_consol.min().max(),
             ub=tab_median_consol.max().max(),
             format=".0f",
+            annot_size=3
         )
         fig_tab_mean_consol = heatmap(
             input=tab_mean_consol,
@@ -708,6 +740,7 @@ for outcome in tqdm(base_outcomes):
             lb=tab_mean_consol.min().max(),
             ub=tab_mean_consol.max().max(),
             format=".0f",
+            annot_size=3
         )
         fig_tab_min_consol = heatmap(
             input=tab_min_consol,
@@ -721,6 +754,7 @@ for outcome in tqdm(base_outcomes):
             lb=tab_min_consol.min().max(),
             ub=tab_min_consol.max().max(),
             format=".0f",
+            annot_size=3
         )
         fig_tab_max_consol = heatmap(
             input=tab_max_consol,
@@ -734,6 +768,7 @@ for outcome in tqdm(base_outcomes):
             lb=tab_max_consol.min().max(),
             ub=tab_max_consol.max().max(),
             format=".0f",
+            annot_size=3
         )
         # Generate allstats version
         tab_allstats_consol = (
@@ -765,63 +800,67 @@ for outcome in tqdm(base_outcomes):
 pil_img2pdf(
     list_images=list_heattables_median_names,
     extension="png",
-    pdf_name="output/tab_median_inc_allbasis_fixedincgroups_years",
+    pdf_name="output/tab_median_inc_allbasis_fixedincgroups_birthyear_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_median_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_median_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_median_inc_allbasis_fixedincgroups_birthyear_years.pdf",
+#     cap="tab_median_inc_allbasis_fixedincgroups_birthyear_years",
+# )
 
 pil_img2pdf(
     list_images=list_heattables_mean_names,
     extension="png",
-    pdf_name="output/tab_mean_inc_allbasis_fixedincgroups_years",
+    pdf_name="output/tab_mean_inc_allbasis_fixedincgroups_birthyear_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_mean_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_mean_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_mean_inc_allbasis_fixedincgroups_birthyear_years.pdf",
+#     cap="tab_mean_inc_allbasis_fixedincgroups_birthyear_years",
+# )
 
 pil_img2pdf(
     list_images=list_heattables_min_names,
     extension="png",
-    pdf_name="output/tab_min_inc_allbasis_fixedincgroups_years",
+    pdf_name="output/tab_min_inc_allbasis_fixedincgroups_birthyear_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_min_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_min_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_min_inc_allbasis_fixedincgroups_birthyear_years.pdf",
+#     cap="tab_min_inc_allbasis_fixedincgroups_birthyear_years",
+# )
 
 pil_img2pdf(
     list_images=list_heattables_max_names,
     extension="png",
-    pdf_name="output/tab_max_inc_allbasis_fixedincgroups_years",
+    pdf_name="output/tab_max_inc_allbasis_fixedincgroups_birthyear_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_max_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_max_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_max_inc_allbasis_fixedincgroups_birthyear_years.pdf",
+#     cap="tab_max_inc_allbasis_fixedincgroups_birthyear_years",
+# )
 
 pil_img2pdf(
     list_images=list_heattables_allstats_names,
     extension="png",
-    pdf_name="output/tab_allstats_inc_allbasis_fixedincgroups_years",
+    pdf_name="output/tab_allstats_inc_allbasis_fixedincgroups_birthyear_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_allstats_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_allstats_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_allstats_inc_allbasis_fixedincgroups_birthyear_years.pdf",
+#     cap="tab_allstats_inc_allbasis_fixedincgroups_birthyear_years",
+# )
 
+# %%
 # X --- Notify
-telsendmsg(
-    conf=tel_config,
-    msg="impact-household --- analysis_descriptive_fixedincgroups: COMPLETED",
-)
+# telsendmsg(
+#     conf=tel_config,
+#     msg="impact-household --- analysis_descriptive_fixedincgroups_birthyear: COMPLETED",
+# )
 
+# %%
 # End
 print("\n----- Ran in " + "{:.0f}".format(time.time() - time_start) + " seconds -----")
+
+# %%

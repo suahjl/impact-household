@@ -1159,6 +1159,7 @@ def gen_pseudopanel(
 ):
     # Groupby operation
     if use_mean and not use_quantile:
+        # generate pseudo panel time periods
         df1_agg = (
             data1.groupby(list_cols_cohort)[list_cols_outcomes]
             .mean(numeric_only=True)
@@ -1180,6 +1181,7 @@ def gen_pseudopanel(
             .reset_index()
         )
     elif use_quantile and not use_mean:
+        # generate pseudo panel time periods
         df1_agg = (
             data1.groupby(list_cols_cohort)[list_cols_outcomes]
             .quantile(numeric_only=True, q=quantile_choice)
@@ -1229,10 +1231,41 @@ def gen_pseudopanel(
     df_agg_balanced = df_agg_balanced.sort_values(
         by=list_cols_cohort + ["_time"]
     ).reset_index(drop=True)
+    
+    # calculate number of individual observations per cohort
+    obscohort_df1 = data1.groupby(list_cols_cohort).size()
+    obscohort_df2 = data2.groupby(list_cols_cohort).size()
+    obscohort_df3 = data1.groupby(list_cols_cohort).size()
+    obscohort_df4 = data1.groupby(list_cols_cohort).size()
+    obscohort_all = pd.concat(
+        [obscohort_df1, obscohort_df2, obscohort_df3, obscohort_df4], axis=0
+    )
+    obscohort = pd.DataFrame(
+        {
+            "Year": ["2014", "2016", "2019", "2022", "Total"],
+            "Avg Obs Per Cohort": [
+                len(data1) / len(df1_agg),
+                len(data2) / len(df2_agg),
+                len(data3) / len(df3_agg),
+                len(data4) / len(df4_agg),
+                (len(data1) + len(data2) + len(data3) + len(data4)) / len(df_agg_balanced) / 4,
+            ],
+            "Number of Cohorts": [
+                len(df1_agg),
+                len(df2_agg),
+                len(df3_agg),
+                len(df4_agg),
+                len(df_agg_balanced) / 4,
+            ],
+        }
+    )
     # Save to local
     df_agg.to_parquet(base_path + "hies_consol_agg_" + file_suffix + ".parquet")
     df_agg_balanced.to_parquet(
         base_path + "hies_consol_agg_balanced_" + file_suffix + ".parquet"
+    )
+    obscohort.to_parquet(
+        base_path + "hies_consol_agg_obscohort_" + file_suffix + ".parquet"
     )
     # Output
     return df_agg, df_agg_balanced
@@ -1336,10 +1369,41 @@ def gen_pseudopanel_quantile_fixed_axis(
     df_agg_balanced = df_agg_balanced.sort_values(
         by=list_cols_cohort + ["_time"]
     ).reset_index(drop=True)
+    
+    # calculate number of individual observations per cohort
+    obscohort_df1 = data1.groupby(list_cols_cohort).size()
+    obscohort_df2 = data2.groupby(list_cols_cohort).size()
+    obscohort_df3 = data1.groupby(list_cols_cohort).size()
+    obscohort_df4 = data1.groupby(list_cols_cohort).size()
+    obscohort_all = pd.concat(
+        [obscohort_df1, obscohort_df2, obscohort_df3, obscohort_df4], axis=0
+    )
+    obscohort = pd.DataFrame(
+        {
+            "Year": ["2014", "2016", "2019", "2022", "Total"],
+            "Avg Obs Per Cohort": [
+                len(data1) / len(df1_agg),
+                len(data2) / len(df2_agg),
+                len(data3) / len(df3_agg),
+                len(data4) / len(df4_agg),
+                (len(data1) + len(data2) + len(data3) + len(data4)) / len(df_agg_balanced) / 4,
+            ],
+            "Number of Cohorts": [
+                len(df1_agg),
+                len(df2_agg),
+                len(df3_agg),
+                len(df4_agg),
+                len(df_agg_balanced) / 4,
+            ],
+        }
+    )
     # Save to local
     df_agg.to_parquet(base_path + "hies_consol_agg_" + file_suffix + ".parquet")
     df_agg_balanced.to_parquet(
         base_path + "hies_consol_agg_balanced_" + file_suffix + ".parquet"
+    )
+    obscohort.to_parquet(
+        base_path + "hies_consol_agg_obscohort_" + file_suffix + ".parquet"
     )
     # Output
     return df_agg, df_agg_balanced
@@ -1489,10 +1553,41 @@ def gen_pseudopanel_distgroup_fixed_axis(
     df_agg_balanced = df_agg_balanced.sort_values(
         by=list_cols_cohort + ["_time"]
     ).reset_index(drop=True)
+    
+    # calculate number of individual observations per cohort
+    obscohort_df1 = data1.groupby(list_cols_cohort).size()
+    obscohort_df2 = data2.groupby(list_cols_cohort).size()
+    obscohort_df3 = data1.groupby(list_cols_cohort).size()
+    obscohort_df4 = data1.groupby(list_cols_cohort).size()
+    obscohort_all = pd.concat(
+        [obscohort_df1, obscohort_df2, obscohort_df3, obscohort_df4], axis=0
+    )
+    obscohort = pd.DataFrame(
+        {
+            "Year": ["2014", "2016", "2019", "2022", "Total"],
+            "Avg Obs Per Cohort": [
+                len(data1) / len(df1_agg),
+                len(data2) / len(df2_agg),
+                len(data3) / len(df3_agg),
+                len(data4) / len(df4_agg),
+                (len(data1) + len(data2) + len(data3) + len(data4)) / len(df_agg_balanced) / 4,
+            ],
+            "Number of Cohorts": [
+                len(df1_agg),
+                len(df2_agg),
+                len(df3_agg),
+                len(df4_agg),
+                len(df_agg_balanced) / 4,
+            ],
+        }
+    )
     # Save to local
     df_agg.to_parquet(base_path + "hies_consol_agg_" + file_suffix + ".parquet")
     df_agg_balanced.to_parquet(
         base_path + "hies_consol_agg_balanced_" + file_suffix + ".parquet"
+    )
+    obscohort.to_parquet(
+        base_path + "hies_consol_agg_obscohort_" + file_suffix + ".parquet"
     )
     # Output
     return df_agg, df_agg_balanced
@@ -1676,13 +1771,212 @@ df_ind_full_equivalised.to_parquet(
 )
 
 # %%
-# IV.B --------------------- Merger (group-level; 2014 - 2019; for SUBGROUP analyses) ---------------------
-
+# IV.B --------------------- Merger (group-level; 2014 - 2022; for LIFECYCLE analyses) ---------------------
 # Remove years
 del df_14["year"]
 del df_16["year"]
 del df_19["year"]
 del df_22["year"]
+# Set up loop
+print_balanced = True
+list_incgroups = ["0_b20-", "1_b20+", "2_m20-", "3_m20+", "4_t20"]
+list_incgroups_suffix = ["b20m", "b20p", "m20m", "m20p", "t20"]
+list_birth_year_groups = list(df_22["birth_year_group"].unique())
+for incgroup, incgroup_suffix in zip(list_incgroups, list_incgroups_suffix):
+    for birth_year_group in tqdm(list_birth_year_groups):
+        df_14_sub_hhbasis = df_14_hhbasis_withbase[
+            (
+                (df_14_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_14_hhbasis_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_16_sub_hhbasis = df_16_hhbasis_withbase[
+            (
+                (df_16_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_16_hhbasis_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_19_sub_hhbasis = df_19_hhbasis_withbase[
+            (
+                (df_19_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_19_hhbasis_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_22_sub_hhbasis = df_22_hhbasis_withbase[
+            (
+                (df_22_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_22_hhbasis_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+
+        # equivalised
+        df_14_sub_equivalised = df_14_equivalised_withbase[
+            (
+                (df_14_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_14_equivalised_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_16_sub_equivalised = df_16_equivalised_withbase[
+            (
+                (df_16_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_16_equivalised_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_19_sub_equivalised = df_19_equivalised_withbase[
+            (
+                (df_19_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_19_equivalised_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_22_sub_equivalised = df_22_equivalised_withbase[
+            (
+                (df_22_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_22_equivalised_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+
+        # per capita
+        df_14_sub = df_14_withbase[
+            (
+                (df_14_withbase["gross_income_group"] == incgroup)
+                & (df_14_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_16_sub = df_16_withbase[
+            (
+                (df_16_withbase["gross_income_group"] == incgroup)
+                & (df_16_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_19_sub = df_19_withbase[
+            (
+                (df_19_withbase["gross_income_group"] == incgroup)
+                & (df_19_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+        df_22_sub = df_22_withbase[
+            (
+                (df_22_withbase["gross_income_group"] == incgroup)
+                & (df_22_withbase["birth_year_group"] == birth_year_group)
+            )
+        ].copy()
+
+        # Delete variables that already have base variables created
+        for i in cols_base_group_transformed:
+            del df_14_sub[i]
+            del df_16_sub[i]
+            del df_19_sub[i]
+            del df_22_sub[i]
+
+            del df_14_sub_equivalised[i]
+            del df_16_sub_equivalised[i]
+            del df_19_sub_equivalised[i]
+            del df_22_sub_equivalised[i]
+
+        for i in cols_base_group_transformed_with_hhsize:
+            del df_14_sub_hhbasis[i]
+            del df_16_sub_hhbasis[i]
+            del df_19_sub_hhbasis[i]
+            del df_22_sub_hhbasis[i]
+
+        # Compile pseudo panel data
+        df_agg_mean_sub, df_agg_balanced_mean_sub = gen_pseudopanel(
+            data1=df_14_sub,
+            data2=df_16_sub,
+            data3=df_19_sub,
+            data4=df_22_sub,
+            list_cols_cohort=col_groups,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_" + birth_year_group,
+            base_path=path_subgroup,
+        )
+        df_agg_mean_sub_hhbasis, df_agg_balanced_mean_sub_hhbasis = gen_pseudopanel(
+            data1=df_14_sub_hhbasis,
+            data2=df_16_sub_hhbasis,
+            data3=df_19_sub_hhbasis,
+            data4=df_22_sub_hhbasis,
+            list_cols_cohort=col_groups_with_hhsize,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_" + birth_year_group + "_hhbasis",
+            base_path=path_subgroup,
+        )
+        (
+            df_agg_mean_sub_equivalised,
+            df_agg_balanced_mean_sub_equivalised,
+        ) = gen_pseudopanel(
+            data1=df_14_sub_equivalised,
+            data2=df_16_sub_equivalised,
+            data3=df_19_sub_equivalised,
+            data4=df_22_sub_equivalised,
+            list_cols_cohort=col_groups,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_"
+            + incgroup_suffix
+            + "_"
+            + birth_year_group
+            + "_equivalised",
+            base_path=path_subgroup,
+        )
+        # Print out length of dataframe
+        if print_balanced:
+            print(
+                "Number of balanced cohorts for "
+                + incgroup
+                + " with birth years in "
+                + birth_year_group
+                + ": "
+                + str(int(len(df_agg_balanced_mean_sub_hhbasis) / 4))
+                + " (from "
+                + str(
+                    int(
+                        np.amin(
+                            [
+                                len(df_14_sub_hhbasis),
+                                len(df_16_sub_hhbasis),
+                                len(df_19_sub_hhbasis),
+                                len(df_22_sub_hhbasis),
+                            ]
+                        )
+                    )
+                )
+                + " households)"
+            )
+        elif not print_balanced:
+            print(
+                "Number of cohorts (balanced / unbalanced) for "
+                + incgroup
+                + " with birth years in "
+                + birth_year_group
+                + ": "
+                + str(int(len(df_agg_mean_sub_hhbasis) / 4))
+                + " (from "
+                + str(
+                    int(
+                        np.amin(
+                            [
+                                len(df_14_sub_hhbasis),
+                                len(df_16_sub_hhbasis),
+                                len(df_19_sub_hhbasis),
+                                len(df_22_sub_hhbasis),
+                            ]
+                        )
+                    )
+                )
+                + " households)"
+            )
+
+
+# %%
+# IV.C --------------------- Merger (group-level; 2014 - 2022; for SUBGROUP analyses) ---------------------
 # Reduced set of col_groups
 # Create subgroups by benefit objective B (kid, working_age2, and elderly2), and income groups Y
 list_incgroups = ["0_b20-", "1_b20+", "2_m20-", "3_m20+", "4_t20"]
@@ -1995,9 +2289,400 @@ for incgroup, incgroup_suffix in zip(list_incgroups, list_incgroups_suffix):
                 )
 
 
+# IV.D --------------------- Merger (group-level; 2014 - 2022; for ETHNICITY analyses) ---------------------
+# Set up loop
+print_balanced = True
+list_incgroups = ["0_b20-", "1_b20+", "2_m20-", "3_m20+", "4_t20"]
+list_incgroups_suffix = ["b20m", "b20p", "m20m", "m20p", "t20"]
+list_ethnicities = list(df_22["ethnicity"].unique())
+for incgroup, incgroup_suffix in zip(list_incgroups, list_incgroups_suffix):
+    for ethnicity in tqdm(list_ethnicities):
+        df_14_sub_hhbasis = df_14_hhbasis_withbase[
+            (
+                (df_14_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_14_hhbasis_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_16_sub_hhbasis = df_16_hhbasis_withbase[
+            (
+                (df_16_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_16_hhbasis_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_19_sub_hhbasis = df_19_hhbasis_withbase[
+            (
+                (df_19_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_19_hhbasis_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_22_sub_hhbasis = df_22_hhbasis_withbase[
+            (
+                (df_22_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_22_hhbasis_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+
+        # equivalised
+        df_14_sub_equivalised = df_14_equivalised_withbase[
+            (
+                (df_14_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_14_equivalised_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_16_sub_equivalised = df_16_equivalised_withbase[
+            (
+                (df_16_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_16_equivalised_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_19_sub_equivalised = df_19_equivalised_withbase[
+            (
+                (df_19_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_19_equivalised_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_22_sub_equivalised = df_22_equivalised_withbase[
+            (
+                (df_22_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_22_equivalised_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+
+        # per capita
+        df_14_sub = df_14_withbase[
+            (
+                (df_14_withbase["gross_income_group"] == incgroup)
+                & (df_14_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_16_sub = df_16_withbase[
+            (
+                (df_16_withbase["gross_income_group"] == incgroup)
+                & (df_16_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_19_sub = df_19_withbase[
+            (
+                (df_19_withbase["gross_income_group"] == incgroup)
+                & (df_19_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+        df_22_sub = df_22_withbase[
+            (
+                (df_22_withbase["gross_income_group"] == incgroup)
+                & (df_22_withbase["ethnicity"] == ethnicity)
+            )
+        ].copy()
+
+        # Delete variables that already have base variables created
+        for i in cols_base_group_transformed:
+            del df_14_sub[i]
+            del df_16_sub[i]
+            del df_19_sub[i]
+            del df_22_sub[i]
+
+            del df_14_sub_equivalised[i]
+            del df_16_sub_equivalised[i]
+            del df_19_sub_equivalised[i]
+            del df_22_sub_equivalised[i]
+
+        for i in cols_base_group_transformed_with_hhsize:
+            del df_14_sub_hhbasis[i]
+            del df_16_sub_hhbasis[i]
+            del df_19_sub_hhbasis[i]
+            del df_22_sub_hhbasis[i]
+
+        # Compile pseudo panel data
+        df_agg_mean_sub, df_agg_balanced_mean_sub = gen_pseudopanel(
+            data1=df_14_sub,
+            data2=df_16_sub,
+            data3=df_19_sub,
+            data4=df_22_sub,
+            list_cols_cohort=col_groups,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_" + ethnicity,
+            base_path=path_subgroup,
+        )
+        df_agg_mean_sub_hhbasis, df_agg_balanced_mean_sub_hhbasis = gen_pseudopanel(
+            data1=df_14_sub_hhbasis,
+            data2=df_16_sub_hhbasis,
+            data3=df_19_sub_hhbasis,
+            data4=df_22_sub_hhbasis,
+            list_cols_cohort=col_groups_with_hhsize,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_" + ethnicity + "_hhbasis",
+            base_path=path_subgroup,
+        )
+        (
+            df_agg_mean_sub_equivalised,
+            df_agg_balanced_mean_sub_equivalised,
+        ) = gen_pseudopanel(
+            data1=df_14_sub_equivalised,
+            data2=df_16_sub_equivalised,
+            data3=df_19_sub_equivalised,
+            data4=df_22_sub_equivalised,
+            list_cols_cohort=col_groups,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_" + ethnicity + "_equivalised",
+            base_path=path_subgroup,
+        )
+        # Print out length of dataframe
+        if print_balanced:
+            print(
+                "Number of balanced cohorts for "
+                + incgroup
+                + " of ethnic group "
+                + ethnicity
+                + ": "
+                + str(int(len(df_agg_balanced_mean_sub_hhbasis) / 4))
+                + " (from "
+                + str(
+                    int(
+                        np.amin(
+                            [
+                                len(df_14_sub_hhbasis),
+                                len(df_16_sub_hhbasis),
+                                len(df_19_sub_hhbasis),
+                                len(df_22_sub_hhbasis),
+                            ]
+                        )
+                    )
+                )
+                + " households)"
+            )
+        elif not print_balanced:
+            print(
+                "Number of cohorts (balanced / unbalanced) for "
+                + incgroup
+                + " of ethnic group "
+                + ethnicity
+                + ": "
+                + str(int(len(df_agg_mean_sub_hhbasis) / 4))
+                + " (from "
+                + str(
+                    int(
+                        np.amin(
+                            [
+                                len(df_14_sub_hhbasis),
+                                len(df_16_sub_hhbasis),
+                                len(df_19_sub_hhbasis),
+                                len(df_22_sub_hhbasis),
+                            ]
+                        )
+                    )
+                )
+                + " households)"
+            )
+
+
+
+# IV.E --------------------- Merger (group-level; 2014 - 2022; for STATE analyses) ---------------------
+# Set up loop
+print_balanced = True
+list_incgroups = ["0_b20-", "1_b20+", "2_m20-", "3_m20+", "4_t20"]
+list_incgroups_suffix = ["b20m", "b20p", "m20m", "m20p", "t20"]
+list_urban_rural = list(df_22["urban"].unique())
+for incgroup, incgroup_suffix in zip(list_incgroups, list_incgroups_suffix):
+    for urban in tqdm(list_urban_rural):
+        print("\n" + str(urban) + ", " + incgroup)
+        df_14_sub_hhbasis = df_14_hhbasis_withbase[
+            (
+                (df_14_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_14_hhbasis_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_16_sub_hhbasis = df_16_hhbasis_withbase[
+            (
+                (df_16_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_16_hhbasis_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_19_sub_hhbasis = df_19_hhbasis_withbase[
+            (
+                (df_19_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_19_hhbasis_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_22_sub_hhbasis = df_22_hhbasis_withbase[
+            (
+                (df_22_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_22_hhbasis_withbase["urban"] == urban)
+            )
+        ].copy()
+
+        # equivalised
+        df_14_sub_equivalised = df_14_equivalised_withbase[
+            (
+                (df_14_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_14_equivalised_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_16_sub_equivalised = df_16_equivalised_withbase[
+            (
+                (df_16_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_16_equivalised_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_19_sub_equivalised = df_19_equivalised_withbase[
+            (
+                (df_19_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_19_equivalised_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_22_sub_equivalised = df_22_equivalised_withbase[
+            (
+                (df_22_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_22_equivalised_withbase["urban"] == urban)
+            )
+        ].copy()
+
+        # per capita
+        df_14_sub = df_14_withbase[
+            (
+                (df_14_withbase["gross_income_group"] == incgroup)
+                & (df_14_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_16_sub = df_16_withbase[
+            (
+                (df_16_withbase["gross_income_group"] == incgroup)
+                & (df_16_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_19_sub = df_19_withbase[
+            (
+                (df_19_withbase["gross_income_group"] == incgroup)
+                & (df_19_withbase["urban"] == urban)
+            )
+        ].copy()
+        df_22_sub = df_22_withbase[
+            (
+                (df_22_withbase["gross_income_group"] == incgroup)
+                & (df_22_withbase["urban"] == urban)
+            )
+        ].copy()
+
+        # Delete variables that already have base variables created
+        for i in cols_base_group_transformed:
+            del df_14_sub[i]
+            del df_16_sub[i]
+            del df_19_sub[i]
+            del df_22_sub[i]
+
+            del df_14_sub_equivalised[i]
+            del df_16_sub_equivalised[i]
+            del df_19_sub_equivalised[i]
+            del df_22_sub_equivalised[i]
+
+        for i in cols_base_group_transformed_with_hhsize:
+            del df_14_sub_hhbasis[i]
+            del df_16_sub_hhbasis[i]
+            del df_19_sub_hhbasis[i]
+            del df_22_sub_hhbasis[i]
+
+        # Compile pseudo panel data
+        df_agg_mean_sub, df_agg_balanced_mean_sub = gen_pseudopanel(
+            data1=df_14_sub,
+            data2=df_16_sub,
+            data3=df_19_sub,
+            data4=df_22_sub,
+            list_cols_cohort=col_groups,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_urban" + str(urban),
+            base_path=path_subgroup,
+        )
+        df_agg_mean_sub_hhbasis, df_agg_balanced_mean_sub_hhbasis = gen_pseudopanel(
+            data1=df_14_sub_hhbasis,
+            data2=df_16_sub_hhbasis,
+            data3=df_19_sub_hhbasis,
+            data4=df_22_sub_hhbasis,
+            list_cols_cohort=col_groups_with_hhsize,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_urban" + str(urban) + "_hhbasis",
+            base_path=path_subgroup,
+        )
+        (
+            df_agg_mean_sub_equivalised,
+            df_agg_balanced_mean_sub_equivalised,
+        ) = gen_pseudopanel(
+            data1=df_14_sub_equivalised,
+            data2=df_16_sub_equivalised,
+            data3=df_19_sub_equivalised,
+            data4=df_22_sub_equivalised,
+            list_cols_cohort=col_groups,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_urban" + str(urban) + "_equivalised",
+            base_path=path_subgroup,
+        )
+        # Print out length of dataframe
+        if print_balanced:
+            print(
+                "Number of balanced cohorts for "
+                + incgroup
+                + " of strata "
+                + str(urban)
+                + ": "
+                + str(int(len(df_agg_balanced_mean_sub_hhbasis) / 4))
+                + " (from "
+                + str(
+                    int(
+                        np.amin(
+                            [
+                                len(df_14_sub_hhbasis),
+                                len(df_16_sub_hhbasis),
+                                len(df_19_sub_hhbasis),
+                                len(df_22_sub_hhbasis),
+                            ]
+                        )
+                    )
+                )
+                + " households)"
+            )
+        elif not print_balanced:
+            print(
+                "Number of cohorts (balanced / unbalanced) for "
+                + incgroup
+                + " of strata "
+                + str(urban)
+                + ": "
+                + str(int(len(df_agg_mean_sub_hhbasis) / 4))
+                + " (from "
+                + str(
+                    int(
+                        np.amin(
+                            [
+                                len(df_14_sub_hhbasis),
+                                len(df_16_sub_hhbasis),
+                                len(df_19_sub_hhbasis),
+                                len(df_22_sub_hhbasis),
+                            ]
+                        )
+                    )
+                )
+                + " households)"
+            )
+
 # %%
 # X --- Notify
-telsendmsg(conf=tel_config, msg="impact-household --- process_consol_group: COMPLETED")
+# telsendmsg(conf=tel_config, msg="impact-household --- process_consol_group: COMPLETED")
 
 # End
 print("\n----- Ran in " + "{:.0f}".format(time.time() - time_start) + " seconds -----")
