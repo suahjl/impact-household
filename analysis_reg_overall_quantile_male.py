@@ -172,7 +172,7 @@ def load_clean_estimate(input_suffix, opt_income, opt_consumption, opt_first_dif
 
 # %%
 # Loop to estimate all quantiles
-list_birth_year_groups = ["1959-", "1960_79", "1980+"]  # aggregation=2
+list_gender = [0, 1]
 list_quantiles = ["0-20", "20-40", "40-60", "60-80", "80-100"]
 # [0.2, 0.4, 0.6, 0.8]  # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 # list_suffixes = ['20p', '40p', '60p', '80p', '100p']
@@ -180,10 +180,10 @@ list_suffixes = ["b20m", "b20p", "m20m", "m20p", "t20"]
 # ['20p', '40p', '60p', '80p']  # ['10p', '20p', '30p', '40p', '50p', '60p', '70p', '80p', '90p']
 round = 1
 for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
-    for birth_year_group in list_birth_year_groups:
+    for male in list_gender:
         # Load, clean, and estimate
         params_table_fe, params_table_timefe, params_table_re = load_clean_estimate(
-            input_suffix=suffix + "_" + birth_year_group,
+            input_suffix=suffix + "_male" + str(male),
             opt_income=income_choice,
             opt_consumption=outcome_choice,
             opt_first_diff=use_first_diff,
@@ -196,10 +196,10 @@ for quantile, suffix in tqdm(zip(list_quantiles, list_suffixes)):
         params_table_fe["quantile"] = quantile
         params_table_timefe["quantile"] = quantile
         params_table_re["quantile"] = quantile
-        # Indicate birth year group
-        params_table_fe["birth_year_group"] = birth_year_group
-        params_table_timefe["birth_year_group"] = birth_year_group
-        params_table_re["birth_year_group"] = birth_year_group
+        # Indicate strata
+        params_table_fe["male"] = male
+        params_table_timefe["male"] = male
+        params_table_re["male"] = male
         # Indicate method
         params_table_fe["method"] = "FE"
         params_table_timefe["method"] = "TimeFE"
@@ -267,15 +267,14 @@ list_heatmaps_file_names = []
 # Export heat maps with columns showing estimates by birth year groups
 # FE
 d = params_table_fe_consol.copy()
-d = d.pivot(index="quantile", columns="birth_year_group", values="Parameter")
+d = d.pivot(index="quantile", columns="male", values="Parameter")
 file_name = (
     "output/params_table_overall_quantile_fe"
     + "_"
     + outcome_choice
     + "_"
     + income_choice
-    + "_"
-    + "birth_year_group"
+    + "_male"
     + "_"
     + fd_suffix
     + hhbasis_suffix
@@ -286,24 +285,21 @@ heatmap_fe = heatmap(
     mask=False,
     colourmap="vlag",
     outputfile=file_name + ".png",
-    title="FE: MPC by income group"
-    + " by birth years "
-    + hhbasis_chart_title,
+    title="FE: MPC by income group" + " for male / female head of HH " + hhbasis_chart_title,
     lb=0,
     ub=0.6,
     format=".2f",
 )
 # TimeFE
 d = params_table_timefe_consol.copy()
-d = d.pivot(index="quantile", columns="birth_year_group", values="Parameter")
+d = d.pivot(index="quantile", columns="male", values="Parameter")
 file_name = (
     "output/params_table_overall_quantile_timefe"
     + "_"
     + outcome_choice
     + "_"
     + income_choice
-    + "_"
-    + "birth_year_group"
+    + "_male"
     + "_"
     + fd_suffix
     + hhbasis_suffix
@@ -315,7 +311,7 @@ heatmap_timefe = heatmap(
     colourmap="vlag",
     outputfile=file_name + ".png",
     title="Time FE: MPC by income group"
-    + " by birth years "
+    + " for male / female head of HH "
     + hhbasis_chart_title,
     lb=0,
     ub=0.6,
@@ -323,15 +319,14 @@ heatmap_timefe = heatmap(
 )
 # RE
 d = params_table_re_consol.copy()
-d = d.pivot(index="quantile", columns="birth_year_group", values="Parameter")
+d = d.pivot(index="quantile", columns="male", values="Parameter")
 file_name = (
     "output/params_table_overall_quantile_re"
     + "_"
     + outcome_choice
     + "_"
     + income_choice
-    + "_"
-    + "birth_year_group"
+    + "_male"
     + "_"
     + fd_suffix
     + hhbasis_suffix
@@ -342,16 +337,14 @@ heatmap_re = heatmap(
     mask=False,
     colourmap="vlag",
     outputfile=file_name + ".png",
-    title="RE: MPC by income group"
-    + " by birth years "
-    + hhbasis_chart_title,
+    title="RE: MPC by income group" + " for male / female head of HH " + hhbasis_chart_title,
     lb=0,
     ub=0.6,
     format=".2f",
 )
 # Compile and send
 pdf_file_name = (
-    "output/params_table_overall_quantile_birthyear_consol"
+    "output/params_table_overall_quantile_male_consol"
     + "_"
     + outcome_choice
     + "_"
@@ -384,7 +377,7 @@ if not show_ci:
     ]
 # Export as csv and image
 params_table_consol.to_parquet(
-    "output/params_table_overall_quantile_birthyear"
+    "output/params_table_overall_quantile_male"
     + "_"
     + outcome_choice
     + "_"
@@ -395,7 +388,7 @@ params_table_consol.to_parquet(
     + ".parquet"
 )
 params_table_consol.to_csv(
-    "output/params_table_overall_quantile_birthyear"
+    "output/params_table_overall_quantile_male"
     + "_"
     + outcome_choice
     + "_"
@@ -427,9 +420,10 @@ print(tabulate(params_table_consol_avg.round(3), headers="keys", tablefmt="prett
 # %%
 # X --- Notify
 # telsendmsg(conf=tel_config,
-#            msg='impact-household --- analysis_reg_overall_quantile_birthyear: COMPLETED')
+#            msg='impact-household --- analysis_reg_overall_quantile_male: COMPLETED')
 
 # End
 print("\n----- Ran in " + "{:.0f}".format(time.time() - time_start) + " seconds -----")
 
 # %%
+ 

@@ -2680,6 +2680,202 @@ for incgroup, incgroup_suffix in zip(list_incgroups, list_incgroups_suffix):
                 + " households)"
             )
 
+
+# IV.F --------------------- Merger (group-level; 2014 - 2022; for GENDER analyses) ---------------------
+# Set up loop
+print_balanced = True
+list_incgroups = ["0_b20-", "1_b20+", "2_m20-", "3_m20+", "4_t20"]
+list_incgroups_suffix = ["b20m", "b20p", "m20m", "m20p", "t20"]
+list_gender = list(df_22["male"].unique())
+for incgroup, incgroup_suffix in zip(list_incgroups, list_incgroups_suffix):
+    for male in tqdm(list_gender):
+        print("\n" + str(male) + ", " + incgroup)
+        df_14_sub_hhbasis = df_14_hhbasis_withbase[
+            (
+                (df_14_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_14_hhbasis_withbase["male"] == male)
+            )
+        ].copy()
+        df_16_sub_hhbasis = df_16_hhbasis_withbase[
+            (
+                (df_16_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_16_hhbasis_withbase["male"] == male)
+            )
+        ].copy()
+        df_19_sub_hhbasis = df_19_hhbasis_withbase[
+            (
+                (df_19_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_19_hhbasis_withbase["male"] == male)
+            )
+        ].copy()
+        df_22_sub_hhbasis = df_22_hhbasis_withbase[
+            (
+                (df_22_hhbasis_withbase["gross_income_group"] == incgroup)
+                & (df_22_hhbasis_withbase["male"] == male)
+            )
+        ].copy()
+
+        # equivalised
+        df_14_sub_equivalised = df_14_equivalised_withbase[
+            (
+                (df_14_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_14_equivalised_withbase["male"] == male)
+            )
+        ].copy()
+        df_16_sub_equivalised = df_16_equivalised_withbase[
+            (
+                (df_16_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_16_equivalised_withbase["male"] == male)
+            )
+        ].copy()
+        df_19_sub_equivalised = df_19_equivalised_withbase[
+            (
+                (df_19_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_19_equivalised_withbase["male"] == male)
+            )
+        ].copy()
+        df_22_sub_equivalised = df_22_equivalised_withbase[
+            (
+                (df_22_equivalised_withbase["gross_income_group"] == incgroup)
+                & (df_22_equivalised_withbase["male"] == male)
+            )
+        ].copy()
+
+        # per capita
+        df_14_sub = df_14_withbase[
+            (
+                (df_14_withbase["gross_income_group"] == incgroup)
+                & (df_14_withbase["male"] == male)
+            )
+        ].copy()
+        df_16_sub = df_16_withbase[
+            (
+                (df_16_withbase["gross_income_group"] == incgroup)
+                & (df_16_withbase["male"] == male)
+            )
+        ].copy()
+        df_19_sub = df_19_withbase[
+            (
+                (df_19_withbase["gross_income_group"] == incgroup)
+                & (df_19_withbase["male"] == male)
+            )
+        ].copy()
+        df_22_sub = df_22_withbase[
+            (
+                (df_22_withbase["gross_income_group"] == incgroup)
+                & (df_22_withbase["male"] == male)
+            )
+        ].copy()
+
+        # Delete variables that already have base variables created
+        for i in cols_base_group_transformed:
+            del df_14_sub[i]
+            del df_16_sub[i]
+            del df_19_sub[i]
+            del df_22_sub[i]
+
+            del df_14_sub_equivalised[i]
+            del df_16_sub_equivalised[i]
+            del df_19_sub_equivalised[i]
+            del df_22_sub_equivalised[i]
+
+        for i in cols_base_group_transformed_with_hhsize:
+            del df_14_sub_hhbasis[i]
+            del df_16_sub_hhbasis[i]
+            del df_19_sub_hhbasis[i]
+            del df_22_sub_hhbasis[i]
+
+        # Compile pseudo panel data
+        df_agg_mean_sub, df_agg_balanced_mean_sub = gen_pseudopanel(
+            data1=df_14_sub,
+            data2=df_16_sub,
+            data3=df_19_sub,
+            data4=df_22_sub,
+            list_cols_cohort=col_groups,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_male" + str(male),
+            base_path=path_subgroup,
+        )
+        df_agg_mean_sub_hhbasis, df_agg_balanced_mean_sub_hhbasis = gen_pseudopanel(
+            data1=df_14_sub_hhbasis,
+            data2=df_16_sub_hhbasis,
+            data3=df_19_sub_hhbasis,
+            data4=df_22_sub_hhbasis,
+            list_cols_cohort=col_groups_with_hhsize,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_male" + str(male) + "_hhbasis",
+            base_path=path_subgroup,
+        )
+        (
+            df_agg_mean_sub_equivalised,
+            df_agg_balanced_mean_sub_equivalised,
+        ) = gen_pseudopanel(
+            data1=df_14_sub_equivalised,
+            data2=df_16_sub_equivalised,
+            data3=df_19_sub_equivalised,
+            data4=df_22_sub_equivalised,
+            list_cols_cohort=col_groups,
+            list_cols_outcomes=col_outcomes,
+            use_mean=True,
+            use_quantile=False,
+            quantile_choice=0.5,
+            file_suffix="mean_" + incgroup_suffix + "_male" + str(male) + "_equivalised",
+            base_path=path_subgroup,
+        )
+        # Print out length of dataframe
+        if print_balanced:
+            print(
+                "Number of balanced cohorts for "
+                + incgroup
+                + " of gender of head of HH "
+                + str(male)
+                + ": "
+                + str(int(len(df_agg_balanced_mean_sub_hhbasis) / 4))
+                + " (from "
+                + str(
+                    int(
+                        np.amin(
+                            [
+                                len(df_14_sub_hhbasis),
+                                len(df_16_sub_hhbasis),
+                                len(df_19_sub_hhbasis),
+                                len(df_22_sub_hhbasis),
+                            ]
+                        )
+                    )
+                )
+                + " households)"
+            )
+        elif not print_balanced:
+            print(
+                "Number of cohorts (balanced / unbalanced) for "
+                + incgroup
+                + " of gender of head of HH "
+                + str(male)
+                + ": "
+                + str(int(len(df_agg_mean_sub_hhbasis) / 4))
+                + " (from "
+                + str(
+                    int(
+                        np.amin(
+                            [
+                                len(df_14_sub_hhbasis),
+                                len(df_16_sub_hhbasis),
+                                len(df_19_sub_hhbasis),
+                                len(df_22_sub_hhbasis),
+                            ]
+                        )
+                    )
+                )
+                + " households)"
+            )
+
 # %%
 # X --- Notify
 # telsendmsg(conf=tel_config, msg="impact-household --- process_consol_group: COMPLETED")

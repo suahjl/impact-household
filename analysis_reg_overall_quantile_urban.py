@@ -264,89 +264,84 @@ if show_ci:
 list_heatmaps_file_names = []
 
 # %%
-# Loop to export heat maps with columns showing estimates by birth year groups
-for urban in list_urban_rural:
-    # FE
-    d = params_table_fe_consol.copy()
-    d = d.pivot(index="quantile", columns="urban", values="Parameter")
-    file_name = (
-        "output/params_table_overall_quantile_fe"
-        + "_"
-        + outcome_choice
-        + "_"
-        + income_choice
-        + "_urban"
-        + str(urban)
-        + "_"
-        + fd_suffix
-        + hhbasis_suffix
-    )
-    list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
-    heatmap_fe = heatmap(
-        input=d,
-        mask=False,
-        colourmap="vlag",
-        outputfile=file_name + ".png",
-        title="FE: MPC by income group" + " for urban = " + str(urban) + hhbasis_chart_title,
-        lb=0,
-        ub=0.6,
-        format=".2f",
-    )
-    # TimeFE
-    d = params_table_timefe_consol.copy()
-    d = d.pivot(index="quantile", columns="urban", values="Parameter")
-    file_name = (
-        "output/params_table_overall_quantile_timefe"
-        + "_"
-        + outcome_choice
-        + "_"
-        + income_choice
-        + "_urban"
-        + str(urban)
-        + "_"
-        + fd_suffix
-        + hhbasis_suffix
-    )
-    list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
-    heatmap_timefe = heatmap(
-        input=d,
-        mask=False,
-        colourmap="vlag",
-        outputfile=file_name + ".png",
-        title="Time FE: MPC by income group"
-        + " for urban = "
-        + str(urban)
-        + hhbasis_chart_title,
-        lb=0,
-        ub=0.6,
-        format=".2f",
-    )
-    # RE
-    d = params_table_re_consol.copy()
-    d = d.pivot(index="quantile", columns="urban", values="Parameter")
-    file_name = (
-        "output/params_table_overall_quantile_re"
-        + "_"
-        + outcome_choice
-        + "_"
-        + income_choice
-        + "_urban"
-        + str(urban)
-        + "_"
-        + fd_suffix
-        + hhbasis_suffix
-    )
-    list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
-    heatmap_re = heatmap(
-        input=d,
-        mask=False,
-        colourmap="vlag",
-        outputfile=file_name + ".png",
-        title="RE: MPC by income group" + " for urban = " + str(urban) + hhbasis_chart_title,
-        lb=0,
-        ub=0.6,
-        format=".2f",
-    )
+# Export heat maps with columns showing estimates by birth year groups
+# FE
+d = params_table_fe_consol.copy()
+d = d.pivot(index="quantile", columns="urban", values="Parameter")
+file_name = (
+    "output/params_table_overall_quantile_fe"
+    + "_"
+    + outcome_choice
+    + "_"
+    + income_choice
+    + "_urban"
+    + "_"
+    + fd_suffix
+    + hhbasis_suffix
+)
+list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
+heatmap_fe = heatmap(
+    input=d,
+    mask=False,
+    colourmap="vlag",
+    outputfile=file_name + ".png",
+    title="FE: MPC by income group" + " for urban / rural " + hhbasis_chart_title,
+    lb=0,
+    ub=0.6,
+    format=".2f",
+)
+# TimeFE
+d = params_table_timefe_consol.copy()
+d = d.pivot(index="quantile", columns="urban", values="Parameter")
+file_name = (
+    "output/params_table_overall_quantile_timefe"
+    + "_"
+    + outcome_choice
+    + "_"
+    + income_choice
+    + "_urban"
+    + "_"
+    + fd_suffix
+    + hhbasis_suffix
+)
+list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
+heatmap_timefe = heatmap(
+    input=d,
+    mask=False,
+    colourmap="vlag",
+    outputfile=file_name + ".png",
+    title="Time FE: MPC by income group"
+    + " for urban / rural "
+    + hhbasis_chart_title,
+    lb=0,
+    ub=0.6,
+    format=".2f",
+)
+# RE
+d = params_table_re_consol.copy()
+d = d.pivot(index="quantile", columns="urban", values="Parameter")
+file_name = (
+    "output/params_table_overall_quantile_re"
+    + "_"
+    + outcome_choice
+    + "_"
+    + income_choice
+    + "_urban"
+    + "_"
+    + fd_suffix
+    + hhbasis_suffix
+)
+list_heatmaps_file_names = list_heatmaps_file_names + [file_name]
+heatmap_re = heatmap(
+    input=d,
+    mask=False,
+    colourmap="vlag",
+    outputfile=file_name + ".png",
+    title="RE: MPC by income group" + " for urban / rural " + hhbasis_chart_title,
+    lb=0,
+    ub=0.6,
+    format=".2f",
+)
 # Compile and send
 pdf_file_name = (
     "output/params_table_overall_quantile_urban_consol"
@@ -431,4 +426,3 @@ print(tabulate(params_table_consol_avg.round(3), headers="keys", tablefmt="prett
 print("\n----- Ran in " + "{:.0f}".format(time.time() - time_start) + " seconds -----")
 
 # %%
-``
