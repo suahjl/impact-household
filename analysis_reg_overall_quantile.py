@@ -282,6 +282,50 @@ if not show_ci:
         del params_table_timefe_consol[col]
         del params_table_re_consol[col]
 
+# Add unstratified estimates
+params_table_fe_unstratified = pd.read_parquet(
+    "output/params_table_overall_mean"
+    + "_"
+    + outcome_choice
+    + "_"
+    + income_choice
+    + "_"
+    + fd_suffix
+    + hhbasis_suffix
+    + ".parquet"
+)
+params_table_fe_unstratified = params_table_fe_unstratified[
+    params_table_fe_unstratified["method"] == "FE"
+]
+params_table_fe_unstratified["quantile"] = "Full"
+params_table_fe_unstratified["outcome_variable"] = outcome_choice
+params_table_fe_unstratified.index.name = None
+if not show_ci:
+    for col in ["LowerCI", "UpperCI"]:
+        del params_table_fe_unstratified[col]
+params_table_fe_consol = pd.concat(
+    [params_table_fe_unstratified, params_table_fe_consol], axis=0
+)
+
+# Add unstratified reg stats
+reg_det_fe_unstratified = pd.read_csv(
+    "output/reg_det_overall_mean"
+    + "_"
+    + outcome_choice
+    + "_"
+    + income_choice
+    + "_"
+    + fd_suffix
+    + hhbasis_suffix
+    + ".csv"
+)
+reg_det_fe_unstratified.columns = ["", "Full"]
+reg_det_fe_unstratified = reg_det_fe_unstratified.set_index("")
+if not show_ci:
+    for col in ["LowerCI", "UpperCI"]:
+        del reg_det_fe_unstratified[col]
+reg_det_fe_consol = pd.concat([reg_det_fe_unstratified, reg_det_fe_consol], axis=1)
+
 # Export heat maps by methodology
 list_variables_heatmaps = ["quantile", "Parameter"]
 if show_ci:
@@ -519,3 +563,5 @@ print(tabulate(params_table_consol_avg.round(3), headers="keys", tablefmt="prett
 
 # End
 print("\n----- Ran in " + "{:.0f}".format(time.time() - time_start) + " seconds -----")
+
+# %%
