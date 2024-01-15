@@ -229,7 +229,8 @@ def fe_reg(
             "Observations": [res.nobs],
             "Entities": [res.entity_info.total],
             "Time Periods": [res.time_info.total],
-            "R-Squared": [res.rsquared]
+            "R-Squared": [res.rsquared_within],
+            "Log-Likelihood": [res.loglik]            
         }
     )
     reg_det = reg_det.transpose()
