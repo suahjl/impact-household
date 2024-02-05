@@ -692,7 +692,7 @@ for outcome in tqdm(base_outcomes):
             + outcome
             + " for year "
             + str(t),
-            lb=tab_median_consol.min().max(),
+            lb=tab_median_consol.min().min(),
             ub=tab_median_consol.max().max(),
             format=".0f",
         )
@@ -705,7 +705,7 @@ for outcome in tqdm(base_outcomes):
             + outcome
             + " for year "
             + str(t),
-            lb=tab_mean_consol.min().max(),
+            lb=tab_mean_consol.min().min(),
             ub=tab_mean_consol.max().max(),
             format=".0f",
         )
@@ -718,7 +718,7 @@ for outcome in tqdm(base_outcomes):
             + outcome
             + " for year "
             + str(t),
-            lb=tab_min_consol.min().max(),
+            lb=tab_min_consol.min().min(),
             ub=tab_min_consol.max().max(),
             format=".0f",
         )
@@ -731,7 +731,7 @@ for outcome in tqdm(base_outcomes):
             + outcome
             + " for year "
             + str(t),
-            lb=tab_max_consol.min().max(),
+            lb=tab_max_consol.min().min(),
             ub=tab_max_consol.max().max(),
             format=".0f",
         )
@@ -757,7 +757,7 @@ for outcome in tqdm(base_outcomes):
             + outcome
             + " for year "
             + str(t),
-            lb=tab_median_consol.min().max(),
+            lb=tab_median_consol.min().min(),
             ub=tab_median_consol.max().max(),
             format="s",
         )
@@ -767,61 +767,61 @@ pil_img2pdf(
     extension="png",
     pdf_name="output/tab_median_inc_allbasis_fixedincgroups_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_median_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_median_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_median_inc_allbasis_fixedincgroups_years.pdf",
+#     cap="tab_median_inc_allbasis_fixedincgroups_years",
+# )
 
 pil_img2pdf(
     list_images=list_heattables_mean_names,
     extension="png",
     pdf_name="output/tab_mean_inc_allbasis_fixedincgroups_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_mean_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_mean_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_mean_inc_allbasis_fixedincgroups_years.pdf",
+#     cap="tab_mean_inc_allbasis_fixedincgroups_years",
+# )
 
 pil_img2pdf(
     list_images=list_heattables_min_names,
     extension="png",
     pdf_name="output/tab_min_inc_allbasis_fixedincgroups_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_min_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_min_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_min_inc_allbasis_fixedincgroups_years.pdf",
+#     cap="tab_min_inc_allbasis_fixedincgroups_years",
+# )
 
 pil_img2pdf(
     list_images=list_heattables_max_names,
     extension="png",
     pdf_name="output/tab_max_inc_allbasis_fixedincgroups_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_max_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_max_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_max_inc_allbasis_fixedincgroups_years.pdf",
+#     cap="tab_max_inc_allbasis_fixedincgroups_years",
+# )
 
 pil_img2pdf(
     list_images=list_heattables_allstats_names,
     extension="png",
     pdf_name="output/tab_allstats_inc_allbasis_fixedincgroups_years",
 )
-telsendfiles(
-    conf=tel_config,
-    path="output/tab_allstats_inc_allbasis_fixedincgroups_years.pdf",
-    cap="tab_allstats_inc_allbasis_fixedincgroups_years",
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="output/tab_allstats_inc_allbasis_fixedincgroups_years.pdf",
+#     cap="tab_allstats_inc_allbasis_fixedincgroups_years",
+# )
 
 # X --- Notify
-telsendmsg(
-    conf=tel_config,
-    msg="impact-household --- analysis_descriptive_fixedincgroups: COMPLETED",
-)
+# telsendmsg(
+#     conf=tel_config,
+#     msg="impact-household --- analysis_descriptive_fixedincgroups: COMPLETED",
+# )
 
 # End
 print("\n----- Ran in " + "{:.0f}".format(time.time() - time_start) + " seconds -----")

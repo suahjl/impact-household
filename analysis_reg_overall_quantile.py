@@ -374,7 +374,8 @@ heatmap_fe_regdet = heatmap(
     title="Reg Stats for FE:\n MPC by income group" + hhbasis_chart_title,
     lb=0,
     ub=0.6,
-    format=".3g",
+    format=".5g",
+    annot_size=7
 )
 # TimeFE
 d = params_table_timefe_consol.copy()

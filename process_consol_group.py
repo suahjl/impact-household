@@ -1250,7 +1250,7 @@ def gen_pseudopanel(
                 len(data4) / len(df4_agg),
                 (len(data1) + len(data2) + len(data3) + len(data4)) / len(df_agg_balanced) / 4,
             ],
-            "Number of Cohorts": [
+            "Number of households (vintage) / cohorts (panel)": [
                 len(df1_agg),
                 len(df2_agg),
                 len(df3_agg),
@@ -1388,7 +1388,7 @@ def gen_pseudopanel_quantile_fixed_axis(
                 len(data4) / len(df4_agg),
                 (len(data1) + len(data2) + len(data3) + len(data4)) / len(df_agg_balanced) / 4,
             ],
-            "Number of Cohorts": [
+            "Number of households (vintage) / cohorts (panel)": [
                 len(df1_agg),
                 len(df2_agg),
                 len(df3_agg),
@@ -1572,7 +1572,7 @@ def gen_pseudopanel_distgroup_fixed_axis(
                 len(data4) / len(df4_agg),
                 (len(data1) + len(data2) + len(data3) + len(data4)) / len(df_agg_balanced) / 4,
             ],
-            "Number of Cohorts": [
+            "Number of households (vintage) / cohorts (panel)": [
                 len(df1_agg),
                 len(df2_agg),
                 len(df3_agg),

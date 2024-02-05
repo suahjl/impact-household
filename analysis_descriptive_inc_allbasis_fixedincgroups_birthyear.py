@@ -669,7 +669,8 @@ for outcome in tqdm(base_outcomes):
         ]  # separate file
         round = 1
         for basis, basis_nice in zip(
-            ["", "_equivalised", "_capita"], ["Total HH", "Equivalised", "Per Capita"]
+            [""], ["Total HH"]
+            # ["", "_equivalised", "_capita"], ["Total HH", "Equivalised", "Per Capita"]
         ):
             for birth_year_group in list_birth_year_groups:
                 d_sub = d.copy()
@@ -680,16 +681,16 @@ for outcome in tqdm(base_outcomes):
                     y_col=outcome + basis,
                 )
                 tab_median = tab_median.rename(
-                    columns={outcome + basis: basis_nice + "(" + birth_year_group + ")"}
+                    columns={outcome + basis: birth_year_group}
                 )
                 tab_mean = tab_mean.rename(
-                    columns={outcome + basis: basis_nice + "(" + birth_year_group + ")"}
+                    columns={outcome + basis: birth_year_group}
                 )
                 tab_min = tab_min.rename(
-                    columns={outcome + basis: basis_nice + "(" + birth_year_group + ")"}
+                    columns={outcome + basis: birth_year_group}
                 )
                 tab_max = tab_max.rename(
-                    columns={outcome + basis: basis_nice + "(" + birth_year_group + ")"}
+                    columns={outcome + basis: birth_year_group}
                 )
                 if round == 1:
                     tab_median_consol = tab_median.copy()
@@ -719,56 +720,60 @@ for outcome in tqdm(base_outcomes):
             mask=False,
             colourmap="vlag",
             outputfile=heattable_median_name + ".png",
-            title="Medians of HH, Equivalised, and Per Capita "
+            title="Medians of HH "
             + outcome
             + " for year "
             + str(t),
-            lb=tab_median_consol.min().max(),
+            lb=tab_median_consol.min().min(),
             ub=tab_median_consol.max().max(),
             format=".0f",
-            annot_size=3
+            annot_size=3,
+            center_value=tab_median_consol.min().min()
         )
         fig_tab_mean_consol = heatmap(
             input=tab_mean_consol,
             mask=False,
             colourmap="vlag",
             outputfile=heattable_mean_name + ".png",
-            title="Means of HH, Equivalised, and Per Capita "
+            title="Means of HH "
             + outcome
             + " for year "
             + str(t),
-            lb=tab_mean_consol.min().max(),
+            lb=tab_mean_consol.min().min(),
             ub=tab_mean_consol.max().max(),
             format=".0f",
-            annot_size=3
+            annot_size=3,
+            center_value=tab_mean_consol.min().min()
         )
         fig_tab_min_consol = heatmap(
             input=tab_min_consol,
             mask=False,
             colourmap="vlag",
             outputfile=heattable_min_name + ".png",
-            title="Min of HH, Equivalised, and Per Capita "
+            title="Min of HH "
             + outcome
             + " for year "
             + str(t),
-            lb=tab_min_consol.min().max(),
+            lb=tab_min_consol.min().min(),
             ub=tab_min_consol.max().max(),
             format=".0f",
-            annot_size=3
+            annot_size=3,
+            center_value=tab_min_consol.min().min()
         )
         fig_tab_max_consol = heatmap(
             input=tab_max_consol,
             mask=False,
             colourmap="vlag",
             outputfile=heattable_max_name + ".png",
-            title="Max of HH, Equivalised, and Per Capita "
+            title="Max of HH "
             + outcome
             + " for year "
             + str(t),
-            lb=tab_max_consol.min().max(),
+            lb=tab_max_consol.min().min(),
             ub=tab_max_consol.max().max(),
             format=".0f",
-            annot_size=3
+            annot_size=3,
+            center_value=tab_max_consol.min().min()
         )
         # Generate allstats version
         tab_allstats_consol = (
@@ -788,11 +793,11 @@ for outcome in tqdm(base_outcomes):
             mask=False,
             colourmap="vlag",
             outputfile=heattable_allstats_name + ".png",
-            title="Range (Median) of HH, Equivalised, and Per Capita "
+            title="Range (Median) of HH "
             + outcome
             + " for year "
             + str(t),
-            lb=tab_median_consol.min().max(),
+            lb=tab_median_consol.min().min(),
             ub=tab_median_consol.max().max(),
             format="s",
         )

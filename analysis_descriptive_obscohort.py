@@ -46,7 +46,7 @@ for basis, basis_nice in zip(list_bases, list_bases_nice):
         df = df.round(2)
         df = df.set_index("Year")
         df_avg = pd.DataFrame(df["Avg Obs Per Cohort"].copy())
-        df_ncohorts = pd.DataFrame(df["Number of Cohorts"].copy())
+        df_ncohorts = pd.DataFrame(df["Number of households (vintage) / cohorts (panel)"].copy())
         # avg
         file_name = path_output + "hies_consol_agg_obscohort_" + suffix + basis + "_avg"
         fig = heatmap(

@@ -338,6 +338,7 @@ def heatmap(
     ub: float,
     format: str,
     annot_size=9,
+    center_value=0
 ):
     fig = plt.figure()
     sns.heatmap(
@@ -345,7 +346,7 @@ def heatmap(
         mask=mask,
         annot=True,
         cmap=colourmap,
-        center=0,
+        center=center_value,
         annot_kws={"size": 9},  # 9, 12, 16, 20, 24, 28
         vmin=lb,
         vmax=ub,
