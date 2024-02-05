@@ -373,6 +373,8 @@ def heatmap_layered(
     lb: float,
     ub: float,
     format: str,
+    annot_size=12,
+    tick_sizes=9
 ):
     fig = plt.figure()
     sns.heatmap(
@@ -381,7 +383,7 @@ def heatmap_layered(
         annot=disp_input,
         cmap=colourmap,
         center=0,
-        annot_kws={"size": 12},  # 9, 12, 20, 28
+        annot_kws={"size": annot_size},  # 9, 12, 20, 28
         vmin=lb,
         vmax=ub,
         xticklabels=True,
@@ -389,8 +391,8 @@ def heatmap_layered(
         fmt=format,
     )
     plt.title(title, fontsize=11)
-    plt.xticks(fontsize=9)
-    plt.yticks(fontsize=9)
+    plt.xticks(fontsize=tick_sizes)
+    plt.yticks(fontsize=tick_sizes)
     fig.tight_layout()
     fig.savefig(outputfile)
     plt.close()

@@ -1,3 +1,4 @@
+# %%
 # Regression analysis, but stratified, and by quantiles
 
 import pandas as pd
@@ -10,6 +11,7 @@ from helper import (
     re_reg,
     reg_ols,
     heatmap,
+    heatmap_layered,
     pil_img2pdf,
     barchart,
 )
@@ -23,6 +25,7 @@ import ast
 
 time_start = time.time()
 
+# %%
 # 0 --- Main settings
 load_dotenv()
 tel_config = os.getenv("TEL_CONFIG")
@@ -49,9 +52,12 @@ elif not hhbasis_adj_analysis and not equivalised_adj_analysis:
 hhbasis_cohorts_with_hhsize = ast.literal_eval(os.getenv("HHBASIS_COHORTS_WITH_HHSIZE"))
 
 
+# %%
 # --------- Analysis Starts (only cohort pseudo-panel data regressions) ---------
 
 
+# %%
+# Functions
 def load_clean_estimate(input_suffix, opt_income, opt_first_diff, opt_show_ci):
     # I --- Load data
     df = pd.read_parquet(
@@ -270,6 +276,7 @@ def load_clean_estimate(input_suffix, opt_income, opt_first_diff, opt_show_ci):
     return params_table_fe_consol, params_table_timefe_consol, params_table_re_consol
 
 
+# %%
 # Loop to estimate all quantiles
 list_quantiles = ["0-20", "20-40", "40-60", "60-80", "80-100"]
 # [0.2, 0.4, 0.6, 0.8]  # [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -455,28 +462,29 @@ pil_img2pdf(
     + "_quantile"
     + hhbasis_suffix,
 )
-for i in [
-    "./output/params_table_fe_strat_cons_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + "_quantile"
-    + hhbasis_suffix,
-    "./output/params_table_timefe_strat_cons_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + "_quantile"
-    + hhbasis_suffix,
-    "./output/params_table_re_strat_cons_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + "_quantile"
-    + hhbasis_suffix,
-]:
-    telsendfiles(conf=tel_config, path=i + ".pdf", cap=i)
+# for i in [
+#     "./output/params_table_fe_strat_cons_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + "_quantile"
+#     + hhbasis_suffix,
+#     "./output/params_table_timefe_strat_cons_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + "_quantile"
+#     + hhbasis_suffix,
+#     "./output/params_table_re_strat_cons_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + "_quantile"
+#     + hhbasis_suffix,
+# ]:
+#     telsendfiles(conf=tel_config, path=i + ".pdf", cap=i)
 
+# %%
 # Set type for consolidated dataframe
 if show_ci:
     dict_dtype = {
@@ -496,6 +504,7 @@ params_table_fe_consol = params_table_fe_consol.astype(dict_dtype)
 params_table_timefe_consol = params_table_timefe_consol.astype(dict_dtype)
 params_table_re_consol = params_table_re_consol.astype(dict_dtype)
 
+# %%
 # Sort subgroups
 if show_ci:
     col_sort_order = ["method", "quantile", "Parameter", "LowerCI", "UpperCI"]
@@ -505,6 +514,7 @@ params_table_fe_consol = params_table_fe_consol[col_sort_order]
 params_table_timefe_consol = params_table_timefe_consol[col_sort_order]
 params_table_re_consol = params_table_re_consol[col_sort_order]
 
+# %%
 # Output full output
 params_table_fe_consol.to_csv(
     "./output/params_table_fe_consol_strat_cons_"
@@ -557,6 +567,75 @@ params_table_re_consol.to_parquet(
     + ".parquet"
 )
 
+# %%
+# Generate standard regression estimate table of MPCs (x-axis = income groups; y-axis = cons type)
+params_table_fe_consol_wide_disp = params_table_fe_consol.copy()
+params_table_fe_consol_wide_val = params_table_fe_consol_wide_disp[
+    ["method", "quantile"] + ["Parameter"]
+].copy()
+params_table_fe_consol_wide_disp[["Parameter", "LowerCI", "UpperCI"]] = (
+    params_table_fe_consol_wide_disp[["Parameter", "LowerCI", "UpperCI"]]
+    .round(2)
+    .astype("str")
+)
+params_table_fe_consol_wide_disp["Parameter"] = (
+    params_table_fe_consol_wide_disp["Parameter"]
+    + " \n ("
+    + params_table_fe_consol_wide_disp["LowerCI"]
+    + " to "
+    + params_table_fe_consol_wide_disp["UpperCI"]
+    + ")"
+)
+for col in ["LowerCI", "UpperCI"]:
+    del params_table_fe_consol_wide_disp[col]
+params_table_fe_consol_wide_disp = params_table_fe_consol_wide_disp.pivot(
+    columns="quantile", values="Parameter"
+)
+params_table_fe_consol_wide_val = params_table_fe_consol_wide_val.pivot(
+    columns="quantile", values="Parameter"
+)
+list_outcomes_nice = [
+    "Consumption + Fin. Expenses",
+    "Consumption",
+    "Food & Beverages",
+    "Alcohol & Tobacco",
+    "Clothing & Footwear",
+    "Rent & Utilities",
+    "Furnishing, HH Equipment & Maintenance",
+    "Healthcare",
+    "Transport",
+    "Communication",
+    "Recreation & Culture",
+    "Education",
+    "Restaurant & Hotels",
+    "Misc",
+    "Financial Expenses",
+    "Transport: Fuel Only",
+    "Transport ex. Vehicles & Maintenance",
+]
+params_table_fe_consol_wide_disp = params_table_fe_consol_wide_disp.loc[list_outcomes_nice, :]
+params_table_fe_consol_wide_val = params_table_fe_consol_wide_val.loc[list_outcomes_nice, :]
+fig = heatmap_layered(
+    actual_input=params_table_fe_consol_wide_val,
+    disp_input=params_table_fe_consol_wide_disp,
+    mask=False,
+    colourmap="vlag",
+    outputfile="./output/params_table_fe_strat_cons_"
+    + "wide"
+    + "_"
+    + fd_suffix
+    + "_quantile"
+    + hhbasis_suffix,
+    title="Fixed Effects: MPC by cons type" + hhbasis_chart_title,
+    lb=-0.3,
+    ub=0.3,
+    format="s",
+    annot_size=6,
+    tick_sizes=6,
+)
+
+
+# %%
 # Generate consumption-specific distribution of MPCs along income quantile groups (the opposite of earlier)
 list_outcomes = (
     ["cons_01_13", "cons_01_12"]
@@ -812,6 +891,7 @@ for outcome, outcome_nice in tqdm(zip(list_outcomes, list_outcomes_nice)):
         + hhbasis_suffix
     ]
 
+# %%
 # Group charts of c-specific mpcs by ygroups into pdf by methodology
 # FE
 pil_img2pdf(
@@ -852,69 +932,72 @@ pil_img2pdf(
 
 # Send charts of c-specific mpcs by ygroups into pdf by methodology
 # FE
-telsendfiles(
-    conf=tel_config,
-    path="./output/params_table_fe_"
-    + "cons"
-    + "_strat_incgroup_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + hhbasis_suffix
-    + ".pdf",
-    cap="params_table_fe_"
-    + "cons"
-    + "_strat_incgroup_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + hhbasis_suffix,
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="./output/params_table_fe_"
+#     + "cons"
+#     + "_strat_incgroup_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + hhbasis_suffix
+#     + ".pdf",
+#     cap="params_table_fe_"
+#     + "cons"
+#     + "_strat_incgroup_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + hhbasis_suffix,
+# )
 # Time FE
-telsendfiles(
-    conf=tel_config,
-    path="./output/params_table_timefe_"
-    + "cons"
-    + "_strat_incgroup_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + hhbasis_suffix
-    + ".pdf",
-    cap="params_table_timefe_"
-    + "cons"
-    + "_strat_incgroup_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + hhbasis_suffix,
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="./output/params_table_timefe_"
+#     + "cons"
+#     + "_strat_incgroup_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + hhbasis_suffix
+#     + ".pdf",
+#     cap="params_table_timefe_"
+#     + "cons"
+#     + "_strat_incgroup_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + hhbasis_suffix,
+# )
 # RE
-telsendfiles(
-    conf=tel_config,
-    path="./output/params_table_re_"
-    + "cons"
-    + "_strat_incgroup_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + hhbasis_suffix
-    + ".pdf",
-    cap="params_table_re_"
-    + "cons"
-    + "_strat_incgroup_"
-    + income_choice
-    + "_"
-    + fd_suffix
-    + hhbasis_suffix,
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path="./output/params_table_re_"
+#     + "cons"
+#     + "_strat_incgroup_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + hhbasis_suffix
+#     + ".pdf",
+#     cap="params_table_re_"
+#     + "cons"
+#     + "_strat_incgroup_"
+#     + income_choice
+#     + "_"
+#     + fd_suffix
+#     + hhbasis_suffix,
+# )
 
+# %%
 # --------- Analysis Ends ---------
 
+# %%
 # X --- Notify
-telsendmsg(
-    conf=tel_config, msg="impact-household --- analysis_reg_strat_quantile: COMPLETED"
-)
+# telsendmsg(
+#     conf=tel_config, msg="impact-household --- analysis_reg_strat_quantile: COMPLETED"
+# )
 
+# %%
 # End
 print("\n----- Ran in " + "{:.0f}".format(time.time() - time_start) + " seconds -----")
