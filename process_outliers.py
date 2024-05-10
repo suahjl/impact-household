@@ -173,8 +173,8 @@ df_14_equivalised.to_parquet(path_2014 + 'hies_2014_consol_equivalised_trimmedou
 
 # %%
 # X --- Notify
-telsendmsg(conf=tel_config,
-           msg='impact-household --- process_outliers: COMPLETED')
+# telsendmsg(conf=tel_config,
+#            msg='impact-household --- process_outliers: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

@@ -467,22 +467,22 @@ pil_img2pdf(
     list_images=list_heattable_names,
     extension='png', pdf_name='output/tab_marginsinccons_incgroup_years' + output_suffix
 )
-telsendfiles(
-    conf=tel_config,
-    path='output/tab_marginsinccons_incgroup_years' + output_suffix + '.pdf',
-    cap='tab_marginsinccons_incgroup_years' + output_suffix
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path='output/tab_marginsinccons_incgroup_years' + output_suffix + '.pdf',
+#     cap='tab_marginsinccons_incgroup_years' + output_suffix
+# )
 # Continue boxplots
 pil_img2pdf(
     list_images=list_boxplot_names,
     extension='png',
     pdf_name='output/boxplot_marginsinccons_incgroup_years' + output_suffix
 )
-telsendfiles(
-    conf=tel_config,
-    path='output/boxplot_marginsinccons_incgroup_years' + output_suffix + '.pdf',
-    cap='boxplot_marginsinccons_incgroup_years' + output_suffix
-)
+# telsendfiles(
+#     conf=tel_config,
+#     path='output/boxplot_marginsinccons_incgroup_years' + output_suffix + '.pdf',
+#     cap='boxplot_marginsinccons_incgroup_years' + output_suffix
+# )
 # Continue latest medians
 # pil_img2pdf(
 #     list_images=list_latest_median_names,
@@ -578,8 +578,8 @@ if not skip_inc_cons_by_obs:
 
 # %%
 # X --- Notify
-telsendmsg(conf=tel_config,
-           msg='impact-household --- analysis_descriptive: COMPLETED')
+# telsendmsg(conf=tel_config,
+#            msg='impact-household --- analysis_descriptive: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')

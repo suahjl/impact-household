@@ -371,6 +371,7 @@ df["cons_01_12"] = df[cols_cons_01_12].sum(axis=1)
 del df["jum_g01g13"]
 # del df["jum_g01g90"]
 df = df.rename(columns={"jum_g01g90": "cons_01_13"})
+df["cons_13"] = df["cons_01_13"] - df["cons_01_12"]
 
 # %%
 # Margins
@@ -538,8 +539,8 @@ df.to_parquet(path_data + 'hies_2022_consol.parquet', compression='brotli')
 
 # %%
 # VI --- Notify
-telsendmsg(conf=tel_config,
-           msg='impact-household --- process_raw_2022_bnm: COMPLETED')
+# telsendmsg(conf=tel_config,
+#            msg='impact-household --- process_raw_2022_bnm: COMPLETED')
 
 # End
 print('\n----- Ran in ' + "{:.0f}".format(time.time() - time_start) + ' seconds -----')
